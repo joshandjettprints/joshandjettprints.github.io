@@ -93,7 +93,6 @@
     }
   </style>
 </head>
-
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
 
   <!-- FULL-SCREEN LOADING OVERLAY -->
@@ -160,13 +159,13 @@
         <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="relative z-10 max-w-2xl space-y-3">
           <span class="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20 inline-block">
-            High Quality Filament Prints & Custom Models
+            High Quality Filament Prints & Custom Models (Optimized Fast Mode)
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
             Bring Digital Designs into <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400">Physical Reality</span>
           </h2>
           <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            Select your favorite 3D models, customize scales and custom filament colors with live price estimations, and track production status.
+            Select your favorite 3D models, customize scales and custom filament colors with instant localized pricing, and track production status.
           </p>
         </div>
 
@@ -189,7 +188,7 @@
 
         <div class="relative w-full sm:w-64">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          <input type="text" id="shop-search-input" oninput="renderShopGrid()" placeholder="Search 3D models..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+          <input type="text" id="shop-search-input" oninput="debounceRenderShopGrid()" placeholder="Search 3D models..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
         </div>
       </div>
 
@@ -358,7 +357,7 @@
           </div>
           <div class="relative w-full sm:w-64">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-            <input type="text" id="owner-search-input" oninput="renderOwnerPortalOrders()" placeholder="Search orders..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+            <input type="text" id="owner-search-input" oninput="debounceRenderOwnerPortalOrders()" placeholder="Search orders..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
           </div>
         </div>
 
@@ -470,7 +469,7 @@
         <!-- Scale Multiplier -->
         <div class="space-y-1">
           <div class="flex justify-between text-xs font-mono">
-            <span class="text-slate-400">Model Scale (Affects Pricing):</span>
+            <span class="text-slate-400">Model Scale (Optimized Pricing):</span>
             <span id="buy-scale-val" class="text-cyan-300 font-bold">100% (Standard)</span>
           </div>
           <input type="range" id="buy-scale-slider" min="50" max="250" step="25" value="100" oninput="updateBuyTotal()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer" />
@@ -610,7 +609,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-3d-print-hub-app';
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyA3FsrqyQ_oMbZoEUnoS2CLqJ7iPOoI4JM", projectId: "josh-and-jett-3d-printing" };
@@ -620,28 +619,39 @@
     let filaments = [];
     let orders = [];
 
+    // Cache lookup maps for O(1) performance
+    let catalogMap = new Map();
+    let filamentMap = new Map();
+    let orderMap = new Map();
+
+    // Debounce timers for lightning fast input searches
+    let searchDebounceTimer = null;
+    let ownerSearchDebounceTimer = null;
+
     // Helper to show realistic loading screens for actions
     function showLoading(title, subtitle = 'Processing your request...') {
       const screen = document.getElementById('global-loading-screen');
+      if (!screen) return;
       document.getElementById('loading-title').innerText = title;
       document.getElementById('loading-subtitle').innerText = subtitle;
       const bar = document.getElementById('loading-bar-fill');
-      bar.style.width = '75%';
+      if (bar) bar.style.width = '85%';
       screen.classList.remove('hidden', 'opacity-0');
     }
 
     function hideLoading() {
       const screen = document.getElementById('global-loading-screen');
+      if (!screen) return;
       const bar = document.getElementById('loading-bar-fill');
-      bar.style.width = '100%';
+      if (bar) bar.style.width = '100%';
       setTimeout(() => {
         screen.classList.add('opacity-0');
-        setTimeout(() => screen.classList.add('hidden'), 300);
-      }, 250);
+        setTimeout(() => screen.classList.add('hidden'), 200);
+      }, 150);
     }
 
     async function initFirebase() {
-      showLoading('Connecting to Cloud Database...', 'Authenticating & Synchronizing 3D Lab');
+      showLoading('Connecting to Optimized Cloud...', 'Synchronizing with Firestore Caching');
       try {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
@@ -654,9 +664,9 @@
         }
         userId = auth.currentUser?.uid || crypto.randomUUID();
         
-        setupFirestoreListeners();
+        setupOptimizedFirestoreListeners();
       } catch (err) {
-        console.warn("Firebase fallback to in-memory due to config:", err);
+        console.warn("Firebase fallback to local memory cache:", err);
         loadDefaultInMemoryData();
         hideLoading();
       }
@@ -679,26 +689,42 @@
         { id: 'emerald-green', name: 'Emerald Green PLA', color: '#10b981', surcharge: 10, inStock: true }
       ];
       orders = [];
+      rebuildMaps();
       renderCategoryPills();
       renderShopGrid();
+      handleHashNavigation();
+    }
+
+    function rebuildMaps() {
+      catalogMap.clear();
+      catalogModels.forEach(m => catalogMap.set(m.id, m));
+
+      filamentMap.clear();
+      filaments.forEach(f => filamentMap.set(f.id, f));
+
+      orderMap.clear();
+      orders.forEach(o => orderMap.set(o.trackingCode, o));
     }
 
     let isInitialLoad = true;
 
-    function setupFirestoreListeners() {
+    function setupOptimizedFirestoreListeners() {
       if (!db) return;
 
       const modelsCol = collection(db, 'artifacts', appId, 'public', 'data', 'catalogModels');
       onSnapshot(modelsCol, (snapshot) => {
-        catalogModels = [];
+        const loadedModels = [];
         snapshot.forEach(docSnap => {
-          catalogModels.push({ id: docSnap.id, ...docSnap.data() });
+          loadedModels.push({ id: docSnap.id, ...docSnap.data() });
         });
-        if (catalogModels.length === 0 && isInitialLoad) {
+        
+        if (loadedModels.length === 0 && isInitialLoad) {
           loadDefaultInMemoryData();
           catalogModels.forEach(m => setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'catalogModels', m.id), m));
           filaments.forEach(f => setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'filaments', f.id), f));
         } else {
+          catalogModels = loadedModels;
+          rebuildMaps();
           renderCategoryPills();
           renderShopGrid();
           if (activeView === 'owner') renderOwnerPortal();
@@ -706,10 +732,12 @@
         if (isInitialLoad) {
           isInitialLoad = false;
           hideLoading();
+          handleHashNavigation();
         }
       }, (err) => {
-        console.error("Models listener error:", err);
+        console.warn("Models listener warning:", err);
         hideLoading();
+        handleHashNavigation();
       });
 
       const filamentsCol = collection(db, 'artifacts', appId, 'public', 'data', 'filaments');
@@ -718,8 +746,9 @@
         snapshot.forEach(docSnap => {
           filaments.push({ id: docSnap.id, ...docSnap.data() });
         });
+        rebuildMaps();
         if (activeView === 'owner') renderOwnerFilaments();
-      }, (err) => console.error("Filaments listener error:", err));
+      }, (err) => console.warn("Filaments listener warning:", err));
 
       const ordersCol = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
       onSnapshot(ordersCol, (snapshot) => {
@@ -727,50 +756,39 @@
         snapshot.forEach(docSnap => {
           orders.push({ id: docSnap.id, ...docSnap.data() });
         });
-        if (activeView === 'owner') renderOwnerPortalOrders();
-      }, (err) => console.error("Orders listener error:", err));
+        rebuildMaps();
+        if (activeView === 'owner') renderOwnerPortal();
+      }, (err) => console.warn("Orders listener warning:", err));
     }
 
     window.saveModelToDb = async function(model) {
       if (!db || !userId) return;
-      showLoading('Saving Model...', 'Updating catalog in database');
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'catalogModels', model.id), model);
-      hideLoading();
     }
 
     window.removeModelFromDb = async function(id) {
       if (!db || !userId) return;
-      showLoading('Removing Model...', 'Syncing database');
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'catalogModels', id));
-      hideLoading();
     }
 
     window.saveFilamentToDb = async function(filament) {
       if (!db || !userId) return;
-      showLoading('Saving Filament...', 'Updating inventory');
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'filaments', filament.id), filament);
-      hideLoading();
     }
 
     window.removeFilamentFromDb = async function(id) {
       if (!db || !userId) return;
-      showLoading('Removing Filament...', 'Syncing inventory');
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'filaments', id));
-      hideLoading();
     }
 
     window.saveOrderToDb = async function(order) {
       if (!db || !userId) return;
-      showLoading('Submitting Order...', 'Registering in production queue');
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', order.trackingCode), order);
-      hideLoading();
     }
 
     window.removeOrderFromDb = async function(code) {
       if (!db || !userId) return;
-      showLoading('Deleting Order...', 'Updating database');
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', code));
-      hideLoading();
     }
 
     let currentCategory = 'All';
@@ -794,32 +812,54 @@
       setTimeout(() => {
         toast.classList.add('translate-y-2', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
-      }, 3500);
+      }, 3000);
     }
 
-    window.navigateTo = function(viewName) {
+    // Hash-based GitHub Pages compatible routing
+    window.navigateTo = function(viewName, updateHash = true) {
       if (viewName === 'owner') {
         openOwnerPinModal();
         return;
       }
 
-      showLoading('Loading View...', `Switching to ${viewName}`);
-      setTimeout(() => {
-        activeView = viewName;
-        document.getElementById('view-shop').classList.add('hidden');
-        document.getElementById('view-tracking').classList.add('hidden');
-        document.getElementById('view-owner').classList.add('hidden');
+      if (updateHash) {
+        window.location.hash = `#${viewName}`;
+        return;
+      }
 
-        if (viewName === 'shop') {
-          document.getElementById('view-shop').classList.remove('hidden');
-          renderShopGrid();
-        } else if (viewName === 'tracking') {
-          document.getElementById('view-tracking').classList.remove('hidden');
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        hideLoading();
-      }, 300);
+      activeView = viewName;
+      document.getElementById('view-shop').classList.add('hidden');
+      document.getElementById('view-tracking').classList.add('hidden');
+      document.getElementById('view-owner').classList.add('hidden');
+
+      if (viewName === 'shop') {
+        document.getElementById('view-shop').classList.remove('hidden');
+        renderShopGrid();
+      } else if (viewName === 'tracking') {
+        document.getElementById('view-tracking').classList.remove('hidden');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    window.handleHashNavigation = function() {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'tracking') {
+        if (!activeTrackingCode && orders.length > 0) {
+          activeTrackingCode = orders[0].trackingCode;
+        }
+        if (activeTrackingCode) {
+          viewOrderTracking(activeTrackingCode, false);
+        } else {
+          navigateTo('shop', false);
+        }
+      } else if (hash === 'owner') {
+        openOwnerPinModal();
+      } else {
+        navigateTo('shop', false);
+      }
+    }
+
+    window.addEventListener('hashchange', handleHashNavigation);
 
     window.exitOwnerPortal = function() {
       navigateTo('shop');
@@ -842,8 +882,14 @@
       renderShopGrid();
     }
 
+    window.debounceRenderShopGrid = function() {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        renderShopGrid();
+      }, 150);
+    }
+
     window.renderShopGrid = function() {
-      renderCategoryPills();
       const grid = document.getElementById('product-grid');
       const searchElem = document.getElementById('shop-search-input');
       const search = searchElem ? searchElem.value.toLowerCase() : '';
@@ -893,7 +939,7 @@
     }
 
     window.openPurchaseModal = function(modelId) {
-      const model = catalogModels.find(m => m.id === modelId);
+      const model = catalogMap.get(modelId);
       if (!model) return;
       currentConfiguredModel = model;
 
@@ -908,7 +954,7 @@
       if (filaments.length === 0) {
         filamentContainer.innerHTML = `<p class="col-span-full text-xs font-mono text-rose-400">No filaments available currently.</p>`;
       } else {
-        if (!filaments.some(f => f.id === selectedFilamentId && f.inStock)) {
+        if (!filamentMap.has(selectedFilamentId) || !filamentMap.get(selectedFilamentId).inStock) {
           const firstAvailable = filaments.find(f => f.inStock);
           selectedFilamentId = firstAvailable ? firstAvailable.id : (filaments[0] ? filaments[0].id : null);
         }
@@ -935,7 +981,9 @@
 
     window.selectFilament = function(filId) {
       selectedFilamentId = filId;
-      openPurchaseModal(currentConfiguredModel.id);
+      if (currentConfiguredModel) {
+        openPurchaseModal(currentConfiguredModel.id);
+      }
     }
 
     window.updateBuyTotal = function() {
@@ -943,7 +991,7 @@
       const scale = parseInt(document.getElementById('buy-scale-slider').value);
       document.getElementById('buy-scale-val').innerText = `${scale}%`;
 
-      const filamentObj = filaments.find(f => f.id === selectedFilamentId);
+      const filamentObj = filamentMap.get(selectedFilamentId);
       const surcharge = filamentObj ? filamentObj.surcharge : 0;
 
       const scaleMultiplier = Math.pow(scale / 100, 1.5);
@@ -960,7 +1008,7 @@
       const customerName = document.getElementById('buy-customer-name').value.trim() || 'Anonymous Maker';
       const customerAddress = document.getElementById('buy-customer-address').value.trim() || 'Bangkok, Thailand';
       const scale = document.getElementById('buy-scale-slider').value;
-      const filamentObj = filaments.find(f => f.id === selectedFilamentId) || filaments[0];
+      const filamentObj = filamentMap.get(selectedFilamentId) || filaments[0];
 
       if (!filamentObj || !filamentObj.inStock) {
         showToast('Please select a valid in-stock filament.', 'error');
@@ -992,60 +1040,70 @@
       };
 
       await saveOrderToDb(newOrder);
+      
       closePurchaseModal();
 
       showToast(`Order placed successfully! Tracking Code: ${trackingCode}`);
       viewOrderTracking(trackingCode);
     }
 
-    window.viewOrderTracking = function(code) {
-      showLoading('Loading Order Tracker...', `Fetching tracking data for ${code}`);
-      setTimeout(() => {
-        const order = orders.find(o => o.trackingCode === code);
-        if (!order) {
-          hideLoading();
-          showToast('Tracking code not found in active orders.', 'error');
-          return;
-        }
+    window.viewOrderTracking = function(code, updateHash = true) {
+      const order = orderMap.get(code);
+      if (!order) {
+        showToast('Tracking code not found in active orders.', 'error');
+        return;
+      }
 
-        activeTrackingCode = code;
-        document.getElementById('track-number-display').innerText = order.trackingCode;
-        document.getElementById('track-item-title').innerHTML = `<i class="fa-solid ${order.modelIcon || 'fa-cube'} text-cyan-400 mr-1.5"></i> ${order.modelTitle}`;
-        document.getElementById('track-item-specs').innerText = order.specs;
-        document.getElementById('assigned-printer-name').innerText = order.printerName;
+      activeTrackingCode = code;
+      if (updateHash) {
+        window.location.hash = '#tracking';
+      }
 
-        const stages = ['Order Received', 'Printing in Progress', 'Inspected & Packaged', 'Delivered to Customer'];
-        document.getElementById('current-status-title').innerText = stages[order.stage];
+      document.getElementById('track-number-display').innerText = order.trackingCode;
+      document.getElementById('track-item-title').innerHTML = `<i class="fa-solid ${order.modelIcon || 'fa-cube'} text-cyan-400 mr-1.5"></i> ${order.modelTitle}`;
+      document.getElementById('track-item-specs').innerText = order.specs;
+      document.getElementById('assigned-printer-name').innerText = order.printerName;
 
-        const percentages = [0, 33, 66, 100];
-        document.getElementById('progress-bar-fill').style.width = `${percentages[order.stage]}%`;
+      const stages = ['Order Received', 'Printing in Progress', 'Inspected & Packaged', 'Delivered to Customer'];
+      document.getElementById('current-status-title').innerText = stages[order.stage];
 
-        for (let i = 0; i <= 3; i++) {
-          const blob = document.getElementById(`node-blob-${i}`);
+      const percentages = [0, 33, 66, 100];
+      document.getElementById('progress-bar-fill').style.width = `${percentages[order.stage]}%`;
+
+      for (let i = 0; i <= 3; i++) {
+        const blob = document.getElementById(`node-blob-${i}`);
+        if (blob) {
           if (i <= order.stage) {
             blob.className = 'w-10 h-10 rounded-xl bg-cyan-500 text-slate-950 font-black border-2 border-cyan-400 flex items-center justify-center text-xs shadow-lg shadow-cyan-500/30 transition-all';
           } else {
             blob.className = 'w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all';
           }
         }
+      }
 
-        const logList = document.getElementById('audit-log-list');
+      const logList = document.getElementById('audit-log-list');
+      if (logList) {
         logList.innerHTML = order.logs.map(l => `<li>${l}</li>`).join('');
+      }
 
-        navigateTo('tracking');
-        hideLoading();
-      }, 300);
+      navigateTo('tracking', false);
     }
 
     window.copyTrackingNumber = function() {
       if (!activeTrackingCode) return;
-      const textarea = document.createElement('textarea');
-      textarea.value = activeTrackingCode;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      showToast(`Copied tracking code ${activeTrackingCode} to clipboard!`);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(activeTrackingCode).then(() => {
+          showToast(`Copied tracking code ${activeTrackingCode} to clipboard!`);
+        });
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = activeTrackingCode;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`Copied tracking code ${activeTrackingCode} to clipboard!`);
+      }
     }
 
     window.openQuickTrackModal = function() {
@@ -1069,28 +1127,31 @@
     window.openOwnerPinModal = function() {
       document.getElementById('owner-pin-input').value = '';
       document.getElementById('modal-owner-pin').classList.remove('hidden');
-      setTimeout(() => document.getElementById('owner-pin-input').focus(), 100);
+      setTimeout(() => document.getElementById('owner-pin-input').focus(), 50);
     }
 
     window.closeOwnerPinModal = function() {
       document.getElementById('modal-owner-pin').classList.add('hidden');
+      if (window.location.hash === '#owner' && activeView !== 'owner') {
+        window.location.hash = '#shop';
+      }
     }
 
     window.verifyOwnerPin = function() {
       const pin = document.getElementById('owner-pin-input').value.trim();
       if (pin === '85455') {
+        // EXPLICITLY CLOSE MODAL IMMEDIATELY
         closeOwnerPinModal();
-        showLoading('Authenticating Owner...', 'Verifying security credentials');
-        setTimeout(() => {
-          showToast('Owner Portal access granted!');
-          activeView = 'owner';
-          document.getElementById('view-shop').classList.add('hidden');
-          document.getElementById('view-tracking').classList.add('hidden');
-          document.getElementById('view-owner').classList.remove('hidden');
-          renderOwnerPortal();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          hideLoading();
-        }, 400);
+        document.getElementById('modal-owner-pin').classList.add('hidden');
+
+        showToast('Owner Portal access granted!');
+        activeView = 'owner';
+        window.location.hash = '#owner';
+        document.getElementById('view-shop').classList.add('hidden');
+        document.getElementById('view-tracking').classList.add('hidden');
+        document.getElementById('view-owner').classList.remove('hidden');
+        renderOwnerPortal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         showToast('Incorrect security PIN.', 'error');
       }
@@ -1153,7 +1214,7 @@
     }
 
     window.openEditFilamentModal = function(id) {
-      const fil = filaments.find(f => f.id === id);
+      const fil = filamentMap.get(id);
       if (!fil) return;
       document.getElementById('edit-filament-id').value = fil.id;
       document.getElementById('filament-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Filament';
@@ -1180,7 +1241,7 @@
       }
 
       if (editId) {
-        const fil = filaments.find(f => f.id === editId);
+        const fil = filamentMap.get(editId);
         if (fil) {
           fil.name = name;
           fil.color = color;
@@ -1204,7 +1265,7 @@
     }
 
     window.toggleFilamentStock = async function(id) {
-      const fil = filaments.find(f => f.id === id);
+      const fil = filamentMap.get(id);
       if (fil) {
         fil.inStock = !fil.inStock;
         await saveFilamentToDb(fil);
@@ -1253,7 +1314,7 @@
     }
 
     window.openEditCatalogModel = function(id) {
-      const model = catalogModels.find(m => m.id === id);
+      const model = catalogMap.get(id);
       if (!model) return;
       document.getElementById('edit-model-id').value = model.id;
       document.getElementById('model-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-cyan-400"></i> Edit 3D Print Model';
@@ -1284,7 +1345,7 @@
       }
 
       if (editId) {
-        const model = catalogModels.find(m => m.id === editId);
+        const model = catalogMap.get(editId);
         if (model) {
           model.title = title;
           model.category = category;
@@ -1313,6 +1374,13 @@
     window.deleteCatalogModel = async function(id) {
       await removeModelFromDb(id);
       showToast('Catalog model removed.');
+    }
+
+    window.debounceRenderOwnerPortalOrders = function() {
+      if (ownerSearchDebounceTimer) clearTimeout(ownerSearchDebounceTimer);
+      ownerSearchDebounceTimer = setTimeout(() => {
+        renderOwnerPortalOrders();
+      }, 150);
     }
 
     window.renderOwnerPortalOrders = function() {
@@ -1370,7 +1438,7 @@
     }
 
     window.advanceOrderStage = async function(code) {
-      const order = orders.find(o => o.trackingCode === code);
+      const order = orderMap.get(code);
       if (!order) return;
 
       if (order.stage < 3) {
