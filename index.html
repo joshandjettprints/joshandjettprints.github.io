@@ -230,7 +230,6 @@
     .order-items-table th { text-align: left; padding: 4px 6px; color: #64748b; font-size: 9px; border-bottom: 1px solid rgba(255,255,255,.06); }
     .order-items-table td { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.03); }
 
-    /* Branding pill */
     .kings-pill {
       display: inline-flex; align-items: center; gap: .4rem;
       font-size: 10px; font-family: 'Fira Code', monospace;
@@ -606,6 +605,48 @@
           </button>
           <button onclick="checkoutCart()" id="checkout-btn" class="px-5 sm:px-8 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 flex items-center gap-2">
             <i class="fa-solid fa-credit-card"></i> <span class="hidden sm:inline">Checkout as One Order</span><span class="sm:hidden">Checkout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2c. CHECKOUT NAME MODAL -->
+  <div id="modal-checkout-name" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 space-y-6 shadow-2xl">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 mx-auto flex items-center justify-center text-emerald-400 text-2xl">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+        <h3 class="text-lg font-black text-white">Complete Your Order</h3>
+        <p class="text-xs text-slate-400 font-mono">Enter your name so we can prepare your pickup</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-mono text-slate-400 block mb-1">Your Name <span class="text-rose-400">*</span></label>
+          <input type="text" id="checkout-name-input" placeholder="e.g. Alex Ranger" oninput="clearFieldError('checkout-name-input')"
+            class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition" />
+          <p id="error-checkout-name-input" class="field-error-msg hidden"><i class="fa-solid fa-circle-exclamation"></i> Please enter at least 2 characters</p>
+        </div>
+
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs font-mono">
+            <span class="text-slate-400">Items in order</span>
+            <span id="checkout-summary-count" class="text-white font-bold">0</span>
+          </div>
+          <div class="flex items-center justify-between text-xs font-mono">
+            <span class="text-slate-400">Total price</span>
+            <span id="checkout-summary-total" class="text-emerald-400 font-black text-lg">฿0</span>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="closeCheckoutNameModal()" class="w-1/2 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+            Cancel
+          </button>
+          <button onclick="submitCheckoutName()" class="w-1/2 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check"></i> Confirm Order
           </button>
         </div>
       </div>
@@ -1123,9 +1164,6 @@
       rebuildMaps();
     }
 
-    // ============================================================
-    // LIGHTBOX
-    // ============================================================
     window.openLightbox = function(src) {
       if (!src) return;
       document.getElementById('lightbox-img').src = src;
@@ -1138,9 +1176,6 @@
     };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
 
-    // ============================================================
-    // CART
-    // ============================================================
     function saveCart() {
       try { localStorage.setItem('jj_cart_v1', JSON.stringify(cart)); } catch(e) {}
     }
@@ -1254,17 +1289,39 @@
       closePurchaseModal();
     };
 
-    window.checkoutCart = async function() {
+    // Opens the name-entry modal
+    window.checkoutCart = function() {
       if (cart.length === 0) { showToast('Cart is empty.', 'error'); return; }
-      let customerName = localStorage.getItem('jj_last_name') || '';
-      if (!customerName || customerName.length < 2) {
-        customerName = prompt('Please enter your name (at least 2 characters) to place this order:');
-        if (!customerName || customerName.trim().length < 2) { showToast('A valid name is required.', 'error'); return; }
-        customerName = customerName.trim();
-        localStorage.setItem('jj_last_name', customerName);
-      }
-
+      const savedName = localStorage.getItem('jj_last_name') || '';
+      document.getElementById('checkout-name-input').value = savedName;
+      clearFieldError('checkout-name-input');
+      const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+      const totalPrice = cart.reduce((s, i) => s + (i.unitPrice * i.qty), 0);
+      document.getElementById('checkout-summary-count').innerText = totalQty + ' piece' + (totalQty !== 1 ? 's' : '');
+      document.getElementById('checkout-summary-total').innerText = '฿' + totalPrice;
       closeCartModal();
+      document.getElementById('modal-checkout-name').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('checkout-name-input').focus(), 100);
+    };
+
+    window.closeCheckoutNameModal = function() {
+      document.getElementById('modal-checkout-name').classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+
+    // Actual order placement
+    window.submitCheckoutName = async function() {
+      const nEl = document.getElementById('checkout-name-input');
+      const customerName = nEl.value.trim();
+      if (!customerName || customerName.length < 2) {
+        showFieldError('checkout-name-input', 'Please enter at least 2 characters');
+        nEl.focus();
+        return;
+      }
+      localStorage.setItem('jj_last_name', customerName);
+      closeCheckoutNameModal();
+
       showSyncBanner('Placing Order', 'Creating one order with ' + cart.length + ' item(s)...');
       syncState.active = true;
 
@@ -1319,7 +1376,6 @@
         await saveOrderToDb(newOrder);
       } catch (e) { failed = true; }
 
-      // Track this order as "mine" for customer sync
       try {
         const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
         myOrders.push(code);
@@ -1327,7 +1383,6 @@
       } catch (e) {}
 
       rebuildMaps();
-
       cart = []; saveCart(); updateCartBadge(); renderOwnerCartTable();
 
       finalizeSyncBanner(!failed, failed ? 1 : 0, 'Order Placed');
@@ -1460,7 +1515,6 @@
           }
         } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
 
-        // Only push MY orders
         let myOrdersList = [];
         try {
           const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
@@ -1563,7 +1617,6 @@
       return { ok: false, attempts: maxAttempts, error: lastError };
     }
 
-    // CUSTOMER SYNC — pull models & filaments, push ONLY MY orders
     window.customerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
@@ -1594,7 +1647,6 @@
         }
       } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
 
-      // Only push MY orders
       let myOrdersList = [];
       try {
         const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
@@ -1620,7 +1672,6 @@
       else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
     };
 
-    // OWNER SYNC — full push
     window.ownerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
@@ -1857,25 +1908,30 @@
               const delta = Number(c.priceDelta || c.surcharge || 0);
               const sel = cur === val;
               const pt = delta > 0 ? ' (+฿' + delta + ')' : '';
-              return '<button type="button" data-option-group="' + escapeAttr(gid) + '" data-option-value="' + escapeAttr(val) + '" class="option-chip px-3 py-1.5 rounded-xl border text-xs font-mono transition ' + (sel ? 'selected' : 'border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700') + '">' + escapeHtml(label) + '<span class="text-cyan-400/80 text-[10px]">' + pt + '</span></button>';
+              return '<div data-option-group="' + escapeAttr(gid) + '" data-option-value="' + escapeAttr(val) + '" class="option-chip px-3 py-1.5 rounded-xl border text-xs font-mono transition cursor-pointer ' + (sel ? 'selected' : 'border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700') + '">' + escapeHtml(label) + '<span class="text-cyan-400/80 text-[10px]">' + pt + '</span></div>';
             }).join('') + '</div></div>';
       }).join('');
     }
+
     window.selectOption = function(gid, val) {
+      if (selectedOptions[gid] === val) return;
       selectedOptions[gid] = val;
       renderPurchaseOptions();
       updateBuyTotal();
     };
-    // Event delegation for option chips
+
+    // Delegate click handling for option chips (capture phase, prevents double-fire)
     document.addEventListener('click', function(e) {
       const chip = e.target.closest('[data-option-group]');
-      if (chip) {
-        e.preventDefault();
-        const gid = chip.getAttribute('data-option-group');
-        const val = chip.getAttribute('data-option-value');
-        selectOption(gid, val);
-      }
-    });
+      if (!chip) return;
+      const purchaseModal = document.getElementById('modal-purchase');
+      if (!purchaseModal || purchaseModal.classList.contains('hidden')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const gid = chip.getAttribute('data-option-group');
+      const val = chip.getAttribute('data-option-value');
+      selectOption(gid, val);
+    }, true);
 
     function renderPurchaseModalFilamentChoices() {
       const fc = document.getElementById('buy-filament-options'); if (!fc) return;
@@ -1970,7 +2026,6 @@
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
       orders.unshift(newOrder); rebuildMaps();
-      // Track this order as "mine"
       try {
         const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
         myOrders.push(code);
