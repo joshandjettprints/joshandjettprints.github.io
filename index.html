@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Josh and Jett's 3D Prints | Shop &amp; Owner Portal</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,13 +17,8 @@
           },
           colors: {
             brand: {
-              50: '#ecfeff',
-              100: '#cffaff',
-              400: '#22d3ee',
-              500: '#06b6d4',
-              600: '#0891b2',
-              900: '#164e63',
-              950: '#083344'
+              50: '#ecfeff', 100: '#cffaff', 400: '#22d3ee', 500: '#06b6d4',
+              600: '#0891b2', 900: '#164e63', 950: '#083344'
             }
           }
         }
@@ -32,13 +26,11 @@
     }
   </script>
 
-  <!-- Google Font & FontAwesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <!-- Backend client library (internal) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -47,44 +39,31 @@
       background: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
       min-height: 100vh;
     }
-
     .glass-panel {
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
-
     .glass-card {
       background: rgba(30, 41, 59, 0.6);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.05);
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     .glass-card:hover {
       border-color: rgba(34, 211, 238, 0.3);
       transform: translateY(-2px);
       box-shadow: 0 12px 30px -10px rgba(6, 182, 212, 0.15);
     }
-
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #020617; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #0891b2; }
-
     input[type=range] { accent-color: #06b6d4; }
-
-    @keyframes spin-slow {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* Error state for inputs */
     .input-error {
       border-color: #f43f5e !important;
       box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
@@ -97,6 +76,60 @@
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    /* Mini action loader */
+    #mini-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.55);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    #mini-loader.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #mini-loader .spinner {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: 3px solid rgba(34, 211, 238, 0.2);
+      border-top-color: #22d3ee;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .option-chip {
+      cursor: pointer;
+      user-select: none;
+    }
+    .option-chip.selected {
+      border-color: #06b6d4 !important;
+      background: rgba(8, 145, 178, 0.25) !important;
+      color: #fff !important;
+    }
+    .product-img {
+      aspect-ratio: 4/3;
+      width: 100%;
+      object-fit: cover;
+      border-radius: 1rem 1rem 0 0;
+      background: #0f172a;
+    }
+    .img-placeholder {
+      aspect-ratio: 4/3;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(16, 185, 129, 0.08));
+      border-radius: 1rem 1rem 0 0;
     }
   </style>
 </head>
@@ -114,12 +147,9 @@
     <div class="space-y-2 text-center max-w-md px-4">
       <h2 id="loading-title" class="text-base font-black tracking-tight text-white font-mono uppercase">Loading Shop...</h2>
       <p id="loading-subtitle" class="text-xs text-slate-400 font-mono">Fetching catalog &amp; orders</p>
-
       <div id="loading-bar-container" class="w-48 h-1.5 bg-slate-900 rounded-full mx-auto overflow-hidden border border-slate-800 mt-3">
         <div id="loading-bar-fill" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-300 w-1/3"></div>
       </div>
-
-      <!-- Error card -->
       <div id="loading-error-box" class="hidden mt-4 p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-left font-mono text-xs space-y-2.5 shadow-2xl">
         <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
           <span class="text-rose-400 font-bold uppercase flex items-center gap-1.5">
@@ -136,8 +166,6 @@
           <p id="loading-error-desc" class="text-rose-300 text-[11px] leading-relaxed break-words">Unable to reach the shop server.</p>
         </div>
       </div>
-
-      <!-- Actions on error -->
       <div id="loading-error-actions" class="hidden flex flex-wrap items-center justify-center gap-2 pt-3">
         <button onclick="dismissLoadingErrorAndUseOffline()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono font-semibold transition flex items-center gap-1.5 shadow-md">
           <i class="fa-solid fa-wifi text-amber-400"></i> Continue Offline
@@ -149,10 +177,12 @@
     </div>
   </div>
 
+  <!-- MINI ACTION LOADER -->
+  <div id="mini-loader"><div class="spinner"></div></div>
+
   <header class="sticky top-0 z-40 border-b border-slate-800/80 glass-panel">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 sm:h-20">
-        <!-- Brand Logo -->
         <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('shop')">
           <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-teal-500 to-emerald-500 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
             <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -167,7 +197,6 @@
           </div>
         </div>
 
-        <!-- Header Actions & Navigation -->
         <div class="flex items-center space-x-1.5 sm:space-x-3">
           <button onclick="navigateTo('shop')" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
             <i class="fa-solid fa-store text-cyan-400"></i> <span class="hidden xs:inline">Shop</span>
@@ -183,14 +212,11 @@
     </div>
   </header>
 
-  <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
 
-  <!-- Main Application Views -->
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
     <section id="view-shop" class="space-y-6">
-      <!-- Hero Banner -->
       <div class="relative overflow-hidden rounded-3xl glass-panel p-6 sm:p-10 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="relative z-10 max-w-2xl space-y-3">
@@ -204,8 +230,6 @@
             Select your favorite 3D models, customize scales and custom filament colors with instant localized pricing, and track production status.
           </p>
         </div>
-
-        <!-- Electronics Disclaimer Note Card -->
         <div class="relative z-10 glass-card p-4 sm:p-5 rounded-2xl border border-amber-500/30 bg-amber-950/20 max-w-xs space-y-1.5">
           <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase font-mono">
             <i class="fa-solid fa-triangle-exclamation"></i> Important Notice
@@ -216,22 +240,15 @@
         </div>
       </div>
 
-      <!-- Search & Category Filters -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div id="category-pills-container" class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
-          <!-- Dynamic Category Pills -->
-        </div>
-
+        <div id="category-pills-container" class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar"></div>
         <div class="relative w-full sm:w-64">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
           <input type="text" id="shop-search-input" oninput="debounceRenderShopGrid()" placeholder="Search 3D models..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
         </div>
       </div>
 
-      <!-- Product Cards Grid -->
-      <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <!-- Products populated via JS -->
-      </div>
+      <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
     <section id="view-tracking" class="hidden space-y-6">
@@ -249,7 +266,6 @@
         </button>
       </div>
 
-      <!-- Tracking Header Details Card -->
       <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6 border-b border-slate-800">
           <div>
@@ -270,18 +286,14 @@
           </div>
         </div>
 
-        <!-- Read-Only Progress Timeline -->
         <div class="space-y-6 pt-2">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-mono uppercase tracking-wider text-slate-400">Production &amp; Delivery Status</h3>
             <span id="current-status-title" class="text-sm font-bold text-cyan-400">Order Received</span>
           </div>
-
-          <!-- Progress Bar & Stage Nodes -->
           <div class="relative py-4">
             <div class="absolute top-1/2 left-0 right-0 h-1.5 bg-slate-800 -translate-y-1/2 rounded-full"></div>
             <div id="progress-bar-fill" class="absolute top-1/2 left-0 h-1.5 bg-cyan-500 -translate-y-1/2 rounded-full transition-all duration-500" style="width: 0%"></div>
-
             <div class="relative flex justify-between">
               <div class="flex flex-col items-center gap-2">
                 <div id="node-blob-0" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">1</div>
@@ -303,7 +315,11 @@
           </div>
         </div>
 
-        <!-- Audit Logs Feed -->
+        <div id="track-selected-options" class="pt-4 border-t border-slate-800 hidden">
+          <h4 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Selected Options</h4>
+          <div id="track-selected-options-list" class="flex flex-wrap gap-2 text-xs font-mono"></div>
+        </div>
+
         <div class="pt-4 border-t border-slate-800">
           <h4 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Live Log History</h4>
           <ul id="audit-log-list" class="space-y-2 text-xs font-mono text-slate-300 bg-slate-950/60 p-4 rounded-2xl border border-slate-800 max-h-40 overflow-y-auto">
@@ -328,7 +344,6 @@
         </button>
       </div>
 
-      <!-- Dashboard Summary Stats -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="glass-panel p-4 rounded-2xl border border-slate-800">
           <span class="text-[10px] font-mono text-slate-500 uppercase">Total Orders</span>
@@ -344,45 +359,39 @@
         </div>
       </div>
 
-      <!-- Filament Inventory Management Section -->
+      <!-- Filament Inventory (with reorder arrows) -->
       <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-palette text-amber-400"></i> Filament Inventory &amp; Stock Control
             </h3>
-            <p class="text-xs text-slate-400">Add, edit, or remove filament materials with color wheel picker</p>
+            <p class="text-xs text-slate-400">Add, edit, remove, or re-arrange filament materials</p>
           </div>
           <button onclick="openAddFilamentModal()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-md">
             <i class="fa-solid fa-plus"></i> Add New Filament
           </button>
         </div>
-
-        <div id="owner-filaments-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <!-- Filament Stock Toggles -->
-        </div>
+        <div id="owner-filaments-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
       </div>
 
-      <!-- Catalog Model Management Section -->
+      <!-- Catalog Models -->
       <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-boxes-stacked text-cyan-400"></i> Catalog Model Management
             </h3>
-            <p class="text-xs text-slate-400">Add and fully edit your 3D print models, tags, and icon symbols</p>
+            <p class="text-xs text-slate-400">Add/edit models, upload photos, and define customer options</p>
           </div>
           <button onclick="openAddModelModal()" class="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-md">
             <i class="fa-solid fa-plus"></i> Add New Model
           </button>
         </div>
-
-        <div id="owner-catalog-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Catalog items -->
-        </div>
+        <div id="owner-catalog-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
 
-      <!-- Customer Orders Management Section -->
+      <!-- Customer Orders -->
       <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
@@ -396,7 +405,6 @@
             <input type="text" id="owner-search-input" oninput="debounceRenderOwnerPortalOrders()" placeholder="Search orders..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
           </div>
         </div>
-
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs font-mono">
             <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider border-b border-slate-800">
@@ -404,22 +412,18 @@
                 <th class="p-3">Tracking / Code</th>
                 <th class="p-3">Customer</th>
                 <th class="p-3">Model Item</th>
-                <th class="p-3">Specs</th>
+                <th class="p-3">Options</th>
                 <th class="p-3">Stage</th>
                 <th class="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody id="owner-orders-table-body" class="divide-y divide-slate-800/60">
-              <!-- Dynamic orders list -->
-            </tbody>
+            <tbody id="owner-orders-table-body" class="divide-y divide-slate-800/60"></tbody>
           </table>
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- Footer -->
   <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 mt-12 text-center text-xs text-slate-500 font-mono">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved)</p>
@@ -430,9 +434,7 @@
     </div>
   </footer>
 
-  <!-- MODALS CONTAINER -->
-
-  <!-- 1. Owner PIN Security Modal -->
+  <!-- 1. Owner PIN Modal -->
   <div id="modal-owner-pin" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
     <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-amber-500/30 space-y-6 shadow-2xl relative">
       <div class="text-center space-y-2">
@@ -442,7 +444,6 @@
         <h3 class="text-lg font-black text-white">Owner Portal Page Access</h3>
         <p class="text-xs text-slate-400">Enter security PIN to enter portal</p>
       </div>
-
       <div class="space-y-4">
         <input type="password" id="owner-pin-input" maxlength="6" placeholder="••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-mono tracking-widest text-white focus:outline-none focus:border-amber-500 transition" />
         <div class="flex gap-2">
@@ -453,19 +454,18 @@
     </div>
   </div>
 
-  <!-- 2. Quick Track Lookup Modal -->
+  <!-- 2. Quick Track Modal -->
   <div id="modal-quick-track" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
     <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-md w-full border border-cyan-500/30 space-y-6 shadow-2xl">
       <div class="flex items-center justify-between">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Track Order by 8A Code
+          <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Track Order by Code
         </h3>
         <button onclick="closeQuickTrackModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
-
       <div class="space-y-4">
         <div>
-          <label class="text-[11px] font-mono text-slate-400 block mb-1">Enter 8A Tracking Number</label>
+          <label class="text-[11px] font-mono text-slate-400 block mb-1">Enter Tracking Number</label>
           <input type="text" id="quick-track-input" placeholder="e.g. 8A7F9X2B" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-cyan-400 uppercase placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
         </div>
         <button onclick="submitQuickTrack()" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider transition">
@@ -475,7 +475,7 @@
     </div>
   </div>
 
-  <!-- 3. Purchase / Customize Order Modal -->
+  <!-- 3. Purchase Modal -->
   <div id="modal-purchase" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
     <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-800 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -485,7 +485,7 @@
 
       <div class="space-y-4">
         <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex items-center gap-4">
-          <div id="buy-modal-icon-box" class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl flex-shrink-0">
+          <div id="buy-modal-icon-box" class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl flex-shrink-0 overflow-hidden">
             <i class="fa-solid fa-cube"></i>
           </div>
           <div>
@@ -494,15 +494,11 @@
           </div>
         </div>
 
-        <!-- Filament Color Selection -->
         <div class="space-y-2">
           <label class="text-xs font-mono text-slate-400">Select Filament Material &amp; Color (Includes Color Surcharge):</label>
-          <div id="buy-filament-options" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <!-- Dynamic filament choices -->
-          </div>
+          <div id="buy-filament-options" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
         </div>
 
-        <!-- Scale Multiplier -->
         <div class="space-y-1">
           <div class="flex justify-between text-xs font-mono">
             <span class="text-slate-400">Model Scale (Optimized Pricing):</span>
@@ -511,7 +507,12 @@
           <input type="range" id="buy-scale-slider" min="50" max="250" step="25" value="100" oninput="updateBuyTotal()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer" />
         </div>
 
-        <!-- Customer Info (REQUIRED FIELDS) -->
+        <!-- Options group section -->
+        <div id="buy-options-section" class="hidden space-y-3 pt-2 border-t border-slate-800">
+          <label class="text-xs font-mono text-slate-400 block">Customize Model Options:</label>
+          <div id="buy-options-container" class="space-y-4"></div>
+        </div>
+
         <div class="space-y-3 pt-2 border-t border-slate-800">
           <div>
             <label class="text-xs font-mono text-slate-400 block mb-1">
@@ -537,7 +538,6 @@
           </div>
         </div>
 
-        <!-- Total Price & Confirm -->
         <div class="flex items-center justify-between pt-4 border-t border-slate-800">
           <div>
             <span class="text-[10px] font-mono text-slate-500 block">FINAL PRICE (EST.)</span>
@@ -551,9 +551,9 @@
     </div>
   </div>
 
-  <!-- 4. Add / Edit Catalog Model Modal -->
+  <!-- 4. Add/Edit Model Modal (with image + options builder) -->
   <div id="modal-add-model" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
-    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-800 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-800 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-4">
         <h3 id="model-modal-title" class="text-base font-bold text-white flex items-center gap-2">
           <i class="fa-solid fa-plus text-cyan-400"></i> Add New 3D Print Model
@@ -568,47 +568,81 @@
           <input type="text" id="new-model-title" placeholder="e.g. Crystal Dragon" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
         </div>
 
-        <div>
-          <label class="text-slate-400 block mb-1">Category &amp; Tag</label>
-          <select id="new-model-category" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
-            <option value="Articulated">🐉 Articulated Toys &amp; Creatures</option>
-            <option value="Tools">⚙️ Tools</option>
-            <option value="Miniatures">⚔️ Miniatures &amp; Figurines</option>
-            <option value="Mechanical">🔧 Mechanical Gears &amp; Boxes</option>
-            <option value="Toys">🧸 Children &amp; Play Toys</option>
-            <option value="Functional">🛠️ Functional Household Items</option>
-            <option value="Cosplay">🛡️ Cosplay &amp; Wearable Props</option>
-            <option value="Desk Decor">🪴 Desk Decor &amp; Planters</option>
-            <option value="Fidget">🌀 Fidget &amp; Sensory Toys</option>
-            <option value="Puzzles">🧩 Brain Teasers &amp; Puzzles</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="text-slate-400 block mb-1">Model Icon / Symbol</label>
-          <select id="new-model-icon" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
-            <option value="fa-dragon">🐉 Dragon / Creature</option>
-            <option value="fa-sword">⚔️ Sword / Weapon</option>
-            <option value="fa-gear">⚙️ Gear / Mechanism</option>
-            <option value="fa-cube">🧊 Geometric / Cube</option>
-            <option value="fa-robot">🤖 Robot / Mech</option>
-            <option value="fa-puzzle-piece">🧩 Puzzle / Toy</option>
-            <option value="fa-shield">🛡️ Shield / Armor</option>
-            <option value="fa-ghost">👻 Ghost / Monster</option>
-            <option value="fa-fire">🔥 Flame / Magic</option>
-            <option value="fa-crown">👑 Crown / Royalty</option>
-            <option value="fa-cat">🐱 Animal / Pet</option>
-            <option value="fa-rocket">🚀 Space / Vehicle</option>
-          </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-400 block mb-1">Category &amp; Tag</label>
+            <select id="new-model-category" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
+              <option value="Articulated">🐉 Articulated Toys &amp; Creatures</option>
+              <option value="Tools">⚙️ Tools</option>
+              <option value="Miniatures">⚔️ Miniatures &amp; Figurines</option>
+              <option value="Mechanical">🔧 Mechanical Gears &amp; Boxes</option>
+              <option value="Toys">🧸 Children &amp; Play Toys</option>
+              <option value="Functional">🛠️ Functional Household Items</option>
+              <option value="Cosplay">🛡️ Cosplay &amp; Wearable Props</option>
+              <option value="Desk Decor">🪴 Desk Decor &amp; Planters</option>
+              <option value="Fidget">🌀 Fidget &amp; Sensory Toys</option>
+              <option value="Puzzles">🧩 Brain Teasers &amp; Puzzles</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Model Icon / Symbol</label>
+            <select id="new-model-icon" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
+              <option value="fa-dragon">🐉 Dragon / Creature</option>
+              <option value="fa-sword">⚔️ Sword / Weapon</option>
+              <option value="fa-gear">⚙️ Gear / Mechanism</option>
+              <option value="fa-cube">🧊 Geometric / Cube</option>
+              <option value="fa-robot">🤖 Robot / Mech</option>
+              <option value="fa-puzzle-piece">🧩 Puzzle / Toy</option>
+              <option value="fa-shield">🛡️ Shield / Armor</option>
+              <option value="fa-ghost">👻 Ghost / Monster</option>
+              <option value="fa-fire">🔥 Flame / Magic</option>
+              <option value="fa-crown">👑 Crown / Royalty</option>
+              <option value="fa-cat">🐱 Animal / Pet</option>
+              <option value="fa-rocket">🚀 Space / Vehicle</option>
+            </select>
+          </div>
         </div>
 
         <div>
           <label class="text-slate-400 block mb-1">Base Price (฿)</label>
           <input type="number" id="new-model-price" value="150" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500" />
         </div>
+
         <div>
           <label class="text-slate-400 block mb-1">Description</label>
           <textarea id="new-model-desc" rows="2" placeholder="High detail 3D physical plastic print model..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"></textarea>
+        </div>
+
+        <!-- Image upload -->
+        <div>
+          <label class="text-slate-400 block mb-1">Model Photo (optional)</label>
+          <div class="flex items-center gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+            <div id="model-image-preview" class="w-20 h-20 rounded-xl bg-slate-950 border border-slate-700 flex items-center justify-center text-slate-600 overflow-hidden flex-shrink-0">
+              <i class="fa-solid fa-image text-2xl"></i>
+            </div>
+            <div class="flex-1 space-y-1.5">
+              <input type="file" id="new-model-image-file" accept="image/*" class="hidden" onchange="handleModelImageUpload(event)" />
+              <button type="button" onclick="document.getElementById('new-model-image-file').click()" class="w-full px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-upload text-cyan-400"></i> Choose Image
+              </button>
+              <button type="button" onclick="clearModelImage()" class="w-full px-3 py-1.5 rounded-xl bg-slate-800/60 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-[10px] font-mono transition">
+                <i class="fa-solid fa-trash-can"></i> Remove Image
+              </button>
+            </div>
+          </div>
+          <input type="hidden" id="new-model-image-data" value="" />
+        </div>
+
+        <!-- Options builder -->
+        <div class="pt-2 border-t border-slate-800">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-slate-400 block">Custom Options (Optional)</label>
+            <button type="button" onclick="addOptionGroup()" class="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold transition">
+              <i class="fa-solid fa-plus"></i> Add Group
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500 mb-2">e.g. Group "Battery Holder" with choices "AAA", "AA", "None"</p>
+          <div id="options-builder" class="space-y-3"></div>
         </div>
 
         <button onclick="submitNewCatalogModel()" id="model-submit-btn" class="w-full py-3 mt-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black uppercase tracking-wider transition">
@@ -618,7 +652,7 @@
     </div>
   </div>
 
-  <!-- 5. Add / Edit Filament Modal -->
+  <!-- 5. Add/Edit Filament Modal -->
   <div id="modal-add-filament" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
     <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-amber-500/30 space-y-6 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -627,7 +661,6 @@
         </h3>
         <button onclick="closeAddFilamentModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
-
       <div class="space-y-4 font-mono text-xs">
         <input type="hidden" id="edit-filament-id" value="" />
         <div>
@@ -648,7 +681,6 @@
           <label class="text-slate-400 block mb-1">Price Surcharge (฿)</label>
           <input type="number" id="new-filament-surcharge" value="0" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500" />
         </div>
-
         <button onclick="submitNewFilament()" id="filament-submit-btn" class="w-full py-3 mt-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black uppercase tracking-wider transition">
           Add Filament
         </button>
@@ -665,9 +697,6 @@
 
     let backendClient = null;
 
-    // ============================================================
-    // STATE
-    // ============================================================
     let catalogModels = [];
     let filaments = [];
     let orders = [];
@@ -684,9 +713,36 @@
     let activeTrackingCode = null;
     let currentConfiguredModel = null;
     let selectedFilamentId = null;
+    let selectedOptions = {}; // { groupId: chosenValue }
 
     // ============================================================
-    // DATA MAPPING HELPERS (DB <-> Local)
+    // MINI ACTION LOADER (shows on every data action)
+    // ============================================================
+    let miniLoaderTimeout = null;
+    window.showMiniLoader = function() {
+      const el = document.getElementById('mini-loader');
+      if (!el) return;
+      el.classList.add('active');
+    };
+    window.hideMiniLoader = function() {
+      const el = document.getElementById('mini-loader');
+      if (!el) return;
+      el.classList.remove('active');
+    };
+    // Wrap an async action with the mini loader
+    async function withLoader(fn, minMs = 250) {
+      showMiniLoader();
+      const start = Date.now();
+      try { return await fn(); }
+      finally {
+        const elapsed = Date.now() - start;
+        const remaining = Math.max(0, minMs - elapsed);
+        setTimeout(hideMiniLoader, remaining);
+      }
+    }
+
+    // ============================================================
+    // DATA MAPPING
     // ============================================================
     function mapModelFromDb(row) {
       return {
@@ -695,10 +751,11 @@
         category: row.category,
         icon: row.icon || 'fa-cube',
         price: Number(row.price || 0),
-        desc: row.description || row.desc || ''
+        desc: row.description || row.desc || '',
+        imageUrl: row.image_url || '',
+        options: Array.isArray(row.options) ? row.options : (typeof row.options === 'string' ? safeParse(row.options, []) : [])
       };
     }
-
     function mapModelToDb(m) {
       return {
         id: m.id,
@@ -706,36 +763,38 @@
         category: m.category,
         icon: m.icon,
         price: m.price,
-        description: m.desc
+        description: m.desc,
+        image_url: m.imageUrl || null,
+        options: m.options || []
       };
     }
-
     function mapFilamentFromDb(row) {
       return {
         id: row.id,
         name: row.name,
         color: row.color,
         surcharge: Number(row.surcharge || 0),
-        inStock: row.in_stock !== undefined ? row.in_stock : (row.inStock !== undefined ? row.inStock : true)
+        inStock: row.in_stock !== undefined ? row.in_stock : (row.inStock !== undefined ? row.inStock : true),
+        sortOrder: Number(row.sort_order || 0)
       };
     }
-
-    function mapFilamentToDb(f) {
+    function mapFilamentToDb(f, idx) {
       return {
         id: f.id,
         name: f.name,
         color: f.color,
         surcharge: f.surcharge,
-        in_stock: f.inStock
+        in_stock: f.inStock,
+        sort_order: typeof f.sortOrder === 'number' ? f.sortOrder : (typeof idx === 'number' ? idx : 0)
       };
     }
-
     function mapOrderFromDb(row) {
       let logs = [];
       if (Array.isArray(row.logs)) logs = row.logs;
-      else if (typeof row.logs === 'string') {
-        try { logs = JSON.parse(row.logs); } catch (e) { logs = []; }
-      }
+      else if (typeof row.logs === 'string') logs = safeParse(row.logs, []);
+      let selected = {};
+      if (row.selected_options && typeof row.selected_options === 'object') selected = row.selected_options;
+      else if (typeof row.selected_options === 'string') selected = safeParse(row.selected_options, {});
       return {
         trackingCode: row.tracking_code || row.trackingCode,
         customerName: row.customer_name || row.customerName,
@@ -746,10 +805,10 @@
         printerName: row.printer_name || row.printerName,
         stage: Number(row.stage || 0),
         logs: logs,
+        selectedOptions: selected,
         createdAt: row.created_at || row.createdAt
       };
     }
-
     function mapOrderToDb(o) {
       return {
         tracking_code: o.trackingCode,
@@ -761,57 +820,55 @@
         printer_name: o.printerName,
         stage: o.stage,
         logs: o.logs,
+        selected_options: o.selectedOptions || {},
         created_at: o.createdAt
       };
+    }
+    function safeParse(str, fallback) {
+      try { return JSON.parse(str); } catch (e) { return fallback; }
     }
 
     function rebuildMaps() {
       catalogMap.clear();
       catalogModels.forEach(m => catalogMap.set(m.id, m));
-
       filamentMap.clear();
       filaments.forEach(f => filamentMap.set(f.id, f));
-
       orderMap.clear();
       orders.forEach(o => orderMap.set(o.trackingCode, o));
     }
 
     function loadDefaultInMemoryData() {
       catalogModels = [
-        { id: 'mod-1', title: 'Articulated Crystal Dragon', category: 'Articulated', icon: 'fa-dragon', price: 250, desc: 'Fully flexible print-in-place crystal dragon with beautiful segmented joints.' },
-        { id: 'mod-2', title: 'Modular Gear Fidget Spinner', category: 'Fidget', icon: 'fa-gear', price: 120, desc: 'Satisfying mechanical interlocking print with smooth counter-rotational gears.' },
-        { id: 'mod-3', title: 'Self-Watering Planter Pot', category: 'Desk Decor', icon: 'fa-cube', price: 180, desc: 'Two-piece planter with internal reservoir wick system for low maintenance desk plants.' },
-        { id: 'mod-4', title: 'Mechanical Screw Organizer', category: 'Tools', icon: 'fa-box', price: 210, desc: 'Precision threaded cylindrical storage box for hardware fasteners and tiny items.' }
+        { id: 'mod-1', title: 'Articulated Crystal Dragon', category: 'Articulated', icon: 'fa-dragon', price: 250, desc: 'Fully flexible print-in-place crystal dragon with beautiful segmented joints.', imageUrl: '', options: [] },
+        { id: 'mod-2', title: 'Modular Gear Fidget Spinner', category: 'Fidget', icon: 'fa-gear', price: 120, desc: 'Satisfying mechanical interlocking print with smooth counter-rotational gears.', imageUrl: '', options: [] },
+        { id: 'mod-3', title: 'Self-Watering Planter Pot', category: 'Desk Decor', icon: 'fa-cube', price: 180, desc: 'Two-piece planter with internal reservoir wick system for low maintenance desk plants.', imageUrl: '', options: [] },
+        { id: 'mod-4', title: 'Mechanical Screw Organizer', category: 'Tools', icon: 'fa-box', price: 210, desc: 'Precision threaded cylindrical storage box for hardware fasteners and tiny items.', imageUrl: '', options: [] }
       ];
-
       filaments = [
-        { id: 'neon-cyan', name: 'Silk Neon Cyan PLA', color: '#06b6d4', surcharge: 0, inStock: true },
-        { id: 'emerald-green', name: 'Emerald Green PLA', color: '#10b981', surcharge: 10, inStock: true },
-        { id: 'galaxy-black', name: 'Galaxy Glitter Black', color: '#334155', surcharge: 15, inStock: true },
-        { id: 'sunset-orange', name: 'Sunset Matte Orange', color: '#f97316', surcharge: 5, inStock: true }
+        { id: 'neon-cyan', name: 'Silk Neon Cyan PLA', color: '#06b6d4', surcharge: 0, inStock: true, sortOrder: 0 },
+        { id: 'emerald-green', name: 'Emerald Green PLA', color: '#10b981', surcharge: 10, inStock: true, sortOrder: 1 },
+        { id: 'galaxy-black', name: 'Galaxy Glitter Black', color: '#334155', surcharge: 15, inStock: true, sortOrder: 2 },
+        { id: 'sunset-orange', name: 'Sunset Matte Orange', color: '#f97316', surcharge: 5, inStock: true, sortOrder: 3 }
       ];
-
-      orders = [
-        {
-          trackingCode: '8A7F9X2B',
-          customerName: 'Josh Maker',
-          customerAddress: 'Lab Room 302',
-          modelTitle: 'Articulated Crystal Dragon',
-          modelIcon: 'fa-dragon',
-          specs: 'Silk Neon Cyan PLA | 100% Scale (฿250)',
-          printerName: 'Bambu Lab A2L',
-          stage: 1,
-          logs: ['▶ Order created.', '▶ Material loaded: Silk Neon Cyan PLA.', '▶ First layer calibration complete.'],
-          createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
-        }
-      ];
-
+      orders = [{
+        trackingCode: '8A7F9X2B',
+        customerName: 'Josh Maker',
+        customerAddress: 'Lab Room 302',
+        modelTitle: 'Articulated Crystal Dragon',
+        modelIcon: 'fa-dragon',
+        specs: 'Silk Neon Cyan PLA | 100% Scale (฿250)',
+        printerName: 'Bambu Lab A2L',
+        stage: 1,
+        logs: ['▶ Order created.', '▶ Material loaded: Silk Neon Cyan PLA.', '▶ First layer calibration complete.'],
+        selectedOptions: {},
+        createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+      }];
       selectedFilamentId = filaments[0] ? filaments[0].id : null;
       rebuildMaps();
     }
 
     // ============================================================
-    // FORM VALIDATION HELPERS
+    // FORM VALIDATION
     // ============================================================
     function showFieldError(fieldId, message) {
       const input = document.getElementById(fieldId);
@@ -822,14 +879,12 @@
         err.classList.remove('hidden');
       }
     }
-
     window.clearFieldError = function(fieldId) {
       const input = document.getElementById(fieldId);
       const err = document.getElementById('error-' + fieldId);
       if (input) input.classList.remove('input-error');
       if (err) err.classList.add('hidden');
     };
-
     function clearAllPurchaseErrors() {
       clearFieldError('buy-customer-name');
       clearFieldError('buy-customer-address');
@@ -841,51 +896,36 @@
     window.showLoading = function(title, subtitle = 'Loading shop data...') {
       const screen = document.getElementById('global-loading-screen');
       if (!screen) return;
-
       document.getElementById('loading-title').innerText = title;
       document.getElementById('loading-title').className = "text-base font-black tracking-tight text-white font-mono uppercase";
       document.getElementById('loading-subtitle').innerText = subtitle;
-
       const bar = document.getElementById('loading-bar-fill');
       if (bar) bar.style.width = '100%';
-
       const icon = document.getElementById('loading-icon');
       if (icon) icon.className = "fa-solid fa-cube text-cyan-400 text-2xl animate-bounce";
-
       const spinnerRing = document.getElementById('loading-spinner-ring');
       if (spinnerRing) spinnerRing.className = "absolute inset-0 rounded-3xl border-4 border-cyan-500/20 animate-pulse";
-
       const spinnerSpin = document.getElementById('loading-spinner-spin');
       if (spinnerSpin) spinnerSpin.className = "absolute inset-0 rounded-3xl border-4 border-cyan-400 border-t-transparent animate-spin";
-
       document.getElementById('loading-bar-container').classList.remove('hidden');
       document.getElementById('loading-error-box').classList.add('hidden');
       document.getElementById('loading-error-actions').classList.add('hidden');
-
       screen.classList.remove('hidden', 'opacity-0');
     };
-
     window.showLoadingError = function(requestName, errorCode, description) {
       const screen = document.getElementById('global-loading-screen');
       if (!screen) return;
-
       screen.classList.remove('hidden', 'opacity-0');
-
       document.getElementById('loading-title').innerText = "Connection Problem";
       document.getElementById('loading-title').className = "text-base font-black tracking-tight text-rose-400 font-mono uppercase";
       document.getElementById('loading-subtitle').innerText = "Unable to reach the shop server";
-
       const spinnerRing = document.getElementById('loading-spinner-ring');
       if (spinnerRing) spinnerRing.className = "absolute inset-0 rounded-3xl border-4 border-rose-500/20 animate-pulse";
-
       const spinnerSpin = document.getElementById('loading-spinner-spin');
       if (spinnerSpin) spinnerSpin.className = "absolute inset-0 rounded-3xl border-4 border-rose-500 border-t-transparent animate-spin";
-
       const icon = document.getElementById('loading-icon');
       if (icon) icon.className = "fa-solid fa-triangle-exclamation text-rose-400 text-2xl animate-bounce";
-
       document.getElementById('loading-bar-container').classList.add('hidden');
-
       const errorBox = document.getElementById('loading-error-box');
       if (errorBox) {
         errorBox.classList.remove('hidden');
@@ -893,11 +933,9 @@
         document.getElementById('loading-error-code').innerText = 'CODE: ' + (errorCode || 'ERR');
         document.getElementById('loading-error-desc').innerText = description || 'Unable to reach the shop server.';
       }
-
       const actions = document.getElementById('loading-error-actions');
       if (actions) actions.classList.remove('hidden');
     };
-
     window.dismissLoadingErrorAndUseOffline = function() {
       loadDefaultInMemoryData();
       renderCategoryPills();
@@ -905,11 +943,7 @@
       hideLoading();
       showToast('Switched to offline mode', 'error');
     };
-
-    window.retrySupabaseConnection = function() {
-      initBackend();
-    };
-
+    window.retrySupabaseConnection = function() { initBackend(); };
     window.hideLoading = function() {
       const screen = document.getElementById('global-loading-screen');
       if (!screen) return;
@@ -918,7 +952,7 @@
     };
 
     // ============================================================
-    // BACKEND INIT & DATA FETCH
+    // BACKEND INIT
     // ============================================================
     async function initBackend() {
       showLoading('Loading Shop...', 'Fetching catalog & orders');
@@ -928,7 +962,6 @@
         } else {
           throw new Error('Backend library failed to load');
         }
-
         const success = await fetchAllData();
         if (success) {
           setupRealtimeSubscriptions();
@@ -942,45 +975,37 @@
 
     async function fetchAllData() {
       if (!backendClient) return false;
-
       let firstError = null;
 
+      // Models
       const { data: dbModels, error: modelsErr } = await backendClient.from('catalog_models').select('*');
       if (modelsErr) {
-        const errorMsg = modelsErr.message || String(modelsErr);
-        if (!firstError) {
-          firstError = { request: "Catalog", code: modelsErr.code || modelsErr.status || "ERR", desc: errorMsg };
-        }
+        if (!firstError) firstError = { request: "Catalog", code: modelsErr.code || modelsErr.status || "ERR", desc: modelsErr.message || String(modelsErr) };
       } else if (dbModels && dbModels.length > 0) {
         catalogModels = dbModels.map(mapModelFromDb);
       } else {
         loadDefaultInMemoryData();
-        for (const m of catalogModels) {
-          await saveModelToDb(m);
-        }
+        for (const m of catalogModels) await saveModelToDb(m);
       }
 
+      // Filaments
       const { data: dbFilaments, error: filErr } = await backendClient.from('filaments').select('*');
       if (filErr) {
-        const errorMsg = filErr.message || String(filErr);
-        if (!firstError) {
-          firstError = { request: "Filaments", code: filErr.code || filErr.status || "ERR", desc: errorMsg };
-        }
+        if (!firstError) firstError = { request: "Filaments", code: filErr.code || filErr.status || "ERR", desc: filErr.message || String(filErr) };
       } else if (dbFilaments && dbFilaments.length > 0) {
         filaments = dbFilaments.map(mapFilamentFromDb);
+        // Sort by sort_order, then by name
+        filaments.sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name));
       } else if (!firstError) {
         if (filaments.length === 0) loadDefaultInMemoryData();
-        for (const f of filaments) {
-          await saveFilamentToDb(f);
-        }
+        let i = 0;
+        for (const f of filaments) { await saveFilamentToDb(f, i++); }
       }
 
+      // Orders
       const { data: dbOrders, error: ordersErr } = await backendClient.from('orders').select('*');
       if (ordersErr) {
-        const errorMsg = ordersErr.message || String(ordersErr);
-        if (!firstError) {
-          firstError = { request: "Orders", code: ordersErr.code || ordersErr.status || "ERR", desc: errorMsg };
-        }
+        if (!firstError) firstError = { request: "Orders", code: ordersErr.code || ordersErr.status || "ERR", desc: ordersErr.message || String(ordersErr) };
       } else if (dbOrders) {
         orders = dbOrders.map(mapOrderFromDb);
       }
@@ -989,11 +1014,7 @@
         showLoadingError(firstError.request, firstError.code, firstError.desc);
         return false;
       }
-
-      if (!selectedFilamentId && filaments.length > 0) {
-        selectedFilamentId = filaments[0].id;
-      }
-
+      if (!selectedFilamentId && filaments.length > 0) selectedFilamentId = filaments[0].id;
       rebuildMaps();
       renderCategoryPills();
       renderShopGrid();
@@ -1003,62 +1024,57 @@
 
     function setupRealtimeSubscriptions() {
       if (!backendClient) return;
-
       try {
-        backendClient
-          .channel('public:catalog_models')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_models' }, () => fetchAllData())
-          .subscribe();
-
-        backendClient
-          .channel('public:filaments')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'filaments' }, () => fetchAllData())
-          .subscribe();
-
-        backendClient
-          .channel('public:orders')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchAllData())
-          .subscribe();
+        backendClient.channel('public:catalog_models').on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_models' }, () => fetchAllData()).subscribe();
+        backendClient.channel('public:filaments').on('postgres_changes', { event: '*', schema: 'public', table: 'filaments' }, () => fetchAllData()).subscribe();
+        backendClient.channel('public:orders').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchAllData()).subscribe();
       } catch (e) {}
     }
 
     // ============================================================
-    // DB WRITE HELPERS
+    // DB WRITE HELPERS (with mini-loader)
     // ============================================================
     window.saveModelToDb = async function(model) {
       if (!backendClient) return;
-      const { error } = await backendClient.from('catalog_models').upsert(mapModelToDb(model));
-      if (error) console.warn('Save model failed:', error.message);
+      await withLoader(async () => {
+        const { error } = await backendClient.from('catalog_models').upsert(mapModelToDb(model));
+        if (error) console.warn('Save model failed:', error.message);
+      });
     };
-
     window.removeModelFromDb = async function(id) {
       if (!backendClient) return;
-      const { error } = await backendClient.from('catalog_models').delete().eq('id', id);
-      if (error) console.warn('Delete model failed:', error.message);
+      await withLoader(async () => {
+        const { error } = await backendClient.from('catalog_models').delete().eq('id', id);
+        if (error) console.warn('Delete model failed:', error.message);
+      });
     };
-
-    window.saveFilamentToDb = async function(filament) {
+    window.saveFilamentToDb = async function(filament, idx) {
       if (!backendClient) return;
-      const { error } = await backendClient.from('filaments').upsert(mapFilamentToDb(filament));
-      if (error) console.warn('Save filament failed:', error.message);
+      await withLoader(async () => {
+        const { error } = await backendClient.from('filaments').upsert(mapFilamentToDb(filament, idx));
+        if (error) console.warn('Save filament failed:', error.message);
+      });
     };
-
     window.removeFilamentFromDb = async function(id) {
       if (!backendClient) return;
-      const { error } = await backendClient.from('filaments').delete().eq('id', id);
-      if (error) console.warn('Delete filament failed:', error.message);
+      await withLoader(async () => {
+        const { error } = await backendClient.from('filaments').delete().eq('id', id);
+        if (error) console.warn('Delete filament failed:', error.message);
+      });
     };
-
     window.saveOrderToDb = async function(order) {
       if (!backendClient) return;
-      const { error } = await backendClient.from('orders').upsert(mapOrderToDb(order));
-      if (error) console.warn('Save order failed:', error.message);
+      await withLoader(async () => {
+        const { error } = await backendClient.from('orders').upsert(mapOrderToDb(order));
+        if (error) console.warn('Save order failed:', error.message);
+      });
     };
-
     window.removeOrderFromDb = async function(code) {
       if (!backendClient) return;
-      const { error } = await backendClient.from('orders').delete().eq('tracking_code', code);
-      if (error) console.warn('Delete order failed:', error.message);
+      await withLoader(async () => {
+        const { error } = await backendClient.from('orders').delete().eq('tracking_code', code);
+        if (error) console.warn('Delete order failed:', error.message);
+      });
     };
 
     // ============================================================
@@ -1070,13 +1086,10 @@
       const toast = document.createElement('div');
       const bgColors = type === 'success' ? 'bg-cyan-950/95 border-cyan-500/40 text-cyan-300' : 'bg-rose-950/95 border-rose-500/40 text-rose-300';
       const icon = type === 'success' ? 'fa-circle-check text-cyan-400' : 'fa-triangle-exclamation text-rose-400';
-
       toast.className = 'glass-panel p-4 rounded-2xl border ' + bgColors + ' flex items-center gap-3 shadow-xl pointer-events-auto transform translate-y-2 opacity-0 transition-all duration-300 font-mono text-xs';
       toast.innerHTML = '<i class="fa-solid ' + icon + ' text-base"></i><span class="flex-grow">' + message + '</span>';
-
       container.appendChild(toast);
       setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
-
       setTimeout(() => {
         toast.classList.add('translate-y-2', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
@@ -1087,24 +1100,15 @@
     // NAVIGATION
     // ============================================================
     window.navigateTo = function(viewName, updateHash = true) {
-      if (viewName === 'owner') {
-        openOwnerPinModal();
-        return;
-      }
-
+      if (viewName === 'owner') { openOwnerPinModal(); return; }
       if (updateHash) {
         const target = '#' + viewName;
-        if (window.location.hash !== target) {
-          window.location.hash = target;
-          return;
-        }
+        if (window.location.hash !== target) { window.location.hash = target; return; }
       }
-
       activeView = viewName;
       document.getElementById('view-shop').classList.add('hidden');
       document.getElementById('view-tracking').classList.add('hidden');
       document.getElementById('view-owner').classList.add('hidden');
-
       if (viewName === 'shop') {
         document.getElementById('view-shop').classList.remove('hidden');
         renderShopGrid();
@@ -1113,18 +1117,12 @@
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
     window.handleHashNavigation = function() {
       const hash = window.location.hash.replace('#', '');
       if (hash === 'tracking') {
-        if (!activeTrackingCode && orders.length > 0) {
-          activeTrackingCode = orders[0].trackingCode;
-        }
-        if (activeTrackingCode) {
-          viewOrderTracking(activeTrackingCode, false);
-        } else {
-          navigateTo('shop', false);
-        }
+        if (!activeTrackingCode && orders.length > 0) activeTrackingCode = orders[0].trackingCode;
+        if (activeTrackingCode) viewOrderTracking(activeTrackingCode, false);
+        else navigateTo('shop', false);
       } else if (hash === 'owner') {
         navigateTo('shop', false);
         openOwnerPinModal();
@@ -1132,9 +1130,7 @@
         navigateTo('shop', false);
       }
     };
-
     window.addEventListener('hashchange', handleHashNavigation);
-
     window.exitOwnerPortal = function() {
       activeView = 'shop';
       history.replaceState(null, '', '#shop');
@@ -1148,40 +1144,31 @@
       const container = document.getElementById('category-pills-container');
       if (!container) return;
       const categories = ['All', 'Articulated', 'Miniatures', 'Mechanical', 'Toys', 'Functional', 'Cosplay', 'Desk Decor', 'Fidget', 'Puzzles'];
-
       container.innerHTML = categories.map(cat => {
         const active = currentCategory === cat;
         const activeClass = active ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-lg shadow-cyan-500/20' : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700';
         return '<button onclick="setCategory(\'' + cat + '\')" class="px-3.5 py-1.5 rounded-xl text-xs font-mono border transition flex-shrink-0 ' + activeClass + '">' + cat + '</button>';
       }).join('');
     };
-
     window.setCategory = function(cat) {
       currentCategory = cat;
       renderCategoryPills();
       renderShopGrid();
     };
-
     window.debounceRenderShopGrid = function() {
       if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        renderShopGrid();
-      }, 150);
+      searchDebounceTimer = setTimeout(() => { renderShopGrid(); }, 150);
     };
-
     window.renderShopGrid = function() {
       const grid = document.getElementById('product-grid');
       if (!grid) return;
       const searchElem = document.getElementById('shop-search-input');
       const search = searchElem ? searchElem.value.toLowerCase() : '';
-
       const filtered = catalogModels.filter(m => {
         const matchesCat = currentCategory === 'All' || m.category === currentCategory;
         const haystack = (m.title + ' ' + (m.desc || '')).toLowerCase();
-        const matchesSearch = haystack.includes(search);
-        return matchesCat && matchesSearch;
+        return matchesCat && haystack.includes(search);
       });
-
       if (filtered.length === 0) {
         grid.innerHTML = `
           <div class="col-span-full py-16 text-center space-y-3 glass-panel rounded-3xl border border-slate-800">
@@ -1190,35 +1177,46 @@
           </div>`;
         return;
       }
-
-      grid.innerHTML = filtered.map(model => `
+      grid.innerHTML = filtered.map(model => {
+        const imageHtml = model.imageUrl
+          ? `<img src="${escapeAttr(model.imageUrl)}" alt="${escapeAttr(model.title)}" class="product-img" onerror="this.outerHTML='<div class=\\'img-placeholder\\'><i class=\\'fa-solid ${model.icon || 'fa-cube'} text-5xl text-cyan-400/40\\'></i></div>'" />`
+          : `<div class="img-placeholder"><i class="fa-solid ${model.icon || 'fa-cube'} text-5xl text-cyan-400/40"></i></div>`;
+        const optionsBadge = (model.options && model.options.length > 0)
+          ? `<span class="absolute top-3 right-3 bg-cyan-500/90 text-slate-950 text-[9px] font-black font-mono px-2 py-1 rounded-lg shadow-lg"><i class="fa-solid fa-sliders"></i> ${model.options.length} OPTION${model.options.length > 1 ? 'S' : ''}</span>`
+          : '';
+        return `
         <div class="glass-card rounded-3xl overflow-hidden border border-slate-800 flex flex-col justify-between group">
+          <div class="relative">
+            ${imageHtml}
+            <span class="absolute top-3 left-3 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-xl border border-slate-800 text-[10px] font-mono text-cyan-400 font-bold">
+              ${model.category}
+            </span>
+            ${optionsBadge}
+          </div>
           <div class="p-6 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="bg-slate-900/80 px-3 py-1 rounded-xl border border-slate-800 text-[10px] font-mono text-cyan-400 font-bold">
-                ${model.category}
-              </span>
-              <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-base shadow-inner">
-                <i class="fa-solid ${model.icon || 'fa-cube'}"></i>
-              </div>
+            <div class="flex items-center gap-2">
+              ${!model.imageUrl ? `<div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-sm"><i class="fa-solid ${model.icon || 'fa-cube'}"></i></div>` : ''}
+              <h3 class="text-base font-bold text-white tracking-tight">${escapeHtml(model.title)}</h3>
             </div>
-            <h3 class="text-base font-bold text-white tracking-tight">${model.title}</h3>
-            <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">${model.desc || ''}</p>
+            <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">${escapeHtml(model.desc || '')}</p>
           </div>
           <div class="p-6 pt-0 flex items-center justify-between mt-2">
             <div>
               <span class="text-[10px] font-mono text-slate-500 block">BASE PRICE</span>
               <span class="text-lg font-black text-cyan-400 font-mono">฿${model.price}</span>
             </div>
-            <div>
-              <button onclick="openPurchaseModal('${model.id}')" class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black transition shadow-md flex items-center gap-1.5">
-                <i class="fa-solid fa-cart-shopping"></i> Order Print
-              </button>
-            </div>
+            <button onclick="openPurchaseModal('${model.id}')" class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black transition shadow-md flex items-center gap-1.5">
+              <i class="fa-solid fa-cart-shopping"></i> Order Print
+            </button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     };
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+    }
+    function escapeAttr(str) { return escapeHtml(str).replace(/"/g, '&quot;'); }
 
     // ============================================================
     // PURCHASE MODAL
@@ -1227,22 +1225,77 @@
       const model = catalogMap.get(modelId);
       if (!model) return;
       currentConfiguredModel = model;
+      selectedOptions = {};
 
       document.getElementById('buy-modal-title').innerText = 'Order: ' + model.title;
       document.getElementById('buy-modal-name').innerText = model.title;
       document.getElementById('buy-modal-base-price').innerText = 'Base Price: ฿' + model.price;
-      document.getElementById('buy-modal-icon-box').innerHTML = '<i class="fa-solid ' + (model.icon || 'fa-cube') + '"></i>';
+
+      const iconBox = document.getElementById('buy-modal-icon-box');
+      if (model.imageUrl) {
+        iconBox.innerHTML = `<img src="${escapeAttr(model.imageUrl)}" alt="" class="w-full h-full object-cover" />`;
+      } else {
+        iconBox.innerHTML = '<i class="fa-solid ' + (model.icon || 'fa-cube') + '"></i>';
+      }
+
       document.getElementById('buy-scale-slider').value = 100;
       document.getElementById('buy-scale-val').innerText = '100% (Standard)';
-
-      // Clear previous entries + errors
       document.getElementById('buy-customer-name').value = '';
       document.getElementById('buy-customer-address').value = '';
       clearAllPurchaseErrors();
 
       renderPurchaseModalFilamentChoices();
+      renderPurchaseOptions();
       updateBuyTotal();
       document.getElementById('modal-purchase').classList.remove('hidden');
+    };
+
+    function renderPurchaseOptions() {
+      const section = document.getElementById('buy-options-section');
+      const container = document.getElementById('buy-options-container');
+      const opts = (currentConfiguredModel && currentConfiguredModel.options) || [];
+      if (opts.length === 0) {
+        section.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+      }
+      section.classList.remove('hidden');
+      container.innerHTML = opts.map((group, gi) => {
+        const groupId = group.id || ('g' + gi);
+        const choices = group.choices || [];
+        // Default to first choice if nothing selected yet
+        if (!selectedOptions[groupId] && choices.length > 0) {
+          selectedOptions[groupId] = choices[0].value !== undefined ? choices[0].value : choices[0];
+        }
+        const currentVal = selectedOptions[groupId];
+        return `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-slate-300 font-bold">${escapeHtml(group.name || 'Option')}</span>
+              <span class="text-[10px] font-mono text-cyan-400">${escapeHtml(currentVal || '—')}</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              ${choices.map(c => {
+                const val = c.value !== undefined ? c.value : c;
+                const label = c.label !== undefined ? c.label : val;
+                const priceDelta = Number(c.priceDelta || c.surcharge || 0);
+                const isSelected = currentVal === val;
+                const priceText = priceDelta > 0 ? ` (+฿${priceDelta})` : '';
+                return `<div onclick="selectOption('${escapeAttr(groupId)}', '${escapeAttr(val)}')"
+                  class="option-chip px-3 py-1.5 rounded-xl border text-xs font-mono transition ${isSelected ? 'selected' : ''} border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700">
+                  ${escapeHtml(label)}<span class="text-cyan-400/80 text-[10px]">${priceText}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.selectOption = function(groupId, value) {
+      selectedOptions[groupId] = value;
+      renderPurchaseOptions();
+      updateBuyTotal();
     };
 
     function renderPurchaseModalFilamentChoices() {
@@ -1256,7 +1309,6 @@
         const firstAvailable = filaments.find(f => f.inStock);
         selectedFilamentId = firstAvailable ? firstAvailable.id : (filaments[0] ? filaments[0].id : null);
       }
-
       filamentContainer.innerHTML = filaments.map(f => {
         const isSelected = f.id === selectedFilamentId;
         const borderClass = isSelected ? 'border-cyan-500 bg-cyan-950/40 text-white' : 'border-slate-800 bg-slate-900 text-slate-400';
@@ -1264,10 +1316,9 @@
           ? '<span class="text-[9px] text-cyan-300 ml-auto">+฿' + f.surcharge + '</span>'
           : '<span class="text-[9px] text-rose-400 ml-auto">[Out of Stock]</span>';
         const disabledAttr = f.inStock ? '' : 'opacity-50 pointer-events-none';
-
         return '<div onclick="' + (f.inStock ? "selectFilament('" + f.id + "')" : '') + '" class="p-2.5 rounded-xl border ' + borderClass + ' cursor-pointer transition flex items-center gap-2 text-xs font-mono ' + disabledAttr + '">'
           + '<span class="w-3.5 h-3.5 rounded-full shadow-sm flex-shrink-0" style="background-color: ' + f.color + '"></span>'
-          + '<span class="truncate">' + f.name + '</span>'
+          + '<span class="truncate">' + escapeHtml(f.name) + '</span>'
           + stockBadge
           + '</div>';
       }).join('');
@@ -1279,16 +1330,28 @@
       updateBuyTotal();
     };
 
+    function getSelectedOptionsCost() {
+      if (!currentConfiguredModel || !currentConfiguredModel.options) return 0;
+      let total = 0;
+      currentConfiguredModel.options.forEach((group, gi) => {
+        const gid = group.id || ('g' + gi);
+        const chosenVal = selectedOptions[gid];
+        if (chosenVal === undefined) return;
+        const choice = (group.choices || []).find(c => (c.value !== undefined ? c.value : c) === chosenVal);
+        if (choice && choice.priceDelta) total += Number(choice.priceDelta);
+      });
+      return total;
+    }
+
     window.updateBuyTotal = function() {
       if (!currentConfiguredModel) return;
       const scale = parseInt(document.getElementById('buy-scale-slider').value);
       document.getElementById('buy-scale-val').innerText = scale + '%';
-
       const filamentObj = filamentMap.get(selectedFilamentId);
       const surcharge = filamentObj ? filamentObj.surcharge : 0;
-
       const scaleMultiplier = Math.pow(scale / 100, 1.5);
-      const calculated = Math.round((currentConfiguredModel.price * scaleMultiplier) + surcharge);
+      const optionsCost = getSelectedOptionsCost();
+      const calculated = Math.round((currentConfiguredModel.price * scaleMultiplier) + surcharge + optionsCost);
       document.getElementById('buy-total-price').innerText = '฿' + calculated;
     };
 
@@ -1297,73 +1360,76 @@
       clearAllPurchaseErrors();
     };
 
-    window.confirmPurchaseOrder = function() {
+    window.confirmPurchaseOrder = async function() {
       if (!currentConfiguredModel) return;
-
-      const customerNameInput = document.getElementById('buy-customer-name');
-      const customerAddressInput = document.getElementById('buy-customer-address');
-      const customerName = customerNameInput.value.trim();
-      const customerAddress = customerAddressInput.value.trim();
-
-      // ===== VALIDATION =====
+      const nameInput = document.getElementById('buy-customer-name');
+      const addrInput = document.getElementById('buy-customer-address');
+      const customerName = nameInput.value.trim();
+      const customerAddress = addrInput.value.trim();
       let hasError = false;
-
-      if (!customerName) {
-        showFieldError('buy-customer-name', 'Name is required');
-        hasError = true;
-      }
-      if (!customerAddress) {
-        showFieldError('buy-customer-address', 'Delivery location is required');
-        hasError = true;
-      }
-
+      if (!customerName) { showFieldError('buy-customer-name', 'Name is required'); hasError = true; }
+      if (!customerAddress) { showFieldError('buy-customer-address', 'Delivery location is required'); hasError = true; }
       if (hasError) {
         showToast('Please fill in all required fields.', 'error');
-        if (!customerName) customerNameInput.focus();
-        else if (!customerAddress) customerAddressInput.focus();
+        if (!customerName) nameInput.focus(); else addrInput.focus();
         return;
       }
-
       const scale = document.getElementById('buy-scale-slider').value;
       const filamentObj = filamentMap.get(selectedFilamentId) || filaments[0];
-
       if (!filamentObj || !filamentObj.inStock) {
         showToast('Please select a valid in-stock filament.', 'error');
         return;
       }
+      showMiniLoader();
+      try {
+        const trackingCode = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const scaleMultiplier = Math.pow(scale / 100, 1.5);
+        const optionsCost = getSelectedOptionsCost();
+        const finalPrice = Math.round((currentConfiguredModel.price * scaleMultiplier) + filamentObj.surcharge + optionsCost);
+        const printersList = ['Bambu Lab A2L', 'Bambu Lab A1 Mini'];
+        const assignedPrinter = printersList[Math.floor(Math.random() * printersList.length)];
 
-      const trackingCode = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const scaleMultiplier = Math.pow(scale / 100, 1.5);
-      const finalPrice = Math.round((currentConfiguredModel.price * scaleMultiplier) + filamentObj.surcharge);
+        // Build human-readable selected options
+        const selectedOptionsHuman = {};
+        (currentConfiguredModel.options || []).forEach((group, gi) => {
+          const gid = group.id || ('g' + gi);
+          const val = selectedOptions[gid];
+          if (val !== undefined) selectedOptionsHuman[group.name || gid] = val;
+        });
 
-      const printersList = ['Bambu Lab A2L', 'Bambu Lab A1 Mini'];
-      const assignedPrinter = printersList[Math.floor(Math.random() * printersList.length)];
+        const newOrder = {
+          trackingCode, customerName, customerAddress,
+          modelTitle: currentConfiguredModel.title,
+          modelIcon: currentConfiguredModel.icon || 'fa-cube',
+          specs: filamentObj.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
+          printerName: assignedPrinter,
+          stage: 0,
+          selectedOptions: selectedOptionsHuman,
+          logs: [
+            '▶ Order created for ' + customerName + ' (฿' + finalPrice + ').',
+            '▶ Filament selected: ' + filamentObj.name + ' (+฿' + filamentObj.surcharge + ').',
+            '▶ Assigned to physical machine: ' + assignedPrinter + '.'
+          ].concat(Object.keys(selectedOptionsHuman).length > 0
+            ? ['▶ Options: ' + Object.keys(selectedOptionsHuman).map(k => k + '=' + selectedOptionsHuman[k]).join(', ')]
+            : []),
+          createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        };
 
-      const newOrder = {
-        trackingCode,
-        customerName,
-        customerAddress,
-        modelTitle: currentConfiguredModel.title,
-        modelIcon: currentConfiguredModel.icon || 'fa-cube',
-        specs: filamentObj.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
-        printerName: assignedPrinter,
-        stage: 0,
-        logs: [
-          '▶ Order created for ' + customerName + ' (฿' + finalPrice + ').',
-          '▶ Filament selected: ' + filamentObj.name + ' (+฿' + filamentObj.surcharge + ').',
-          '▶ Assigned to physical machine: ' + assignedPrinter + '.'
-        ],
-        createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
-      };
+        orders.unshift(newOrder);
+        rebuildMaps();
+        await withLoader(async () => {
+          if (backendClient) {
+            const { error } = await backendClient.from('orders').upsert(mapOrderToDb(newOrder));
+            if (error) console.warn('Save order failed:', error.message);
+          }
+        });
 
-      orders.unshift(newOrder);
-      rebuildMaps();
-
-      saveOrderToDb(newOrder);
-
-      closePurchaseModal();
-      showToast('Order placed successfully! Tracking Code: ' + trackingCode);
-      viewOrderTracking(trackingCode);
+        closePurchaseModal();
+        showToast('Order placed successfully! Tracking Code: ' + trackingCode);
+        viewOrderTracking(trackingCode);
+      } finally {
+        hideMiniLoader();
+      }
     };
 
     // ============================================================
@@ -1371,30 +1437,22 @@
     // ============================================================
     window.viewOrderTracking = function(code, updateHash = true) {
       const order = orderMap.get(code);
-      if (!order) {
-        showToast('Tracking code not found in active orders.', 'error');
-        return;
-      }
-
+      if (!order) { showToast('Tracking code not found in active orders.', 'error'); return; }
       activeTrackingCode = code;
       activeView = 'tracking';
       if (updateHash) {
         const target = '#tracking';
         if (window.location.hash !== target) window.location.hash = target;
       }
-
       document.getElementById('track-number-display').innerText = order.trackingCode;
-      document.getElementById('track-item-title').innerHTML = '<i class="fa-solid ' + (order.modelIcon || 'fa-cube') + ' text-cyan-400 mr-1.5"></i> ' + order.modelTitle;
+      document.getElementById('track-item-title').innerHTML = '<i class="fa-solid ' + (order.modelIcon || 'fa-cube') + ' text-cyan-400 mr-1.5"></i> ' + escapeHtml(order.modelTitle);
       document.getElementById('track-item-specs').innerText = order.specs;
       document.getElementById('assigned-printer-name').innerText = order.printerName;
-
       const stages = ['Order Received', 'Printing in Progress', 'Inspected & Packaged', 'Delivered to Customer'];
       const safeStage = Math.max(0, Math.min(3, order.stage));
       document.getElementById('current-status-title').innerText = stages[safeStage];
-
       const percentages = [0, 33, 66, 100];
       document.getElementById('progress-bar-fill').style.width = percentages[safeStage] + '%';
-
       for (let i = 0; i <= 3; i++) {
         const blob = document.getElementById('node-blob-' + i);
         if (blob) {
@@ -1405,10 +1463,20 @@
           }
         }
       }
-
       const logList = document.getElementById('audit-log-list');
-      if (logList) {
-        logList.innerHTML = order.logs.map(l => '<li>' + l + '</li>').join('');
+      if (logList) logList.innerHTML = order.logs.map(l => '<li>' + escapeHtml(l) + '</li>').join('');
+
+      // Options section
+      const optsSection = document.getElementById('track-selected-options');
+      const optsList = document.getElementById('track-selected-options-list');
+      const selOpts = order.selectedOptions || {};
+      const keys = Object.keys(selOpts);
+      if (keys.length > 0) {
+        optsSection.classList.remove('hidden');
+        optsList.innerHTML = keys.map(k => `<span class="px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"><i class="fa-solid fa-circle-check text-[10px] mr-1"></i> ${escapeHtml(k)}: <strong class="text-white">${escapeHtml(selOpts[k])}</strong></span>`).join('');
+      } else {
+        optsSection.classList.add('hidden');
+        optsList.innerHTML = '';
       }
 
       document.getElementById('view-shop').classList.add('hidden');
@@ -1421,14 +1489,9 @@
       if (!activeTrackingCode) return;
       const text = activeTrackingCode;
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-          showToast('Copied tracking code ' + text + ' to clipboard!');
-        }).catch(() => fallbackCopy(text));
-      } else {
-        fallbackCopy(text);
-      }
+        navigator.clipboard.writeText(text).then(() => showToast('Copied tracking code ' + text + ' to clipboard!')).catch(() => fallbackCopy(text));
+      } else fallbackCopy(text);
     };
-
     function fallbackCopy(text) {
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -1438,21 +1501,11 @@
       catch (e) { showToast('Copy failed. Please select manually.', 'error'); }
       document.body.removeChild(textarea);
     }
-
-    window.openQuickTrackModal = function() {
-      document.getElementById('modal-quick-track').classList.remove('hidden');
-    };
-
-    window.closeQuickTrackModal = function() {
-      document.getElementById('modal-quick-track').classList.add('hidden');
-    };
-
+    window.openQuickTrackModal = function() { document.getElementById('modal-quick-track').classList.remove('hidden'); };
+    window.closeQuickTrackModal = function() { document.getElementById('modal-quick-track').classList.add('hidden'); };
     window.submitQuickTrack = function() {
       const code = document.getElementById('quick-track-input').value.trim().toUpperCase();
-      if (!code) {
-        showToast('Please enter a valid tracking code.', 'error');
-        return;
-      }
+      if (!code) { showToast('Please enter a valid tracking code.', 'error'); return; }
       closeQuickTrackModal();
       viewOrderTracking(code);
     };
@@ -1465,17 +1518,13 @@
       document.getElementById('modal-owner-pin').classList.remove('hidden');
       setTimeout(() => document.getElementById('owner-pin-input').focus(), 50);
     };
-
     window.closeOwnerPinModal = function() {
       document.getElementById('modal-owner-pin').classList.add('hidden');
       if (activeView !== 'owner') {
-        if (window.location.hash === '#owner') {
-          history.replaceState(null, '', '#shop');
-        }
+        if (window.location.hash === '#owner') history.replaceState(null, '', '#shop');
         navigateTo('shop', false);
       }
     };
-
     window.verifyOwnerPin = function() {
       const pin = document.getElementById('owner-pin-input').value.trim();
       if (pin === '85455') {
@@ -1488,9 +1537,7 @@
         document.getElementById('view-owner').classList.remove('hidden');
         renderOwnerPortal();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        showToast('Incorrect security PIN.', 'error');
-      }
+      } else showToast('Incorrect security PIN.', 'error');
     };
 
     // ============================================================
@@ -1499,16 +1546,17 @@
     window.renderOwnerPortal = function() {
       const activeCount = orders.filter(o => o.stage < 3).length;
       const completedCount = orders.filter(o => o.stage === 3).length;
-
       document.getElementById('owner-stat-total').innerText = orders.length;
       document.getElementById('owner-stat-active').innerText = activeCount;
       document.getElementById('owner-stat-completed').innerText = completedCount;
-
       renderOwnerFilaments();
       renderOwnerCatalog();
       renderOwnerPortalOrders();
     };
 
+    // ============================================================
+    // OWNER FILAMENTS (with reorder)
+    // ============================================================
     window.renderOwnerFilaments = function() {
       const container = document.getElementById('owner-filaments-container');
       if (!container) return;
@@ -1516,15 +1564,20 @@
         container.innerHTML = '<p class="col-span-full text-xs font-mono text-slate-500">No filaments in stock. Click "Add New Filament" above.</p>';
         return;
       }
-
-      container.innerHTML = filaments.map(f => `
+      container.innerHTML = filaments.map((f, i) => `
         <div class="glass-card p-4 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-3 font-mono text-xs">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <span class="w-4 h-4 rounded-full shadow-md flex-shrink-0" style="background-color: ${f.color}"></span>
-              <span class="text-slate-200 font-bold truncate">${f.name}</span>
+              <span class="text-slate-200 font-bold truncate">${escapeHtml(f.name)}</span>
             </div>
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-0.5">
+              <button onclick="moveFilament('${f.id}', -1)" ${i === 0 ? 'disabled' : ''} class="p-1 transition ${i === 0 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400'}" title="Move up">
+                <i class="fa-solid fa-arrow-up"></i>
+              </button>
+              <button onclick="moveFilament('${f.id}', 1)" ${i === filaments.length - 1 ? 'disabled' : ''} class="p-1 transition ${i === filaments.length - 1 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400'}" title="Move down">
+                <i class="fa-solid fa-arrow-down"></i>
+              </button>
               <button onclick="openEditFilamentModal('${f.id}')" class="text-slate-400 hover:text-amber-400 transition p-1" title="Edit filament">
                 <i class="fa-solid fa-pen-to-square"></i>
               </button>
@@ -1543,6 +1596,26 @@
       `).join('');
     };
 
+    window.moveFilament = async function(id, dir) {
+      const idx = filaments.findIndex(f => f.id === id);
+      if (idx === -1) return;
+      const newIdx = idx + dir;
+      if (newIdx < 0 || newIdx >= filaments.length) return;
+      // Swap
+      [filaments[idx], filaments[newIdx]] = [filaments[newIdx], filaments[idx]];
+      // Reindex sortOrder
+      filaments.forEach((f, i) => f.sortOrder = i);
+      renderOwnerFilaments();
+      // Persist all (simple + safe)
+      if (backendClient) {
+        await withLoader(async () => {
+          for (let i = 0; i < filaments.length; i++) {
+            await backendClient.from('filaments').upsert(mapFilamentToDb(filaments[i], i));
+          }
+        });
+      }
+    };
+
     window.openAddFilamentModal = function() {
       document.getElementById('edit-filament-id').value = '';
       document.getElementById('filament-modal-title').innerHTML = '<i class="fa-solid fa-plus text-amber-400"></i> Add New Filament';
@@ -1552,7 +1625,6 @@
       document.getElementById('new-filament-surcharge').value = '10';
       document.getElementById('modal-add-filament').classList.remove('hidden');
     };
-
     window.openEditFilamentModal = function(id) {
       const fil = filamentMap.get(id);
       if (!fil) return;
@@ -1564,92 +1636,207 @@
       document.getElementById('new-filament-surcharge').value = fil.surcharge;
       document.getElementById('modal-add-filament').classList.remove('hidden');
     };
+    window.closeAddFilamentModal = function() { document.getElementById('modal-add-filament').classList.add('hidden'); };
 
-    window.closeAddFilamentModal = function() {
-      document.getElementById('modal-add-filament').classList.add('hidden');
-    };
-
-    window.submitNewFilament = function() {
+    window.submitNewFilament = async function() {
       const editId = document.getElementById('edit-filament-id').value;
       const name = document.getElementById('new-filament-name').value.trim();
       const color = document.getElementById('new-filament-color').value;
       const surcharge = parseInt(document.getElementById('new-filament-surcharge').value) || 0;
+      if (!name) { showToast('Please enter a filament name.', 'error'); return; }
 
-      if (!name) {
-        showToast('Please enter a filament name.', 'error');
-        return;
-      }
-
-      if (editId) {
-        const fil = filamentMap.get(editId);
-        if (fil) {
-          fil.name = name;
-          fil.color = color;
-          fil.surcharge = surcharge;
+      showMiniLoader();
+      try {
+        if (editId) {
+          const fil = filamentMap.get(editId);
+          if (fil) {
+            fil.name = name; fil.color = color; fil.surcharge = surcharge;
+            renderOwnerFilaments();
+            await saveFilamentToDb(fil);
+            showToast('Updated filament: ' + name);
+          }
+        } else {
+          const newFil = { id: 'fil-' + Date.now(), name, color, surcharge, inStock: true, sortOrder: filaments.length };
+          filaments.push(newFil);
+          rebuildMaps();
           renderOwnerFilaments();
-          saveFilamentToDb(fil);
-          showToast('Updated filament: ' + name);
+          await saveFilamentToDb(newFil, filaments.length - 1);
+          showToast('Added new filament: ' + name);
         }
-      } else {
-        const newFil = {
-          id: 'fil-' + Date.now(),
-          name,
-          color,
-          surcharge,
-          inStock: true
-        };
-        filaments.push(newFil);
-        rebuildMaps();
-        renderOwnerFilaments();
-        saveFilamentToDb(newFil);
-        showToast('Added new filament: ' + name);
-      }
-
-      closeAddFilamentModal();
+        closeAddFilamentModal();
+      } finally { hideMiniLoader(); }
     };
 
-    window.toggleFilamentStock = function(id) {
+    window.toggleFilamentStock = async function(id) {
       const fil = filamentMap.get(id);
-      if (fil) {
-        fil.inStock = !fil.inStock;
-        renderOwnerFilaments();
-        saveFilamentToDb(fil);
-        showToast('Updated stock status for ' + fil.name + '.');
-      }
+      if (!fil) return;
+      fil.inStock = !fil.inStock;
+      renderOwnerFilaments();
+      await saveFilamentToDb(fil);
+      showToast('Updated stock status for ' + fil.name + '.');
     };
 
-    window.deleteFilament = function(id) {
+    window.deleteFilament = async function(id) {
       filaments = filaments.filter(f => f.id !== id);
+      filaments.forEach((f, i) => f.sortOrder = i);
       rebuildMaps();
       if (activeView === 'owner') renderOwnerFilaments();
-      removeFilamentFromDb(id);
+      await removeFilamentFromDb(id);
       showToast('Filament removed successfully.');
     };
 
+    // ============================================================
+    // OWNER CATALOG
+    // ============================================================
     window.renderOwnerCatalog = function() {
       const container = document.getElementById('owner-catalog-container');
       if (!container) return;
-      container.innerHTML = catalogModels.map(m => `
+      container.innerHTML = catalogModels.map(m => {
+        const img = m.imageUrl
+          ? `<img src="${escapeAttr(m.imageUrl)}" alt="" class="w-full h-32 object-cover rounded-xl border border-slate-800" />`
+          : `<div class="w-full h-32 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center"><i class="fa-solid ${m.icon || 'fa-cube'} text-3xl text-cyan-400/40"></i></div>`;
+        const optCount = (m.options || []).length;
+        return `
         <div class="glass-card p-4 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-3">
+          ${img}
           <div class="space-y-1">
             <h4 class="text-xs font-bold text-white flex items-center gap-2">
-              <i class="fa-solid ${m.icon || 'fa-cube'} text-cyan-400"></i> ${m.title}
+              <i class="fa-solid ${m.icon || 'fa-cube'} text-cyan-400"></i> ${escapeHtml(m.title)}
             </h4>
-            <span class="text-[10px] font-mono text-cyan-400 block">${m.category} | ฿${m.price}</span>
-            <p class="text-[11px] text-slate-400 line-clamp-1">${m.desc || ''}</p>
+            <span class="text-[10px] font-mono text-cyan-400 block">${escapeHtml(m.category)} | ฿${m.price}</span>
+            <p class="text-[11px] text-slate-400 line-clamp-2">${escapeHtml(m.desc || '')}</p>
+            ${optCount > 0 ? `<span class="inline-block text-[9px] font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-2 py-0.5 rounded-lg mt-1"><i class="fa-solid fa-sliders"></i> ${optCount} option group${optCount > 1 ? 's' : ''}</span>` : ''}
           </div>
           <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-xs font-mono">
             <button onclick="openEditCatalogModel('${m.id}')" class="text-slate-400 hover:text-cyan-400 transition flex items-center gap-1" title="Edit Model">
-              <i class="fa-solid fa-pen-to-square"></i> Edit Model
+              <i class="fa-solid fa-pen-to-square"></i> Edit
             </button>
             <button onclick="deleteCatalogModel('${m.id}')" class="text-slate-500 hover:text-rose-400 transition flex items-center gap-1" title="Remove Model">
               <i class="fa-solid fa-trash-can"></i> Remove
             </button>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     };
 
+    // Image handling
+    let currentModelImageData = ''; // base64 data-url
+    window.handleModelImageUpload = function(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Image too large. Please use an image under 2MB.', 'error');
+        event.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentModelImageData = e.target.result;
+        document.getElementById('new-model-image-data').value = currentModelImageData;
+        const prev = document.getElementById('model-image-preview');
+        prev.innerHTML = `<img src="${currentModelImageData}" class="w-full h-full object-cover rounded-xl" />`;
+      };
+      reader.readAsDataURL(file);
+    };
+    window.clearModelImage = function() {
+      currentModelImageData = '';
+      document.getElementById('new-model-image-data').value = '';
+      document.getElementById('new-model-image-file').value = '';
+      document.getElementById('model-image-preview').innerHTML = '<i class="fa-solid fa-image text-2xl"></i>';
+    };
+
+    // ============================================================
+    // OPTIONS BUILDER
+    // ============================================================
+    let editingOptions = []; // [{id, name, choices: [{value, label, priceDelta}]}]
+
+    window.addOptionGroup = function() {
+      editingOptions.push({
+        id: 'g' + Date.now() + Math.random().toString(36).substring(2, 5),
+        name: '',
+        choices: [{ value: '', label: '', priceDelta: 0 }]
+      });
+      renderOptionsBuilder();
+    };
+
+    window.removeOptionGroup = function(groupId) {
+      editingOptions = editingOptions.filter(g => g.id !== groupId);
+      renderOptionsBuilder();
+    };
+
+    window.updateOptionGroupName = function(groupId, name) {
+      const g = editingOptions.find(x => x.id === groupId);
+      if (g) g.name = name;
+    };
+
+    window.addOptionChoice = function(groupId) {
+      const g = editingOptions.find(x => x.id === groupId);
+      if (!g) return;
+      g.choices.push({ value: '', label: '', priceDelta: 0 });
+      renderOptionsBuilder();
+    };
+
+    window.removeOptionChoice = function(groupId, idx) {
+      const g = editingOptions.find(x => x.id === groupId);
+      if (!g) return;
+      g.choices.splice(idx, 1);
+      if (g.choices.length === 0) g.choices.push({ value: '', label: '', priceDelta: 0 });
+      renderOptionsBuilder();
+    };
+
+    window.updateOptionChoice = function(groupId, idx, field, value) {
+      const g = editingOptions.find(x => x.id === groupId);
+      if (!g || !g.choices[idx]) return;
+      if (field === 'priceDelta') g.choices[idx][field] = Number(value) || 0;
+      else {
+        g.choices[idx][field] = value;
+        // Auto-sync value = label if value empty
+        if (field === 'label' && !g.choices[idx].value) g.choices[idx].value = value;
+      }
+    };
+
+    function renderOptionsBuilder() {
+      const container = document.getElementById('options-builder');
+      if (!container) return;
+      if (editingOptions.length === 0) {
+        container.innerHTML = '<p class="text-[10px] text-slate-500 font-mono text-center py-2 border border-dashed border-slate-800 rounded-xl">No options defined. Click "Add Group" to create one.</p>';
+        return;
+      }
+      container.innerHTML = editingOptions.map(g => `
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3 space-y-2">
+          <div class="flex items-center gap-2">
+            <input type="text" value="${escapeAttr(g.name)}" oninput="updateOptionGroupName('${g.id}', this.value)"
+              placeholder="Group name (e.g. Battery Holder)"
+              class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500" />
+            <button type="button" onclick="removeOptionGroup('${g.id}')" class="p-1.5 text-rose-400 hover:text-rose-300 transition" title="Remove group">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+          <div class="space-y-1.5 pl-2">
+            ${g.choices.map((c, i) => `
+              <div class="flex items-center gap-1.5">
+                <input type="text" value="${escapeAttr(c.label)}" oninput="updateOptionChoice('${g.id}', ${i}, 'label', this.value)"
+                  placeholder="Choice (e.g. AAA)"
+                  class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white focus:outline-none focus:border-cyan-500" />
+                <input type="number" value="${c.priceDelta || 0}" oninput="updateOptionChoice('${g.id}', ${i}, 'priceDelta', this.value)"
+                  placeholder="+฿"
+                  class="w-16 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-cyan-300 focus:outline-none focus:border-cyan-500" />
+                <button type="button" onclick="removeOptionChoice('${g.id}', ${i})" class="p-1 text-slate-500 hover:text-rose-400 transition">
+                  <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+              </div>
+            `).join('')}
+            <button type="button" onclick="addOptionChoice('${g.id}')" class="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 transition mt-1">
+              <i class="fa-solid fa-plus"></i> Add choice
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============================================================
+    // ADD/EDIT MODEL
+    // ============================================================
     window.openAddModelModal = function() {
       document.getElementById('edit-model-id').value = '';
       document.getElementById('model-modal-title').innerHTML = '<i class="fa-solid fa-plus text-cyan-400"></i> Add New 3D Print Model';
@@ -1659,6 +1846,12 @@
       document.getElementById('new-model-icon').value = 'fa-dragon';
       document.getElementById('new-model-price').value = '150';
       document.getElementById('new-model-desc').value = '';
+      currentModelImageData = '';
+      document.getElementById('new-model-image-data').value = '';
+      document.getElementById('new-model-image-file').value = '';
+      document.getElementById('model-image-preview').innerHTML = '<i class="fa-solid fa-image text-2xl"></i>';
+      editingOptions = [];
+      renderOptionsBuilder();
       document.getElementById('modal-add-model').classList.remove('hidden');
     };
 
@@ -1673,14 +1866,27 @@
       document.getElementById('new-model-icon').value = model.icon || 'fa-cube';
       document.getElementById('new-model-price').value = model.price;
       document.getElementById('new-model-desc').value = model.desc;
+
+      currentModelImageData = model.imageUrl || '';
+      document.getElementById('new-model-image-data').value = currentModelImageData;
+      document.getElementById('new-model-image-file').value = '';
+      const prev = document.getElementById('model-image-preview');
+      if (currentModelImageData) prev.innerHTML = `<img src="${escapeAttr(currentModelImageData)}" class="w-full h-full object-cover rounded-xl" />`;
+      else prev.innerHTML = '<i class="fa-solid fa-image text-2xl"></i>';
+
+      // Deep clone options so editing doesn't mutate the live object until saved
+      editingOptions = JSON.parse(JSON.stringify(model.options || []));
+      renderOptionsBuilder();
       document.getElementById('modal-add-model').classList.remove('hidden');
     };
 
     window.closeAddModelModal = function() {
       document.getElementById('modal-add-model').classList.add('hidden');
+      currentModelImageData = '';
+      editingOptions = [];
     };
 
-    window.submitNewCatalogModel = function() {
+    window.submitNewCatalogModel = async function() {
       const editId = document.getElementById('edit-model-id').value;
       const title = document.getElementById('new-model-title').value.trim();
       const category = document.getElementById('new-model-category').value;
@@ -1688,77 +1894,84 @@
       const price = parseInt(document.getElementById('new-model-price').value) || 150;
       const desc = document.getElementById('new-model-desc').value.trim() || 'Custom 3D printed model.';
 
-      if (!title) {
-        showToast('Please enter a model title.', 'error');
-        return;
-      }
+      if (!title) { showToast('Please enter a model title.', 'error'); return; }
 
-      if (editId) {
-        const model = catalogMap.get(editId);
-        if (model) {
-          model.title = title;
-          model.category = category;
-          model.icon = icon;
-          model.price = price;
-          model.desc = desc;
+      // Clean options — drop empty groups/choices
+      const cleanOptions = editingOptions
+        .map(g => ({
+          id: g.id,
+          name: (g.name || '').trim(),
+          choices: g.choices
+            .map(c => ({ value: (c.value || c.label || '').trim(), label: (c.label || c.value || '').trim(), priceDelta: Number(c.priceDelta) || 0 }))
+            .filter(c => c.value !== '')
+        }))
+        .filter(g => g.name !== '' && g.choices.length > 0);
+
+      showMiniLoader();
+      try {
+        if (editId) {
+          const model = catalogMap.get(editId);
+          if (model) {
+            model.title = title;
+            model.category = category;
+            model.icon = icon;
+            model.price = price;
+            model.desc = desc;
+            model.imageUrl = currentModelImageData || '';
+            model.options = cleanOptions;
+            renderShopGrid();
+            if (activeView === 'owner') renderOwnerCatalog();
+            await saveModelToDb(model);
+            showToast('Updated model: ' + title);
+          }
+        } else {
+          const newModel = {
+            id: 'mod-' + Date.now(),
+            title, category, icon, price, desc,
+            imageUrl: currentModelImageData || '',
+            options: cleanOptions
+          };
+          catalogModels.unshift(newModel);
+          rebuildMaps();
           renderShopGrid();
           if (activeView === 'owner') renderOwnerCatalog();
-          saveModelToDb(model);
-          showToast('Updated model: ' + title);
+          await saveModelToDb(newModel);
+          showToast('Added new catalog model: ' + title);
         }
-      } else {
-        const newModel = {
-          id: 'mod-' + Date.now(),
-          title,
-          category,
-          icon,
-          price,
-          desc
-        };
-        catalogModels.unshift(newModel);
-        rebuildMaps();
-        renderShopGrid();
-        if (activeView === 'owner') renderOwnerCatalog();
-        saveModelToDb(newModel);
-        showToast('Added new catalog model: ' + title);
-      }
-
-      closeAddModelModal();
+        closeAddModelModal();
+      } finally { hideMiniLoader(); }
     };
 
-    window.deleteCatalogModel = function(id) {
+    window.deleteCatalogModel = async function(id) {
       catalogModels = catalogModels.filter(m => m.id !== id);
       rebuildMaps();
       renderShopGrid();
       if (activeView === 'owner') renderOwnerCatalog();
-      removeModelFromDb(id);
+      await removeModelFromDb(id);
       showToast('Catalog model removed.');
     };
 
+    // ============================================================
+    // OWNER ORDERS TABLE
+    // ============================================================
     window.debounceRenderOwnerPortalOrders = function() {
       if (ownerSearchDebounceTimer) clearTimeout(ownerSearchDebounceTimer);
-      ownerSearchDebounceTimer = setTimeout(() => {
-        renderOwnerPortalOrders();
-      }, 150);
+      ownerSearchDebounceTimer = setTimeout(() => { renderOwnerPortalOrders(); }, 150);
     };
-
     window.renderOwnerPortalOrders = function() {
       const tbody = document.getElementById('owner-orders-table-body');
       if (!tbody) return;
       const searchElem = document.getElementById('owner-search-input');
       const search = searchElem ? searchElem.value.toLowerCase() : '';
-
       const filtered = orders.filter(o =>
         o.trackingCode.toLowerCase().includes(search) ||
         (o.customerName || '').toLowerCase().includes(search) ||
         (o.modelTitle || '').toLowerCase().includes(search)
       );
-
       if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">No customer orders found.</td></tr>';
         return;
       }
-
       const stageNames = ['Received', 'Printing', 'Packaged', 'Delivered'];
       const stageBadges = [
         'bg-slate-800 text-slate-300 border-slate-700',
@@ -1766,22 +1979,26 @@
         'bg-purple-950/80 text-purple-300 border-purple-500/30',
         'bg-emerald-950/80 text-emerald-300 border-emerald-500/30'
       ];
-
       tbody.innerHTML = filtered.map(o => {
         const safeStage = Math.max(0, Math.min(3, o.stage));
+        const opts = o.selectedOptions || {};
+        const optsText = Object.keys(opts).length > 0
+          ? Object.keys(opts).map(k => `<span class="inline-block bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] px-2 py-0.5 rounded-md mr-1 mb-1">${escapeHtml(k)}: <strong class="text-white">${escapeHtml(opts[k])}</strong></span>`).join('')
+          : '<span class="text-slate-600 italic">None</span>';
         return `
         <tr class="hover:bg-slate-900/60 transition">
           <td class="p-3 font-bold text-cyan-400">${o.trackingCode}</td>
           <td class="p-3">
-            <span class="text-white block font-bold">${o.customerName}</span>
-            <span class="text-[10px] text-slate-500">${o.customerAddress}</span>
+            <span class="text-white block font-bold">${escapeHtml(o.customerName)}</span>
+            <span class="text-[10px] text-slate-500">${escapeHtml(o.customerAddress)}</span>
           </td>
           <td class="p-3 text-slate-200">
             <span class="flex items-center gap-1.5 font-bold">
-              <i class="fa-solid ${o.modelIcon || 'fa-cube'} text-cyan-400"></i> ${o.modelTitle}
+              <i class="fa-solid ${o.modelIcon || 'fa-cube'} text-cyan-400"></i> ${escapeHtml(o.modelTitle)}
             </span>
+            <span class="text-[10px] text-slate-500">${escapeHtml(o.specs)}</span>
           </td>
-          <td class="p-3 text-[11px] text-slate-400">${o.specs}</td>
+          <td class="p-3 text-[11px] text-slate-400 max-w-xs">${optsText}</td>
           <td class="p-3">
             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${stageBadges[safeStage]}">
               ${stageNames[safeStage]}
@@ -1799,30 +2016,27 @@
       `}).join('');
     };
 
-    window.advanceOrderStage = function(code) {
+    window.advanceOrderStage = async function(code) {
       const order = orderMap.get(code);
       if (!order) return;
-
-      if (order.stage < 3) {
+      if (order.stage >= 3) { showToast('Order ' + code + ' is already completed/delivered.'); return; }
+      showMiniLoader();
+      try {
         order.stage++;
         const stageNames = ['Received', 'Printing in Progress', 'Inspected & Packaged', 'Delivered to Customer'];
         order.logs.push('▶ Status updated by Owner to: ' + stageNames[order.stage]);
-
         renderOwnerPortalOrders();
         renderOwnerPortal();
-
-        saveOrderToDb(order);
+        await saveOrderToDb(order);
         showToast('Order ' + code + ' advanced to ' + stageNames[order.stage]);
-      } else {
-        showToast('Order ' + code + ' is already completed/delivered.');
-      }
+      } finally { hideMiniLoader(); }
     };
 
-    window.deleteOrder = function(code) {
+    window.deleteOrder = async function(code) {
       orders = orders.filter(o => o.trackingCode !== code);
       rebuildMaps();
       if (activeView === 'owner') renderOwnerPortal();
-      removeOrderFromDb(code);
+      await removeOrderFromDb(code);
       showToast('Order ' + code + ' deleted.');
     };
 
