@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Josh and Jett's 3D Prints | Shop &amp; Owner Portal</title>
+  <title>Josh and Jett's 3D Prints | Exclusive to King's Bangkok</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -216,7 +216,6 @@
     .cart-table th { text-align: left; padding: 8px; color: #64748b; text-transform: uppercase; font-size: 9px; letter-spacing: .05em; border-bottom: 1px solid rgba(255,255,255,.08); }
     .cart-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.04); }
 
-    /* Lightbox */
     #lightbox { position: fixed; inset: 0; z-index: 90; background: rgba(2,6,23,.95); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
     #lightbox.active { display: flex; }
     #lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 1rem; box-shadow: 0 0 60px rgba(6,182,212,.3); }
@@ -224,14 +223,26 @@
     #lightbox .close-hint button { background: rgba(15,23,42,.9); border: 1px solid rgba(255,255,255,.1); padding: 8px 14px; border-radius: .75rem; color: #fff; cursor: pointer; }
     #lightbox .close-hint button:hover { background: rgba(6,182,212,.2); border-color: rgba(6,182,212,.4); }
 
-    /* Full image view (purchase modal) */
     .buy-hero-img { width: 100%; height: 100%; object-fit: contain; background: #020617; }
     .buy-hero-wrap { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #020617; overflow: hidden; }
 
-    /* Nested items table inside owner order row */
     .order-items-table { width: 100%; font-family: 'Fira Code', monospace; font-size: 10px; margin-top: 6px; border-collapse: collapse; }
     .order-items-table th { text-align: left; padding: 4px 6px; color: #64748b; font-size: 9px; border-bottom: 1px solid rgba(255,255,255,.06); }
     .order-items-table td { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.03); }
+
+    /* Branding pill */
+    .kings-pill {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: 10px; font-family: 'Fira Code', monospace;
+      padding: .3rem .7rem; border-radius: 9999px;
+      background: linear-gradient(135deg, rgba(34,211,238,.15), rgba(16,185,129,.15));
+      border: 1px solid rgba(34,211,238,.4);
+      color: #67e8f9;
+      font-weight: 700;
+      letter-spacing: .03em;
+      box-shadow: 0 0 20px rgba(34,211,238,.15);
+    }
+    .kings-pill i { color: #fcd34d; }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
@@ -321,7 +332,7 @@
             <h1 class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
               Josh and Jett's <span class="text-emerald-400 font-extrabold text-xs uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30">3D Prints</span>
             </h1>
-            <p class="text-[11px] text-slate-400 hidden sm:block font-mono">Precision Models &amp; Custom Filament Shop</p>
+            <p class="text-[11px] text-cyan-300/80 hidden sm:block font-mono font-bold">Exclusive to King's Bangkok Students &amp; Teachers</p>
           </div>
         </div>
 
@@ -365,6 +376,9 @@
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">Bring Digital Designs into <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">Physical Reality</span></h2>
           <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">Select your favorite 3D models, customize scales and custom filament colors with instant localized pricing, and track production status.</p>
+          <div class="pt-2">
+            <span class="kings-pill"><i class="fa-solid fa-crown"></i> Exclusive to King's Bangkok Students &amp; Teachers</span>
+          </div>
         </div>
         <div class="relative z-10 glass-card p-4 sm:p-5 rounded-2xl border border-amber-500/30 bg-amber-950/20 max-w-xs space-y-1.5">
           <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase font-mono"><i class="fa-solid fa-triangle-exclamation"></i> Important Notice</div>
@@ -513,7 +527,10 @@
 
   <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 mt-12 text-center text-xs text-slate-500 font-mono">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved) <span class="ml-2 text-cyan-400/70 font-bold">v22</span></p>
+      <div class="text-center sm:text-left space-y-1">
+        <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved)</p>
+        <p class="text-[10px] text-cyan-300/80 font-bold"><i class="fa-solid fa-crown text-amber-400"></i> Exclusive to King's Bangkok Students &amp; Teachers</p>
+      </div>
       <div class="flex items-center space-x-4">
         <button onclick="openQuickTrackModal()" class="hover:text-cyan-400 transition">Track Order</button>
         <button onclick="openOwnerPinModal()" class="hover:text-amber-400 transition">Owner Login</button>
@@ -899,8 +916,6 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v22';
-
     const BACKEND_URL = "https://evqycmmnqnvfppcnxscr.supabase.co";
     const BACKEND_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cXljbW1ucW52ZnBwY254c2NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjAzMDIsImV4cCI6MjEwNTkzNjMwMn0.G704LYY5gNkLXn6CaKrCssSxw_h0bcFb5mGBWk7ZqMw";
     let backendClient = null;
@@ -1239,17 +1254,15 @@
       closePurchaseModal();
     };
 
-    // CHECKOUT AS ONE ORDER
     window.checkoutCart = async function() {
       if (cart.length === 0) { showToast('Cart is empty.', 'error'); return; }
-      const nameEl = document.getElementById('buy-customer-name');
-      let customerName = (nameEl && nameEl.value.trim()) || localStorage.getItem('jj_last_name') || '';
-      if (!customerName) {
-        customerName = prompt('Enter your name for the order:');
-        if (!customerName) { showToast('Name is required for checkout.', 'error'); return; }
+      let customerName = localStorage.getItem('jj_last_name') || '';
+      if (!customerName || customerName.length < 2) {
+        customerName = prompt('Please enter your name (at least 2 characters) to place this order:');
+        if (!customerName || customerName.trim().length < 2) { showToast('A valid name is required.', 'error'); return; }
         customerName = customerName.trim();
+        localStorage.setItem('jj_last_name', customerName);
       }
-      localStorage.setItem('jj_last_name', customerName);
 
       closeCartModal();
       showSyncBanner('Placing Order', 'Creating one order with ' + cart.length + ' item(s)...');
@@ -1261,7 +1274,6 @@
       const totalPrice = cart.reduce((s, i) => s + (i.unitPrice * i.qty), 0);
       const totalQty = cart.reduce((s, i) => s + i.qty, 0);
 
-      // Build items array (each entry = one physical piece)
       const orderItems = [];
       cart.forEach(cartItem => {
         for (let q = 0; q < cartItem.qty; q++) {
@@ -1277,7 +1289,6 @@
         }
       });
 
-      // Short summary title
       const uniqueTitles = [...new Set(cart.map(c => c.title))];
       const summaryTitle = uniqueTitles.length === 1
         ? uniqueTitles[0] + (totalQty > 1 ? ' ×' + totalQty : '')
@@ -1307,6 +1318,14 @@
       try {
         await saveOrderToDb(newOrder);
       } catch (e) { failed = true; }
+
+      // Track this order as "mine" for customer sync
+      try {
+        const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
+        myOrders.push(code);
+        localStorage.setItem('jj_my_orders_v1', JSON.stringify(myOrders.slice(-50)));
+      } catch (e) {}
+
       rebuildMaps();
 
       cart = []; saveCart(); updateCartBadge(); renderOwnerCartTable();
@@ -1405,7 +1424,6 @@
       if (icon) icon.className = state === 'busy' ? 'fa-solid fa-arrows-rotate fa-spin' : (state === 'failed' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-arrows-rotate');
     }
 
-    // STARTUP: pull models + filaments, push orders only
     async function initBackend() {
       showLoading('Loading Shop', 'Downloading latest from server...');
       setSyncPill('busy', 'Connecting');
@@ -1417,25 +1435,22 @@
         const ok = await fetchAllData();
         if (!ok) { setSyncPill('err', 'Error'); return; }
 
-        // Show startup sync banner
-        showSyncBanner('Startup Sync', 'Downloading models & filaments, uploading orders...');
+        showSyncBanner('Startup Sync', 'Downloading models & filaments, uploading my orders...');
         syncState.counts = {
           models:    { done: 0, total: 0, failed: 0, dir: 'pull' },
           filaments: { done: 0, total: 0, failed: 0, dir: 'pull' },
-          orders:    { done: 0, total: orders.length, failed: 0, dir: 'push' }
+          orders:    { done: 0, total: 0, failed: 0, dir: 'push' }
         };
         renderSyncCounts();
 
         let totalFailed = 0;
 
-        // PULL models
         try {
           const { data: dbModels, error } = await backendClient.from('catalog_models').select('*');
           if (error) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
           else if (dbModels) { catalogModels = dbModels.map(mapModelFromDb); setSyncCounts('models', dbModels.length, dbModels.length, 0, 'pull'); }
         } catch (e) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
 
-        // PULL filaments
         try {
           const { data: dbFilaments, error } = await backendClient.from('filaments').select('*');
           if (error) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
@@ -1445,12 +1460,22 @@
           }
         } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
 
-        // PUSH orders
-        for (let i = 0; i < orders.length; i++) {
-          const o = orders[i];
+        // Only push MY orders
+        let myOrdersList = [];
+        try {
+          const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
+          const mySet = new Set(myOrders);
+          myOrdersList = orders.filter(o => mySet.has(o.trackingCode));
+        } catch (e) { myOrdersList = []; }
+
+        syncState.counts.orders.total = myOrdersList.length;
+        renderSyncCounts();
+
+        for (let i = 0; i < myOrdersList.length; i++) {
+          const o = myOrdersList[i];
           const res = await verifiedUpsert('orders', mapOrderToDb(o), 'tracking_code', o.trackingCode);
-          if (res.ok) setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push');
-          else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push'); }
+          if (res.ok) setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push');
+          else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push'); }
         }
 
         rebuildMaps(); renderCategoryPills(); renderShopGrid();
@@ -1538,18 +1563,18 @@
       return { ok: false, attempts: maxAttempts, error: lastError };
     }
 
-    // CUSTOMER SYNC — pull models & filaments, push orders only
+    // CUSTOMER SYNC — pull models & filaments, push ONLY MY orders
     window.customerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
 
       setSyncPill('busy', 'Syncing');
-      showSyncBanner('Syncing My Order', 'Uploading your orders & downloading latest shop data...');
+      showSyncBanner('Syncing My Order', 'Uploading my orders & downloading latest shop data...');
 
       syncState.counts = {
         models:    { done: 0, total: 0, failed: 0, dir: 'pull' },
         filaments: { done: 0, total: 0, failed: 0, dir: 'pull' },
-        orders:    { done: 0, total: orders.length, failed: 0, dir: 'push' }
+        orders:    { done: 0, total: 0, failed: 0, dir: 'push' }
       };
       renderSyncCounts();
       let totalFailed = 0;
@@ -1569,11 +1594,22 @@
         }
       } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
 
-      for (let i = 0; i < orders.length; i++) {
-        const o = orders[i];
+      // Only push MY orders
+      let myOrdersList = [];
+      try {
+        const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
+        const mySet = new Set(myOrders);
+        myOrdersList = orders.filter(o => mySet.has(o.trackingCode));
+      } catch (e) { myOrdersList = []; }
+
+      syncState.counts.orders.total = myOrdersList.length;
+      renderSyncCounts();
+
+      for (let i = 0; i < myOrdersList.length; i++) {
+        const o = myOrdersList[i];
         const res = await verifiedUpsert('orders', mapOrderToDb(o), 'tracking_code', o.trackingCode);
-        if (res.ok) setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push');
-        else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push'); }
+        if (res.ok) setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push');
+        else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push'); }
       }
 
       rebuildMaps(); renderCategoryPills(); renderShopGrid();
@@ -1809,7 +1845,9 @@
       container.innerHTML = opts.map((group, gi) => {
         const gid = group.id || ('g' + gi);
         const choices = group.choices || [];
-        if (!selectedOptions[gid] && choices.length > 0) selectedOptions[gid] = choices[0].value !== undefined ? choices[0].value : choices[0];
+        if (selectedOptions[gid] === undefined && choices.length > 0) {
+          selectedOptions[gid] = choices[0].value !== undefined ? choices[0].value : choices[0];
+        }
         const cur = selectedOptions[gid];
         return '<div class="space-y-2">'
           + '<div class="flex items-center justify-between"><span class="text-xs font-mono text-slate-300 font-bold">' + escapeHtml(group.name || 'Option') + '</span><span class="text-[10px] font-mono text-cyan-400">' + escapeHtml(cur || '—') + '</span></div>'
@@ -1819,11 +1857,25 @@
               const delta = Number(c.priceDelta || c.surcharge || 0);
               const sel = cur === val;
               const pt = delta > 0 ? ' (+฿' + delta + ')' : '';
-              return '<div onclick="selectOption(\'' + escapeAttr(gid) + '\', \'' + escapeAttr(val) + '\')" class="option-chip px-3 py-1.5 rounded-xl border text-xs font-mono transition ' + (sel ? 'selected' : 'border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700') + '">' + escapeHtml(label) + '<span class="text-cyan-400/80 text-[10px]">' + pt + '</span></div>';
+              return '<button type="button" data-option-group="' + escapeAttr(gid) + '" data-option-value="' + escapeAttr(val) + '" class="option-chip px-3 py-1.5 rounded-xl border text-xs font-mono transition ' + (sel ? 'selected' : 'border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700') + '">' + escapeHtml(label) + '<span class="text-cyan-400/80 text-[10px]">' + pt + '</span></button>';
             }).join('') + '</div></div>';
       }).join('');
     }
-    window.selectOption = function(gid, val) { selectedOptions[gid] = val; renderPurchaseOptions(); updateBuyTotal(); };
+    window.selectOption = function(gid, val) {
+      selectedOptions[gid] = val;
+      renderPurchaseOptions();
+      updateBuyTotal();
+    };
+    // Event delegation for option chips
+    document.addEventListener('click', function(e) {
+      const chip = e.target.closest('[data-option-group]');
+      if (chip) {
+        e.preventDefault();
+        const gid = chip.getAttribute('data-option-group');
+        const val = chip.getAttribute('data-option-value');
+        selectOption(gid, val);
+      }
+    });
 
     function renderPurchaseModalFilamentChoices() {
       const fc = document.getElementById('buy-filament-options'); if (!fc) return;
@@ -1874,7 +1926,12 @@
       if (!currentConfiguredModel) return;
       const nEl = document.getElementById('buy-customer-name');
       const name = nEl.value.trim();
-      if (!name) { showFieldError('buy-customer-name', 'Name is required'); showToast('Please enter your name.', 'error'); nEl.focus(); return; }
+      if (!name || name.length < 2) {
+        showFieldError('buy-customer-name', 'Please enter at least 2 characters');
+        showToast('Please enter a valid name (2+ characters).', 'error');
+        nEl.focus();
+        return;
+      }
       localStorage.setItem('jj_last_name', name);
       const scale = document.getElementById('buy-scale-slider').value;
       const fil = filamentMap.get(selectedFilamentId) || filaments[0];
@@ -1913,6 +1970,12 @@
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
       orders.unshift(newOrder); rebuildMaps();
+      // Track this order as "mine"
+      try {
+        const myOrders = JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]');
+        myOrders.push(code);
+        localStorage.setItem('jj_my_orders_v1', JSON.stringify(myOrders.slice(-50)));
+      } catch (e) {}
       closePurchaseModal();
       showToast('Order placed! Tracking Code: ' + code);
       viewOrderTracking(code);
@@ -1941,7 +2004,6 @@
       if (st >= 1) pickupWrap.classList.remove('hidden');
       else pickupWrap.classList.add('hidden');
 
-      // Order items list
       const itemsWrap = document.getElementById('track-items-wrap');
       const itemsList = document.getElementById('track-items-list');
       const items = o.items || [];
@@ -2069,6 +2131,7 @@
         for (let j = 0; j < filaments.length; j++) {
           await verifiedUpsert('filaments', mapFilamentToDb(filaments[j], j), 'id', filaments[j].id);
         }
+        ownerSync();
       }
     };
 
@@ -2135,12 +2198,14 @@
         showToast('Added: ' + name);
       }
       closeAddFilamentModal();
+      if (backendClient) ownerSync();
     };
     window.toggleFilamentStock = async function(id) {
       const f = filamentMap.get(id); if (!f) return;
       f.inStock = !f.inStock; renderOwnerFilaments();
       await saveFilamentToDb(f);
       showToast('Stock updated: ' + f.name);
+      if (backendClient) ownerSync();
     };
     window.deleteFilament = async function(id) {
       filaments = filaments.filter(f => f.id !== id);
@@ -2181,6 +2246,7 @@
       renderOwnerCatalog(); renderShopGrid();
       await saveModelToDb(m);
       showToast(m.newArrival ? 'Marked as New Arrival: ' + m.title : 'Removed from New Arrivals: ' + m.title);
+      if (backendClient) ownerSync();
     };
 
     let currentModelImageData = '';
@@ -2390,6 +2456,7 @@
         showToast('Added: ' + title);
       }
       closeAddModelModal();
+      if (backendClient) ownerSync();
     };
     window.deleteCatalogModel = async function(id) {
       catalogModels = catalogModels.filter(m => m.id !== id);
@@ -2463,6 +2530,7 @@
       renderOwnerPortalOrders(); renderOwnerPortal();
       await saveOrderToDb(o);
       showToast('Order ' + code + ' → ' + sn[st]);
+      if (backendClient) ownerSync();
     };
     window.deleteOrder = async function(code) {
       orders = orders.filter(o => o.trackingCode !== code);
@@ -2473,8 +2541,6 @@
     };
 
     window.onload = function() {
-      const versionEl = document.getElementById('app-version');
-      if (versionEl) versionEl.innerText = APP_VERSION;
       loadCart();
       updateCartBadge();
       initBackend();
