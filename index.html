@@ -42,8 +42,11 @@
     .option-chip { cursor: pointer; user-select: none; }
     .option-chip.selected { border-color: #06b6d4 !important; background: rgba(8,145,178,.25) !important; color: #fff !important; }
 
-    .product-img-wrap { position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #0f172a; border-radius: 1rem 1rem 0 0; }
+    .product-img-wrap { position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #0f172a; border-radius: 1rem 1rem 0 0; cursor: pointer; }
     .product-img-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform, object-position; }
+    .product-img-wrap:hover img { filter: brightness(1.1); }
+    .product-img-wrap .zoom-hint { position: absolute; inset: 0; background: rgba(0,0,0,0); display: flex; align-items: center; justify-content: center; opacity: 0; transition: all .2s; }
+    .product-img-wrap:hover .zoom-hint { background: rgba(0,0,0,0.35); opacity: 1; }
     .img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(16,185,129,.08)); }
 
     #crop-canvas { position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #020617; border-radius: 1rem; cursor: grab; }
@@ -212,6 +215,23 @@
     .cart-table { width: 100%; font-family: 'Fira Code', monospace; font-size: 11px; }
     .cart-table th { text-align: left; padding: 8px; color: #64748b; text-transform: uppercase; font-size: 9px; letter-spacing: .05em; border-bottom: 1px solid rgba(255,255,255,.08); }
     .cart-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.04); }
+
+    /* Lightbox */
+    #lightbox { position: fixed; inset: 0; z-index: 90; background: rgba(2,6,23,.95); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+    #lightbox.active { display: flex; }
+    #lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 1rem; box-shadow: 0 0 60px rgba(6,182,212,.3); }
+    #lightbox .close-hint { position: absolute; top: 20px; right: 20px; color: #cbd5e1; font-size: 12px; font-family: 'Fira Code', monospace; display: flex; align-items: center; gap: 8px; }
+    #lightbox .close-hint button { background: rgba(15,23,42,.9); border: 1px solid rgba(255,255,255,.1); padding: 8px 14px; border-radius: .75rem; color: #fff; cursor: pointer; }
+    #lightbox .close-hint button:hover { background: rgba(6,182,212,.2); border-color: rgba(6,182,212,.4); }
+
+    /* Full image view (purchase modal) */
+    .buy-hero-img { width: 100%; height: 100%; object-fit: contain; background: #020617; }
+    .buy-hero-wrap { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #020617; overflow: hidden; }
+
+    /* Nested items table inside owner order row */
+    .order-items-table { width: 100%; font-family: 'Fira Code', monospace; font-size: 10px; margin-top: 6px; border-collapse: collapse; }
+    .order-items-table th { text-align: left; padding: 4px 6px; color: #64748b; font-size: 9px; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .order-items-table td { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.03); }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
@@ -233,8 +253,8 @@
 
           <div class="flex-1 min-w-0">
             <div id="sync-counts" class="flex flex-wrap items-center gap-2">
-              <span class="count-badge pending" data-badge="models"><span data-arrow="models">↑</span> <i class="fa-solid fa-cube"></i> <span data-count="models">0/0</span> models</span>
-              <span class="count-badge pending" data-badge="filaments"><span data-arrow="filaments">↑</span> <i class="fa-solid fa-palette"></i> <span data-count="filaments">0/0</span> filaments</span>
+              <span class="count-badge pending" data-badge="models"><span data-arrow="models">↓</span> <i class="fa-solid fa-cube"></i> <span data-count="models">0/0</span> models</span>
+              <span class="count-badge pending" data-badge="filaments"><span data-arrow="filaments">↓</span> <i class="fa-solid fa-palette"></i> <span data-count="filaments">0/0</span> filaments</span>
               <span class="count-badge pending" data-badge="orders"><span data-arrow="orders">↑</span> <i class="fa-solid fa-list-check"></i> <span data-count="orders">0/0</span> orders</span>
             </div>
             <div class="mt-2 w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
@@ -251,6 +271,15 @@
     </div>
   </div>
 
+  <!-- LIGHTBOX -->
+  <div id="lightbox" onclick="closeLightbox()">
+    <div class="close-hint">
+      <span>Click anywhere or press ESC to close</span>
+      <button onclick="event.stopPropagation(); closeLightbox();"><i class="fa-solid fa-xmark"></i> Close</button>
+    </div>
+    <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation();" />
+  </div>
+
   <!-- INITIAL BOOT LOADING -->
   <div id="global-loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl transition-opacity duration-300 hidden">
     <div class="relative w-24 h-24 mb-6">
@@ -261,8 +290,8 @@
       </div>
     </div>
     <div class="space-y-2 text-center max-w-md px-4">
-      <h2 id="loading-title" class="text-base font-black tracking-tight text-white font-mono uppercase">Startup Sync</h2>
-      <p id="loading-subtitle" class="text-xs text-slate-400 font-mono">Pushing local data &amp; pulling latest from server...</p>
+      <h2 id="loading-title" class="text-base font-black tracking-tight text-white font-mono uppercase">Loading Shop</h2>
+      <p id="loading-subtitle" class="text-xs text-slate-400 font-mono">Downloading latest from server...</p>
       <div id="loading-bar-container" class="w-48 h-1.5 bg-slate-900 rounded-full mx-auto overflow-hidden border border-slate-800 mt-3">
         <div id="loading-bar-fill" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-300 w-1/3"></div>
       </div>
@@ -385,6 +414,11 @@
           </div>
         </div>
 
+        <div id="track-items-wrap" class="pt-4 border-t border-slate-800 hidden">
+          <h4 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Order Items</h4>
+          <div id="track-items-list" class="space-y-2 text-xs font-mono"></div>
+        </div>
+
         <div id="pickup-message-wrap" class="hidden pt-4">
           <div class="pickup-card">
             <p class="text-[10px] font-mono uppercase tracking-widest text-cyan-300 text-center mb-2"><i class="fa-solid fa-location-dot"></i> Pickup Location</p>
@@ -468,7 +502,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs font-mono">
             <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider border-b border-slate-800">
-              <tr><th class="p-3">Tracking / Code</th><th class="p-3">Customer</th><th class="p-3">Model Item</th><th class="p-3">Options</th><th class="p-3">Stage</th><th class="p-3 text-right">Actions</th></tr>
+              <tr><th class="p-3">Tracking / Code</th><th class="p-3">Customer</th><th class="p-3">Order</th><th class="p-3">Stage</th><th class="p-3 text-right">Actions</th></tr>
             </thead>
             <tbody id="owner-orders-table-body" class="divide-y divide-slate-800/60"></tbody>
           </table>
@@ -479,7 +513,7 @@
 
   <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 mt-12 text-center text-xs text-slate-500 font-mono">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved) <span class="ml-2 text-cyan-400/70 font-bold">v21</span></p>
+      <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved) <span class="ml-2 text-cyan-400/70 font-bold">v22</span></p>
       <div class="flex items-center space-x-4">
         <button onclick="openQuickTrackModal()" class="hover:text-cyan-400 transition">Track Order</button>
         <button onclick="openOwnerPinModal()" class="hover:text-amber-400 transition">Owner Login</button>
@@ -554,7 +588,7 @@
             <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Clear</span>
           </button>
           <button onclick="checkoutCart()" id="checkout-btn" class="px-5 sm:px-8 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 flex items-center gap-2">
-            <i class="fa-solid fa-credit-card"></i> <span class="hidden sm:inline">Checkout All</span><span class="sm:hidden">Checkout</span>
+            <i class="fa-solid fa-credit-card"></i> <span class="hidden sm:inline">Checkout as One Order</span><span class="sm:hidden">Checkout</span>
           </button>
         </div>
       </div>
@@ -566,9 +600,9 @@
     <div class="full-menu-shell glass-panel flex flex-col md:flex-row overflow-hidden border border-slate-800 shadow-2xl">
       <div class="md:w-2/5 w-full flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40">
         <div class="relative w-full flex-1 min-h-[200px] overflow-hidden bg-slate-900">
-          <div id="buy-hero-image-wrap" class="product-img-wrap" style="border-radius:0;height:100%;aspect-ratio:auto;">
-            <img id="buy-hero-image" src="" alt="" style="display:none;" />
-            <div id="buy-hero-placeholder" class="img-placeholder"><i class="fa-solid fa-cube text-6xl text-cyan-400/40"></i></div>
+          <div id="buy-hero-image-wrap" class="buy-hero-wrap">
+            <img id="buy-hero-image" src="" alt="" class="buy-hero-img" style="display:none;cursor:pointer;" onclick="openLightbox(this.src)" />
+            <div id="buy-hero-placeholder" class="img-placeholder" style="background:linear-gradient(135deg, rgba(6,182,212,.05), rgba(16,185,129,.05));"><i class="fa-solid fa-cube text-6xl text-cyan-400/40"></i></div>
           </div>
           <button onclick="closePurchaseModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center backdrop-blur">
             <i class="fa-solid fa-xmark"></i>
@@ -865,7 +899,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v21';
+    const APP_VERSION = 'v22';
 
     const BACKEND_URL = "https://evqycmmnqnvfppcnxscr.supabase.co";
     const BACKEND_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cXljbW1ucW52ZnBwY254c2NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjAzMDIsImV4cCI6MjEwNTkzNjMwMn0.G704LYY5gNkLXn6CaKrCssSxw_h0bcFb5mGBWk7ZqMw";
@@ -888,8 +922,8 @@
     let syncState = {
       active: false,
       counts: {
-        models:    { done: 0, total: 0, failed: 0, dir: 'push' },
-        filaments: { done: 0, total: 0, failed: 0, dir: 'push' },
+        models:    { done: 0, total: 0, failed: 0, dir: 'pull' },
+        filaments: { done: 0, total: 0, failed: 0, dir: 'pull' },
         orders:    { done: 0, total: 0, failed: 0, dir: 'push' }
       }
     };
@@ -1017,6 +1051,9 @@
       let selected = {};
       if (row.selected_options && typeof row.selected_options === 'object') selected = row.selected_options;
       else selected = safeParse(row.selected_options, {});
+      let items = [];
+      if (Array.isArray(row.items)) items = row.items;
+      else if (typeof row.items === 'string') items = safeParse(row.items, []);
       return {
         trackingCode: row.tracking_code || row.trackingCode,
         customerName: row.customer_name || row.customerName,
@@ -1025,6 +1062,7 @@
         specs: row.specs, printerName: row.printer_name || row.printerName,
         stage: Number(row.stage || 0),
         logs, selectedOptions: selected,
+        items: items,
         createdAt: row.created_at || row.createdAt
       };
     }
@@ -1035,6 +1073,7 @@
         model_icon: o.modelIcon, specs: o.specs, printer_name: o.printerName,
         stage: o.stage, logs: o.logs,
         selected_options: o.selectedOptions || {},
+        items: o.items || [],
         created_at: o.createdAt
       };
     }
@@ -1063,12 +1102,30 @@
         modelTitle: 'Articulated Crystal Dragon', modelIcon: 'fa-dragon',
         specs: 'Silk Neon Cyan PLA | 100% Scale (฿250)', printerName: 'Bambu Lab A2L',
         stage: 1, logs: ['▶ Order created.', '▶ Material loaded: Silk Neon Cyan PLA.', '▶ First layer calibration complete.'],
-        selectedOptions: {}, createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        selectedOptions: {}, items: [], createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       }];
       selectedFilamentId = filaments[0] ? filaments[0].id : null;
       rebuildMaps();
     }
 
+    // ============================================================
+    // LIGHTBOX
+    // ============================================================
+    window.openLightbox = function(src) {
+      if (!src) return;
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+    window.closeLightbox = function() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    };
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+    // ============================================================
+    // CART
+    // ============================================================
     function saveCart() {
       try { localStorage.setItem('jj_cart_v1', JSON.stringify(cart)); } catch(e) {}
     }
@@ -1105,7 +1162,7 @@
         return;
       }
       const totalItems = cart.reduce((s, i) => s + i.qty, 0);
-      subtitle.innerText = totalItems + ' item' + (totalItems !== 1 ? 's' : '');
+      subtitle.innerText = totalItems + ' item' + (totalItems !== 1 ? 's' : '') + ' (one order)';
       const totalPrice = cart.reduce((s, i) => s + (i.unitPrice * i.qty), 0);
       totalEl.innerText = '฿' + totalPrice;
       container.innerHTML = cart.map(item => {
@@ -1182,6 +1239,7 @@
       closePurchaseModal();
     };
 
+    // CHECKOUT AS ONE ORDER
     window.checkoutCart = async function() {
       if (cart.length === 0) { showToast('Cart is empty.', 'error'); return; }
       const nameEl = document.getElementById('buy-customer-name');
@@ -1194,47 +1252,72 @@
       localStorage.setItem('jj_last_name', customerName);
 
       closeCartModal();
-      showSyncBanner('Placing Order', 'Creating ' + cart.length + ' order(s)...');
+      showSyncBanner('Placing Order', 'Creating one order with ' + cart.length + ' item(s)...');
       syncState.active = true;
 
+      const code = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
       const printers = ['Bambu Lab A2L', 'Bambu Lab A1 Mini'];
-      const createdCodes = [];
-      let failed = 0;
+      const printer = printers[Math.floor(Math.random() * printers.length)];
+      const totalPrice = cart.reduce((s, i) => s + (i.unitPrice * i.qty), 0);
+      const totalQty = cart.reduce((s, i) => s + i.qty, 0);
 
-      for (const item of cart) {
-        for (let q = 0; q < item.qty; q++) {
-          const code = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
-          const printer = printers[Math.floor(Math.random() * printers.length)];
-          const newOrder = {
-            trackingCode: code, customerName,
-            modelTitle: item.title,
-            modelIcon: item.icon || 'fa-cube',
-            specs: item.filamentName + ' | ' + item.scale + '% Scale (฿' + item.unitPrice + ')',
-            printerName: printer, stage: 0, selectedOptions: item.options || {},
-            logs: [
-              '▶ Order created for ' + customerName + ' (฿' + item.unitPrice + ').',
-              '▶ Filament selected: ' + item.filamentName + '.',
-              '▶ Assigned to physical machine: ' + printer + '.'
-            ].concat(Object.keys(item.options || {}).length > 0 ? ['▶ Options: ' + Object.keys(item.options).map(k => k + '=' + item.options[k]).join(', ')] : []),
-            createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
-          };
-          orders.unshift(newOrder);
-          try {
-            await saveOrderToDb(newOrder);
-            createdCodes.push(code);
-          } catch (e) { failed++; }
+      // Build items array (each entry = one physical piece)
+      const orderItems = [];
+      cart.forEach(cartItem => {
+        for (let q = 0; q < cartItem.qty; q++) {
+          orderItems.push({
+            title: cartItem.title,
+            icon: cartItem.icon,
+            filamentName: cartItem.filamentName,
+            filamentColor: cartItem.filamentColor,
+            scale: cartItem.scale,
+            options: cartItem.options,
+            unitPrice: cartItem.unitPrice
+          });
         }
-      }
+      });
+
+      // Short summary title
+      const uniqueTitles = [...new Set(cart.map(c => c.title))];
+      const summaryTitle = uniqueTitles.length === 1
+        ? uniqueTitles[0] + (totalQty > 1 ? ' ×' + totalQty : '')
+        : uniqueTitles.length + ' models (' + totalQty + ' items)';
+
+      const specsSummary = cart.map(c => c.title + ' ×' + c.qty + ' (' + c.filamentName + ', ' + c.scale + '%)').join(' | ');
+
+      const newOrder = {
+        trackingCode: code,
+        customerName,
+        modelTitle: summaryTitle,
+        modelIcon: cart[0].icon || 'fa-cube',
+        specs: specsSummary,
+        printerName: printer,
+        stage: 0,
+        selectedOptions: {},
+        items: orderItems,
+        logs: [
+          '▶ Order created for ' + customerName + ' (฿' + totalPrice + ') — ' + totalQty + ' item(s).',
+          '▶ Assigned to physical machine: ' + printer + '.'
+        ],
+        createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+      };
+
+      orders.unshift(newOrder);
+      let failed = false;
+      try {
+        await saveOrderToDb(newOrder);
+      } catch (e) { failed = true; }
       rebuildMaps();
+
       cart = []; saveCart(); updateCartBadge(); renderOwnerCartTable();
 
-      finalizeSyncBanner(failed === 0, failed, 'Order Placed');
-      if (failed === 0) {
-        showToast('Placed ' + createdCodes.length + ' order(s)! Last code: ' + createdCodes[createdCodes.length - 1]);
-        if (createdCodes.length > 0) viewOrderTracking(createdCodes[createdCodes.length - 1]);
+      finalizeSyncBanner(!failed, failed ? 1 : 0, 'Order Placed');
+      if (!failed) {
+        showToast('Order placed! Tracking Code: ' + code);
+        viewOrderTracking(code);
         customerSync();
       } else {
-        showToast(failed + ' order(s) failed to sync.', 'error');
+        showToast('Order failed to sync.', 'error');
       }
     };
 
@@ -1322,8 +1405,9 @@
       if (icon) icon.className = state === 'busy' ? 'fa-solid fa-arrows-rotate fa-spin' : (state === 'failed' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-arrows-rotate');
     }
 
+    // STARTUP: pull models + filaments, push orders only
     async function initBackend() {
-      showLoading('Startup Sync', 'Pushing local data & pulling latest from server...');
+      showLoading('Loading Shop', 'Downloading latest from server...');
       setSyncPill('busy', 'Connecting');
       try {
         if (window.supabase && window.supabase.createClient) {
@@ -1331,33 +1415,37 @@
         } else throw new Error('Backend library failed to load');
 
         const ok = await fetchAllData();
-        if (!ok) {
-          setSyncPill('err', 'Error');
-          return;
-        }
+        if (!ok) { setSyncPill('err', 'Error'); return; }
 
-        showSyncBanner('Startup Sync', 'Syncing everything with the server...');
+        // Show startup sync banner
+        showSyncBanner('Startup Sync', 'Downloading models & filaments, uploading orders...');
         syncState.counts = {
-          models:    { done: 0, total: catalogModels.length, failed: 0, dir: 'push' },
-          filaments: { done: 0, total: filaments.length, failed: 0, dir: 'push' },
+          models:    { done: 0, total: 0, failed: 0, dir: 'pull' },
+          filaments: { done: 0, total: 0, failed: 0, dir: 'pull' },
           orders:    { done: 0, total: orders.length, failed: 0, dir: 'push' }
         };
         renderSyncCounts();
 
         let totalFailed = 0;
 
-        for (let i = 0; i < catalogModels.length; i++) {
-          const m = catalogModels[i];
-          const res = await verifiedUpsert('catalog_models', mapModelToDb(m), 'id', m.id);
-          if (res.ok) setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed, 'push');
-          else { syncState.counts.models.failed++; totalFailed++; setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed, 'push'); }
-        }
-        for (let i = 0; i < filaments.length; i++) {
-          const f = filaments[i];
-          const res = await verifiedUpsert('filaments', mapFilamentToDb(f, i), 'id', f.id);
-          if (res.ok) setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed, 'push');
-          else { syncState.counts.filaments.failed++; totalFailed++; setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed, 'push'); }
-        }
+        // PULL models
+        try {
+          const { data: dbModels, error } = await backendClient.from('catalog_models').select('*');
+          if (error) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
+          else if (dbModels) { catalogModels = dbModels.map(mapModelFromDb); setSyncCounts('models', dbModels.length, dbModels.length, 0, 'pull'); }
+        } catch (e) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
+
+        // PULL filaments
+        try {
+          const { data: dbFilaments, error } = await backendClient.from('filaments').select('*');
+          if (error) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
+          else if (dbFilaments) {
+            filaments = dbFilaments.map(mapFilamentFromDb).sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name));
+            setSyncCounts('filaments', dbFilaments.length, dbFilaments.length, 0, 'pull');
+          }
+        } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
+
+        // PUSH orders
         for (let i = 0; i < orders.length; i++) {
           const o = orders[i];
           const res = await verifiedUpsert('orders', mapOrderToDb(o), 'tracking_code', o.trackingCode);
@@ -1365,7 +1453,8 @@
           else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push'); }
         }
 
-        await fetchAllData();
+        rebuildMaps(); renderCategoryPills(); renderShopGrid();
+        if (!selectedFilamentId && filaments.length > 0) selectedFilamentId = filaments[0].id;
 
         setupRealtimeSubscriptions();
         hideLoading();
@@ -1449,12 +1538,13 @@
       return { ok: false, attempts: maxAttempts, error: lastError };
     }
 
+    // CUSTOMER SYNC — pull models & filaments, push orders only
     window.customerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
 
       setSyncPill('busy', 'Syncing');
-      showSyncBanner('Syncing My Order', 'Uploading your order & downloading latest shop data...');
+      showSyncBanner('Syncing My Order', 'Uploading your orders & downloading latest shop data...');
 
       syncState.counts = {
         models:    { done: 0, total: 0, failed: 0, dir: 'pull' },
@@ -1494,6 +1584,7 @@
       else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
     };
 
+    // OWNER SYNC — full push
     window.ownerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
@@ -1608,7 +1699,11 @@
       const c = model.imageCrop || defaultCrop();
       const aspect = c.aspect || '4/3';
       const style = 'object-position: ' + (c.x || 50) + '% ' + (c.y || 50) + '%; transform: scale(' + ((c.zoom || 100) / 100) + '); transform-origin: ' + (c.x || 50) + '% ' + (c.y || 50) + '%;';
-      return '<div class="product-img-wrap" style="aspect-ratio:' + aspect + ';"><img src="' + escapeAttr(model.imageUrl) + '" alt="' + escapeAttr(model.title) + '" style="' + style + '" /></div>';
+      const imgSrcAttr = escapeAttr(model.imageUrl);
+      return '<div class="product-img-wrap" style="aspect-ratio:' + aspect + ';" onclick="openLightbox(\'' + imgSrcAttr + '\')">'
+        + '<img src="' + imgSrcAttr + '" alt="' + escapeAttr(model.title) + '" style="' + style + '" />'
+        + '<div class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus text-white text-2xl"></i></div>'
+        + '</div>';
     }
 
     window.renderCategoryPills = function() {
@@ -1686,14 +1781,12 @@
       const heroImg = document.getElementById('buy-hero-image');
       const heroPh = document.getElementById('buy-hero-placeholder');
       if (m.imageUrl) {
-        const c = m.imageCrop || defaultCrop();
-        heroImg.src = m.imageUrl; heroImg.style.display = 'block';
-        heroImg.style.objectPosition = (c.x || 50) + '% ' + (c.y || 50) + '%';
-        heroImg.style.transform = 'scale(' + ((c.zoom || 100) / 100) + ')';
-        heroImg.style.transformOrigin = (c.x || 50) + '% ' + (c.y || 50) + '%';
+        heroImg.src = m.imageUrl;
+        heroImg.style.display = 'block';
         heroPh.style.display = 'none';
       } else {
-        heroImg.style.display = 'none'; heroPh.style.display = 'flex';
+        heroImg.style.display = 'none';
+        heroPh.style.display = 'flex';
         heroPh.innerHTML = '<i class="fa-solid ' + (m.icon || 'fa-cube') + ' text-6xl text-cyan-400/40"></i>';
       }
       document.getElementById('buy-scale-slider').value = 100;
@@ -1803,6 +1896,15 @@
         modelIcon: currentConfiguredModel.icon || 'fa-cube',
         specs: fil.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
         printerName: printer, stage: 0, selectedOptions: humanOpts,
+        items: [{
+          title: currentConfiguredModel.title,
+          icon: currentConfiguredModel.icon || 'fa-cube',
+          filamentName: fil.name,
+          filamentColor: fil.color,
+          scale: scale,
+          options: humanOpts,
+          unitPrice: finalPrice
+        }],
         logs: [
           '▶ Order created for ' + name + ' (฿' + finalPrice + ').',
           '▶ Filament selected: ' + fil.name + ' (+฿' + fil.surcharge + ').',
@@ -1836,15 +1938,39 @@
           : 'w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all';
       }
       const pickupWrap = document.getElementById('pickup-message-wrap');
-      if (st >= 2) pickupWrap.classList.remove('hidden');
+      if (st >= 1) pickupWrap.classList.remove('hidden');
       else pickupWrap.classList.add('hidden');
+
+      // Order items list
+      const itemsWrap = document.getElementById('track-items-wrap');
+      const itemsList = document.getElementById('track-items-list');
+      const items = o.items || [];
+      if (items.length > 0) {
+        itemsWrap.classList.remove('hidden');
+        itemsList.innerHTML = items.map((it, i) =>
+          '<div class="flex items-center gap-3 p-3 bg-slate-950/60 border border-slate-800 rounded-xl">'
+          + '<span class="text-cyan-400 font-bold w-6 text-center">' + (i + 1) + '.</span>'
+          + '<i class="fa-solid ' + (it.icon || 'fa-cube') + ' text-cyan-400"></i>'
+          + '<div class="flex-1 min-w-0">'
+          + '<div class="text-white font-bold truncate">' + escapeHtml(it.title) + '</div>'
+          + '<div class="text-[10px] text-slate-400 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:' + (it.filamentColor || '#64748b') + '"></span> ' + escapeHtml(it.filamentName || '') + ' · ' + (it.scale || 100) + '%'
+          + (it.options && Object.keys(it.options).length > 0 ? ' · ' + Object.keys(it.options).map(k => escapeHtml(k) + '=' + escapeHtml(it.options[k])).join(', ') : '')
+          + '</div></div>'
+          + '<span class="text-emerald-400 font-bold">฿' + (it.unitPrice || 0) + '</span>'
+          + '</div>'
+        ).join('');
+      } else {
+        itemsWrap.classList.add('hidden');
+        itemsList.innerHTML = '';
+      }
+
       const ll = document.getElementById('audit-log-list');
       if (ll) ll.innerHTML = o.logs.map(l => '<li>' + escapeHtml(l) + '</li>').join('');
       const oSec = document.getElementById('track-selected-options');
       const oList = document.getElementById('track-selected-options-list');
       const so = o.selectedOptions || {};
       const keys = Object.keys(so);
-      if (keys.length > 0) {
+      if (keys.length > 0 && items.length === 0) {
         oSec.classList.remove('hidden');
         oList.innerHTML = keys.map(k => '<span class="px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"><i class="fa-solid fa-circle-check text-[10px] mr-1"></i> ' + escapeHtml(k) + ': <strong class="text-white">' + escapeHtml(so[k]) + '</strong></span>').join('');
       } else { oSec.classList.add('hidden'); oList.innerHTML = ''; }
@@ -2282,24 +2408,47 @@
       const s = (document.getElementById('owner-search-input') || {}).value || '';
       const search = s.toLowerCase();
       const f = orders.filter(o => o.trackingCode.toLowerCase().includes(search) || (o.customerName || '').toLowerCase().includes(search) || (o.modelTitle || '').toLowerCase().includes(search));
-      if (f.length === 0) { tb.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">No customer orders found.</td></tr>'; return; }
+      if (f.length === 0) { tb.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-500">No customer orders found.</td></tr>'; return; }
       const sn = ['Received', 'Printing', 'Packaged', 'Ready for Pickup'];
       tb.innerHTML = f.map(o => {
         const st = Math.max(0, Math.min(3, o.stage));
-        const so = o.selectedOptions || {};
-        const optHtml = Object.keys(so).length > 0
-          ? Object.keys(so).map(k => '<span class="inline-block bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] px-2 py-0.5 rounded-md mr-1 mb-1">' + escapeHtml(k) + ': <strong class="text-white">' + escapeHtml(so[k]) + '</strong></span>').join('')
-          : '<span class="text-slate-600 italic">None</span>';
+        const items = o.items || [];
+        let itemsHtml = '';
+        if (items.length > 0) {
+          itemsHtml = '<table class="order-items-table">'
+            + '<thead><tr><th>Item</th><th>Filament</th><th>Scale</th><th>Options</th><th class="text-right">Price</th></tr></thead>'
+            + '<tbody>'
+            + items.map(it => {
+                const optStr = (it.options && Object.keys(it.options).length > 0)
+                  ? Object.keys(it.options).map(k => escapeHtml(k) + '=' + escapeHtml(it.options[k])).join(', ')
+                  : '—';
+                return '<tr>'
+                  + '<td class="text-white font-bold"><i class="fa-solid ' + (it.icon || 'fa-cube') + ' text-cyan-400 mr-1"></i> ' + escapeHtml(it.title) + '</td>'
+                  + '<td><span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:' + (it.filamentColor || '#64748b') + '"></span> ' + escapeHtml(it.filamentName || '') + '</span></td>'
+                  + '<td class="text-cyan-300">' + (it.scale || 100) + '%</td>'
+                  + '<td class="text-slate-400">' + optStr + '</td>'
+                  + '<td class="text-right text-emerald-400">฿' + (it.unitPrice || 0) + '</td>'
+                  + '</tr>';
+              }).join('')
+            + '</tbody></table>';
+        } else {
+          const so = o.selectedOptions || {};
+          const optHtml = Object.keys(so).length > 0
+            ? Object.keys(so).map(k => '<span class="inline-block bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] px-2 py-0.5 rounded-md mr-1 mb-1">' + escapeHtml(k) + ': <strong class="text-white">' + escapeHtml(so[k]) + '</strong></span>').join('')
+            : '<span class="text-slate-600 italic">None</span>';
+          itemsHtml = '<div class="text-[10px] text-slate-500 mb-1">' + escapeHtml(o.specs) + '</div>' + optHtml;
+        }
+        const total = items.reduce((s, it) => s + (it.unitPrice || 0), 0);
+        const totalHtml = items.length > 0 ? '<div class="text-[10px] text-emerald-400 font-bold mt-1">Total: ฿' + total + ' · ' + items.length + ' piece' + (items.length > 1 ? 's' : '') + '</div>' : '';
         const optionsHtml = sn.map((name, i) =>
           '<option value="' + i + '"' + (i === st ? ' selected' : '') + '>' + (i + 1) + '. ' + name + '</option>'
         ).join('');
         return '<tr class="hover:bg-slate-900/60 transition">'
-          + '<td class="p-3 font-bold text-cyan-400">' + o.trackingCode + '</td>'
-          + '<td class="p-3"><span class="text-white block font-bold">' + escapeHtml(o.customerName) + '</span></td>'
-          + '<td class="p-3 text-slate-200"><span class="flex items-center gap-1.5 font-bold"><i class="fa-solid ' + (o.modelIcon || 'fa-cube') + ' text-cyan-400"></i> ' + escapeHtml(o.modelTitle) + '</span><span class="text-[10px] text-slate-500">' + escapeHtml(o.specs) + '</span></td>'
-          + '<td class="p-3 text-[11px] text-slate-400 max-w-xs">' + optHtml + '</td>'
-          + '<td class="p-3"><select class="stage-select s' + st + '" onchange="changeOrderStage(\'' + o.trackingCode + '\', this.value)">' + optionsHtml + '</select></td>'
-          + '<td class="p-3 text-right">'
+          + '<td class="p-3 font-bold text-cyan-400 align-top">' + o.trackingCode + '</td>'
+          + '<td class="p-3 align-top"><span class="text-white block font-bold">' + escapeHtml(o.customerName) + '</span></td>'
+          + '<td class="p-3 text-slate-200">' + itemsHtml + totalHtml + '</td>'
+          + '<td class="p-3 align-top"><select class="stage-select s' + st + '" onchange="changeOrderStage(\'' + o.trackingCode + '\', this.value)">' + optionsHtml + '</select></td>'
+          + '<td class="p-3 text-right align-top">'
           + '<button onclick="deleteOrder(\'' + o.trackingCode + '\')" class="p-1.5 text-slate-500 hover:text-rose-400 transition" title="Delete order"><i class="fa-solid fa-trash-can"></i></button>'
           + '</td></tr>';
       }).join('');
