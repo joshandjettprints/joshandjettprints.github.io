@@ -653,6 +653,7 @@
                 <button type="button" onclick="clearModelImage()" class="px-3 py-2 rounded-xl bg-slate-800/60 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-mono transition"><i class="fa-solid fa-trash-can"></i></button>
                 <button type="button" onclick="resetCrop()" class="px-3 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-mono transition"><i class="fa-solid fa-arrows-to-dot"></i> Reset</button>
               </div>
+              <div id="upload-status" class="mt-2 text-[10px] font-mono text-slate-400"></div>
             </div>
             <div class="space-y-3">
               <div>
@@ -759,17 +760,11 @@
   </div>
 
   <script>
-    // ============================================================
-    // CONFIG
-    // ============================================================
     const IMGBB_API_KEY = "1903836c7d3439d764613e772d95d741";
     const COL_MODELS = 'catalog_models';
     const COL_FILAMENTS = 'filaments';
     const COL_ORDERS = 'orders';
 
-    // ============================================================
-    // STATE
-    // ============================================================
     let catalogModels = [];
     let filaments = [];
     let orders = [];
@@ -812,9 +807,6 @@
       if (!fbReady) setTimeout(pollForFirebase, 50);
     })();
 
-    // ============================================================
-    // FIREBASE HELPERS
-    // ============================================================
     async function readCollection(name) {
       const snap = await firebase.getDocs(firebase.collection(firebase.db, name));
       const out = [];
@@ -855,14 +847,13 @@
     // IMGBB UPLOAD
     // ============================================================
     async function uploadToImgbb(base64Data) {
-      // Strip data:image/xxx;base64, prefix
       const base64Only = base64Data.replace(/^data:image\/\w+;base64,/, '');
       const formData = new FormData();
       formData.append('key', IMGBB_API_KEY);
       formData.append('image', base64Only);
       const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error?.message || 'imgbb upload failed');
+      if (!data.success) throw new Error((data.error && data.error.message) || 'imgbb upload failed');
       return data.data.url;
     }
 
@@ -942,9 +933,6 @@
       setTimeout(() => { hideSyncBanner(); }, success ? 2500 : 6000);
     }
 
-    // ============================================================
-    // DATA MAPPING
-    // ============================================================
     function defaultCrop() { return { x: 50, y: 50, zoom: 100, aspect: '4/3' }; }
 
     function normalizeModel(row) {
@@ -1021,9 +1009,6 @@
       rebuildMaps();
     }
 
-    // ============================================================
-    // BACKEND BOOT
-    // ============================================================
     async function initBackend() {
       showLoading('Loading Shop', 'Connecting to Firebase...');
       setSyncPill('busy', 'Connecting');
@@ -1034,15 +1019,11 @@
           readCollection(COL_FILAMENTS),
           readCollection(COL_ORDERS)
         ]);
-
         if (modelsRaw.length > 0) catalogModels = modelsRaw.map(normalizeModel);
         else { loadDefaultInMemoryData(); await bulkWrite(COL_MODELS, catalogModels.map(m => ({ ...m })), m => m.id); }
-
         if (filamentsRaw.length > 0) filaments = filamentsRaw.map(normalizeFilament).sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name));
         else { if (filaments.length === 0) loadDefaultInMemoryData(); await bulkWrite(COL_FILAMENTS, filaments.map(f => ({ ...f })), f => f.id); }
-
         if (ordersRaw.length > 0) orders = ordersRaw.map(normalizeOrder);
-
         if (!selectedFilamentId && filaments.length > 0) selectedFilamentId = filaments[0].id;
         rebuildMaps(); renderCategoryPills(); renderShopGrid();
         hideLoading(); handleHashNavigation();
@@ -1079,15 +1060,11 @@
       } catch (e) {}
     }
 
-    // ============================================================
-    // CUSTOMER SYNC — pull all, push only MY orders
-    // ============================================================
     window.customerSync = async function() {
       if (!firebase || !firebase.db) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
       setSyncPill('busy', 'Syncing');
       showSyncBanner('Syncing My Order', 'Uploading my orders & downloading latest shop data...');
-
       syncState.counts = {
         models:    { done: 0, total: 0, failed: 0, dir: 'pull' },
         filaments: { done: 0, total: 0, failed: 0, dir: 'pull' },
@@ -1095,48 +1072,30 @@
       };
       renderSyncCounts();
       let totalFailed = 0;
-
-      try {
-        const arr = await readCollection(COL_MODELS);
-        catalogModels = arr.map(normalizeModel);
-        setSyncCounts('models', arr.length, arr.length, 0, 'pull');
-      } catch (e) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
-
-      try {
-        const arr = await readCollection(COL_FILAMENTS);
-        filaments = arr.map(normalizeFilament).sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name));
-        setSyncCounts('filaments', arr.length, arr.length, 0, 'pull');
-      } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
-
+      try { const arr = await readCollection(COL_MODELS); catalogModels = arr.map(normalizeModel); setSyncCounts('models', arr.length, arr.length, 0, 'pull'); }
+      catch (e) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
+      try { const arr = await readCollection(COL_FILAMENTS); filaments = arr.map(normalizeFilament).sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name)); setSyncCounts('filaments', arr.length, arr.length, 0, 'pull'); }
+      catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
       let mySet = new Set();
       try { mySet = new Set(JSON.parse(localStorage.getItem('jj_my_orders_v1') || '[]')); } catch(e) {}
       const myOrdersList = orders.filter(o => mySet.has(o.trackingCode));
       syncState.counts.orders.total = myOrdersList.length;
       renderSyncCounts();
-
       for (let i = 0; i < myOrdersList.length; i++) {
-        try {
-          await writeDoc(COL_ORDERS, myOrdersList[i].trackingCode, myOrdersList[i]);
-          setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push');
-        } catch (e) { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push'); }
+        try { await writeDoc(COL_ORDERS, myOrdersList[i].trackingCode, myOrdersList[i]); setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push'); }
+        catch (e) { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push'); }
       }
-
       rebuildMaps(); renderCategoryPills(); renderShopGrid();
       if (activeView === 'owner') renderOwnerPortal();
-
       if (totalFailed === 0) { setSyncPill('ok', 'Synced'); finalizeSyncBanner(true, 0, 'Order Synced'); }
       else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
     };
 
-    // ============================================================
-    // OWNER SYNC — full push
-    // ============================================================
     window.ownerSync = async function() {
       if (!firebase || !firebase.db) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
       setSyncPill('busy', 'Syncing');
       showSyncBanner('Owner Sync', 'Pushing catalog, filaments & orders...');
-
       syncState.counts = {
         models:    { done: 0, total: catalogModels.length, failed: 0, dir: 'push' },
         filaments: { done: 0, total: filaments.length, failed: 0, dir: 'push' },
@@ -1144,29 +1103,16 @@
       };
       renderSyncCounts();
       let totalFailed = 0;
-
-      try {
-        await bulkWrite(COL_MODELS, catalogModels.map(m => ({ ...m })), m => m.id);
-        setSyncCounts('models', catalogModels.length, catalogModels.length, 0, 'push');
-      } catch (e) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, catalogModels.length, 1, 'push'); }
-
-      try {
-        await bulkWrite(COL_FILAMENTS, filaments.map(f => ({ ...f })), f => f.id);
-        setSyncCounts('filaments', filaments.length, filaments.length, 0, 'push');
-      } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, filaments.length, 1, 'push'); }
-
-      try {
-        await bulkWrite(COL_ORDERS, orders.map(o => ({ ...o })), o => o.trackingCode);
-        setSyncCounts('orders', orders.length, orders.length, 0, 'push');
-      } catch (e) { syncState.counts.orders.failed = 1; totalFailed++; setSyncCounts('orders', 0, orders.length, 1, 'push'); }
-
+      try { await bulkWrite(COL_MODELS, catalogModels.map(m => ({ ...m })), m => m.id); setSyncCounts('models', catalogModels.length, catalogModels.length, 0, 'push'); }
+      catch (e) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, catalogModels.length, 1, 'push'); }
+      try { await bulkWrite(COL_FILAMENTS, filaments.map(f => ({ ...f })), f => f.id); setSyncCounts('filaments', filaments.length, filaments.length, 0, 'push'); }
+      catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, filaments.length, 1, 'push'); }
+      try { await bulkWrite(COL_ORDERS, orders.map(o => ({ ...o })), o => o.trackingCode); setSyncCounts('orders', orders.length, orders.length, 0, 'push'); }
+      catch (e) { syncState.counts.orders.failed = 1; totalFailed++; setSyncCounts('orders', 0, orders.length, 1, 'push'); }
       if (totalFailed === 0) { setSyncPill('ok', 'Synced'); finalizeSyncBanner(true, 0, 'Owner Sync Complete'); showToast('Owner sync complete!'); }
       else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
     };
 
-    // ============================================================
-    // DB WRITE HELPERS
-    // ============================================================
     window.saveModelToDb = async function(model) {
       if (!firebase || !firebase.db) return;
       try { await writeDoc(COL_MODELS, model.id, { ...model }); } catch (e) {}
@@ -1192,19 +1138,13 @@
       try { await deleteDocById(COL_ORDERS, code); } catch (e) {}
     };
 
-    // ============================================================
-    // WIPE & RESET
-    // ============================================================
     window.openWipeModal = function() {
       document.getElementById('wipe-confirm-input').value = '';
       document.getElementById('modal-wipe').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       setTimeout(() => document.getElementById('wipe-confirm-input').focus(), 100);
     };
-    window.closeWipeModal = function() {
-      document.getElementById('modal-wipe').classList.add('hidden');
-      document.body.style.overflow = '';
-    };
+    window.closeWipeModal = function() { document.getElementById('modal-wipe').classList.add('hidden'); document.body.style.overflow = ''; };
     window.executeWipe = async function() {
       const typed = document.getElementById('wipe-confirm-input').value.trim();
       const phrase = 'i want to delete all my progress and restart from beginning!';
@@ -1222,11 +1162,7 @@
         const mIds = []; mS.forEach(d => mIds.push(d.id));
         const fIds = []; fS.forEach(d => fIds.push(d.id));
         const oIds = []; oS.forEach(d => oIds.push(d.id));
-        await Promise.all([
-          bulkDelete(COL_MODELS, mIds),
-          bulkDelete(COL_FILAMENTS, fIds),
-          bulkDelete(COL_ORDERS, oIds)
-        ]);
+        await Promise.all([ bulkDelete(COL_MODELS, mIds), bulkDelete(COL_FILAMENTS, fIds), bulkDelete(COL_ORDERS, oIds) ]);
         const dm = getDefaultModels(), df = getDefaultFilaments(), dou = getDefaultOrders();
         await bulkWrite(COL_MODELS, dm, m => m.id);
         await bulkWrite(COL_FILAMENTS, df, f => f.id);
@@ -1242,9 +1178,6 @@
       } catch (e) { finalizeSyncBanner(false, 1); showToast('Wipe failed: ' + e.message, 'error'); }
     };
 
-    // ============================================================
-    // UI HELPERS
-    // ============================================================
     window.showToast = function(message, type = 'success') {
       const c = document.getElementById('toast-container'); if (!c) return;
       const t = document.createElement('div');
@@ -1254,7 +1187,7 @@
       t.innerHTML = '<i class="fa-solid ' + ic + ' text-base"></i><span class="flex-grow">' + message + '</span>';
       c.appendChild(t);
       setTimeout(() => t.classList.remove('translate-y-2', 'opacity-0'), 10);
-      setTimeout(() => { t.classList.add('translate-y-2', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
+      setTimeout(() => { t.classList.add('translate-y-2', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 4000);
     };
     window.showLoading = function(title, subtitle = 'Loading...') {
       const s = document.getElementById('global-loading-screen'); if (!s) return;
@@ -1311,15 +1244,9 @@
       document.getElementById('lightbox').classList.add('active');
       document.body.style.overflow = 'hidden';
     };
-    window.closeLightbox = function() {
-      document.getElementById('lightbox').classList.remove('active');
-      document.body.style.overflow = '';
-    };
+    window.closeLightbox = function() { document.getElementById('lightbox').classList.remove('active'); document.body.style.overflow = ''; };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
 
-    // ============================================================
-    // CART
-    // ============================================================
     function saveCart() { try { localStorage.setItem('jj_cart_v1', JSON.stringify(cart)); } catch(e) {} }
     function loadCart() {
       try { const raw = localStorage.getItem('jj_cart_v1'); if (raw) cart = JSON.parse(raw) || []; } catch(e) { cart = []; }
@@ -1331,15 +1258,8 @@
       if (totalItems > 0) { badge.classList.remove('empty'); badge.innerText = totalItems > 99 ? '99+' : String(totalItems); }
       else { badge.classList.add('empty'); badge.innerText = '0'; }
     };
-    window.openCartModal = function() {
-      document.getElementById('modal-cart').classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-      renderCartModal();
-    };
-    window.closeCartModal = function() {
-      document.getElementById('modal-cart').classList.add('hidden');
-      document.body.style.overflow = '';
-    };
+    window.openCartModal = function() { document.getElementById('modal-cart').classList.remove('hidden'); document.body.style.overflow = 'hidden'; renderCartModal(); };
+    window.closeCartModal = function() { document.getElementById('modal-cart').classList.add('hidden'); document.body.style.overflow = ''; };
     function renderCartModal() {
       const container = document.getElementById('cart-items-container');
       const subtitle = document.getElementById('cart-subtitle');
@@ -1355,9 +1275,7 @@
       totalEl.innerText = '฿' + totalPrice;
       container.innerHTML = cart.map(item => {
         const crop = item.imageCrop || defaultCrop();
-        const thumb = item.imageUrl
-          ? '<img src="' + escapeAttr(item.imageUrl) + '" style="object-position:' + (crop.x || 50) + '% ' + (crop.y || 50) + '%;transform:scale(' + ((crop.zoom || 100) / 100) + ');transform-origin:' + (crop.x || 50) + '% ' + (crop.y || 50) + '%;" />'
-          : '<i class="fa-solid ' + (item.icon || 'fa-cube') + ' text-cyan-400/40 text-xl"></i>';
+        const thumb = item.imageUrl ? '<img src="' + escapeAttr(item.imageUrl) + '" style="object-position:' + (crop.x || 50) + '% ' + (crop.y || 50) + '%;transform:scale(' + ((crop.zoom || 100) / 100) + ');transform-origin:' + (crop.x || 50) + '% ' + (crop.y || 50) + '%;" />' : '<i class="fa-solid ' + (item.icon || 'fa-cube') + ' text-cyan-400/40 text-xl"></i>';
         const optsList = Object.keys(item.options || {}).map(k => escapeHtml(k) + ': <strong class="text-white">' + escapeHtml(item.options[k]) + '</strong>').join(' · ');
         return '<div class="cart-item"><div class="cart-thumb">' + thumb + '</div><div class="flex-1 min-w-0"><div class="font-bold text-white text-sm truncate">' + escapeHtml(item.title) + '</div><div class="text-[10px] font-mono text-slate-400 mt-0.5 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:' + item.filamentColor + '"></span> ' + escapeHtml(item.filamentName) + ' · ' + item.scale + '%</div>' + (optsList ? '<div class="text-[10px] font-mono text-cyan-300 mt-0.5 truncate">' + optsList + '</div>' : '') + '<div class="text-emerald-400 font-mono font-black text-sm mt-1">฿' + (item.unitPrice * item.qty) + '</div></div><div class="flex flex-col items-end gap-2"><div class="flex items-center gap-1.5"><button class="qty-btn" onclick="updateCartQty(\'' + item.cartId + '\', -1)">−</button><span class="font-mono text-xs text-white px-1">' + item.qty + '</span><button class="qty-btn" onclick="updateCartQty(\'' + item.cartId + '\', 1)">+</button></div><button onclick="removeFromCart(\'' + item.cartId + '\')" class="text-rose-400 hover:text-rose-300 text-[10px] font-mono transition"><i class="fa-solid fa-trash-can"></i></button></div></div>';
       }).join('');
@@ -1417,10 +1335,7 @@
       document.body.style.overflow = 'hidden';
       setTimeout(() => document.getElementById('checkout-name-input').focus(), 100);
     };
-    window.closeCheckoutNameModal = function() {
-      document.getElementById('modal-checkout-name').classList.add('hidden');
-      document.body.style.overflow = '';
-    };
+    window.closeCheckoutNameModal = function() { document.getElementById('modal-checkout-name').classList.add('hidden'); document.body.style.overflow = ''; };
     window.submitCheckoutName = async function() {
       const nEl = document.getElementById('checkout-name-input');
       const customerName = nEl.value.trim();
@@ -1446,10 +1361,7 @@
         modelTitle: summaryTitle, modelIcon: cart[0].icon || 'fa-cube',
         specs: specsSummary, printerName: printer, stage: 0,
         selectedOptions: {}, items: orderItems,
-        logs: [
-          '▶ Order created for ' + customerName + ' (฿' + totalPrice + ') — ' + totalQty + ' item(s).',
-          '▶ Assigned to physical machine: ' + printer + '.'
-        ],
+        logs: [ '▶ Order created for ' + customerName + ' (฿' + totalPrice + ') — ' + totalQty + ' item(s).', '▶ Assigned to physical machine: ' + printer + '.' ],
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
       orders.unshift(newOrder);
@@ -1481,9 +1393,6 @@
         + '</tbody></table><div class="flex justify-end pt-3 border-t border-slate-800 mt-3"><div class="text-right"><span class="text-[10px] font-mono text-slate-500 block">CART TOTAL</span><span class="text-lg font-black text-emerald-400">฿' + total + '</span></div></div>';
     };
 
-    // ============================================================
-    // NAVIGATION
-    // ============================================================
     window.navigateTo = function(viewName, updateHash = true) {
       if (viewName === 'owner') { openOwnerPinModal(); return; }
       if (updateHash) {
@@ -1519,7 +1428,7 @@
       const aspect = c.aspect || '4/3';
       const style = 'object-position: ' + (c.x || 50) + '% ' + (c.y || 50) + '%; transform: scale(' + ((c.zoom || 100) / 100) + '); transform-origin: ' + (c.x || 50) + '% ' + (c.y || 50) + '%;';
       const imgSrcAttr = escapeAttr(model.imageUrl);
-      return '<div class="product-img-wrap" style="aspect-ratio:' + aspect + ';" onclick="openLightbox(\'' + imgSrcAttr + '\')"><img src="' + imgSrcAttr + '" alt="' + escapeAttr(model.title) + '" style="' + style + '" /><div class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus text-white text-2xl"></i></div></div>';
+      return '<div class="product-img-wrap" style="aspect-ratio:' + aspect + ';" onclick="openLightbox(\'' + imgSrcAttr + '\')"><img src="' + imgSrcAttr + '" alt="' + escapeAttr(model.title) + '" style="' + style + '" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div class=&quot;img-placeholder&quot;><i class=&quot;fa-solid ' + (model.icon || 'fa-cube') + ' text-5xl text-cyan-400/40&quot;></i></div>\';" /><div class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus text-white text-2xl"></i></div></div>';
     }
 
     window.renderCategoryPills = function() {
@@ -1715,11 +1624,7 @@
         specs: fil.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
         printerName: printer, stage: 0, selectedOptions: humanOpts,
         items: [{ title: currentConfiguredModel.title, icon: currentConfiguredModel.icon || 'fa-cube', filamentName: fil.name, filamentColor: fil.color, scale: scale, options: humanOpts, unitPrice: finalPrice }],
-        logs: [
-          '▶ Order created for ' + name + ' (฿' + finalPrice + ').',
-          '▶ Filament selected: ' + fil.name + ' (+฿' + fil.surcharge + ').',
-          '▶ Assigned to physical machine: ' + printer + '.'
-        ],
+        logs: [ '▶ Order created for ' + name + ' (฿' + finalPrice + ').', '▶ Filament selected: ' + fil.name + ' (+฿' + fil.surcharge + ').', '▶ Assigned to physical machine: ' + printer + '.' ],
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
       orders.unshift(newOrder); rebuildMaps();
@@ -1757,9 +1662,7 @@
       const items = o.items || [];
       if (items.length > 0) {
         itemsWrap.classList.remove('hidden');
-        itemsList.innerHTML = items.map((it, i) =>
-          '<div class="flex items-center gap-3 p-3 bg-slate-950/60 border border-slate-800 rounded-xl"><span class="text-cyan-400 font-bold w-6 text-center">' + (i + 1) + '.</span><i class="fa-solid ' + (it.icon || 'fa-cube') + ' text-cyan-400"></i><div class="flex-1 min-w-0"><div class="text-white font-bold truncate">' + escapeHtml(it.title) + '</div><div class="text-[10px] text-slate-400 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:' + (it.filamentColor || '#64748b') + '"></span> ' + escapeHtml(it.filamentName || '') + ' · ' + (it.scale || 100) + '%</div></div><span class="text-emerald-400 font-bold">฿' + (it.unitPrice || 0) + '</span></div>'
-        ).join('');
+        itemsList.innerHTML = items.map((it, i) => '<div class="flex items-center gap-3 p-3 bg-slate-950/60 border border-slate-800 rounded-xl"><span class="text-cyan-400 font-bold w-6 text-center">' + (i + 1) + '.</span><i class="fa-solid ' + (it.icon || 'fa-cube') + ' text-cyan-400"></i><div class="flex-1 min-w-0"><div class="text-white font-bold truncate">' + escapeHtml(it.title) + '</div><div class="text-[10px] text-slate-400 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:' + (it.filamentColor || '#64748b') + '"></span> ' + escapeHtml(it.filamentName || '') + ' · ' + (it.scale || 100) + '%</div></div><span class="text-emerald-400 font-bold">฿' + (it.unitPrice || 0) + '</span></div>').join('');
       } else { itemsWrap.classList.add('hidden'); itemsList.innerHTML = ''; }
       const ll = document.getElementById('audit-log-list');
       if (ll) ll.innerHTML = o.logs.map(l => '<li>' + escapeHtml(l) + '</li>').join('');
@@ -1828,10 +1731,7 @@
       if (filaments.length === 0) { c.innerHTML = '<p class="col-span-full text-xs font-mono text-slate-500">No filaments.</p>'; return; }
       c.innerHTML = filaments.map((f, i) => {
         const first = i === 0, last = i === filaments.length - 1;
-        return '<div class="glass-card p-4 rounded-2xl border border-slate-800 filament-card font-mono text-xs">'
-          + '<div class="flex items-start justify-between gap-2"><div class="flex items-start gap-2.5 min-w-0 flex-1"><span class="w-4 h-4 rounded-full shadow-md flex-shrink-0 mt-0.5" style="background-color: ' + f.color + '"></span><div class="min-w-0 flex-1"><span class="text-slate-200 font-bold filament-name">' + escapeHtml(f.name) + '</span>' + (f.description ? '<p class="text-[10px] text-slate-500 filament-name mt-0.5">' + escapeHtml(f.description) + '</p>' : '') + '</div></div>'
-          + '<div class="filament-actions"><button onclick="moveFilament(\'' + f.id + '\', -1)" ' + (first ? 'disabled' : '') + ' class="p-1 transition ' + (first ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '"><i class="fa-solid fa-arrow-up"></i></button><button onclick="moveFilament(\'' + f.id + '\', 1)" ' + (last ? 'disabled' : '') + ' class="p-1 transition ' + (last ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '"><i class="fa-solid fa-arrow-down"></i></button><button onclick="openEditFilamentModal(\'' + f.id + '\')" class="text-slate-400 hover:text-amber-400 transition p-1"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteFilament(\'' + f.id + '\')" class="text-slate-500 hover:text-rose-400 transition p-1"><i class="fa-solid fa-trash-can"></i></button></div></div>'
-          + '<div class="flex items-center justify-between pt-2 border-t border-slate-800 gap-2 flex-wrap"><span class="text-slate-400 text-[10px]">+฿' + f.surcharge + ' surcharge</span><button onclick="toggleFilamentStock(\'' + f.id + '\')" class="px-2.5 py-1 rounded-xl text-[10px] font-bold transition ' + (f.inStock ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30') + '">' + (f.inStock ? 'In Stock' : 'Out of Stock') + '</button></div></div>';
+        return '<div class="glass-card p-4 rounded-2xl border border-slate-800 filament-card font-mono text-xs"><div class="flex items-start justify-between gap-2"><div class="flex items-start gap-2.5 min-w-0 flex-1"><span class="w-4 h-4 rounded-full shadow-md flex-shrink-0 mt-0.5" style="background-color: ' + f.color + '"></span><div class="min-w-0 flex-1"><span class="text-slate-200 font-bold filament-name">' + escapeHtml(f.name) + '</span>' + (f.description ? '<p class="text-[10px] text-slate-500 filament-name mt-0.5">' + escapeHtml(f.description) + '</p>' : '') + '</div></div><div class="filament-actions"><button onclick="moveFilament(\'' + f.id + '\', -1)" ' + (first ? 'disabled' : '') + ' class="p-1 transition ' + (first ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '"><i class="fa-solid fa-arrow-up"></i></button><button onclick="moveFilament(\'' + f.id + '\', 1)" ' + (last ? 'disabled' : '') + ' class="p-1 transition ' + (last ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '"><i class="fa-solid fa-arrow-down"></i></button><button onclick="openEditFilamentModal(\'' + f.id + '\')" class="text-slate-400 hover:text-amber-400 transition p-1"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteFilament(\'' + f.id + '\')" class="text-slate-500 hover:text-rose-400 transition p-1"><i class="fa-solid fa-trash-can"></i></button></div></div><div class="flex items-center justify-between pt-2 border-t border-slate-800 gap-2 flex-wrap"><span class="text-slate-400 text-[10px]">+฿' + f.surcharge + ' surcharge</span><button onclick="toggleFilamentStock(\'' + f.id + '\')" class="px-2.5 py-1 rounded-xl text-[10px] font-bold transition ' + (f.inStock ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30') + '">' + (f.inStock ? 'In Stock' : 'Out of Stock') + '</button></div></div>';
       }).join('');
     };
     window.moveFilament = async function(id, dir) {
@@ -1927,9 +1827,20 @@
       showToast(m.newArrival ? 'Marked as New Arrival: ' + m.title : 'Removed from New Arrivals: ' + m.title);
     };
 
+    // ============================================================
+    // IMAGE HANDLING
+    // ============================================================
     let currentModelImageData = '';
     let currentCrop = defaultCrop();
     let cropDragging = false, cropStartX = 0, cropStartY = 0, cropStartPosX = 50, cropStartPosY = 50;
+    let imageUploadState = 'idle';
+
+    function setUploadStatus(msg, color) {
+      const el = document.getElementById('upload-status');
+      if (!el) return;
+      el.innerHTML = msg || '';
+      el.style.color = color || '#94a3b8';
+    }
 
     function applyCropToImage() {
       const img = document.getElementById('crop-image');
@@ -1972,26 +1883,37 @@
         currentModelImageData = base64;
         currentCrop = defaultCrop();
         applyCropToImage();
-        showToast('Uploading image to imgbb...');
+
+        imageUploadState = 'uploading';
+        document.getElementById('new-model-image-data').value = '';
+        setUploadStatus('⏳ Uploading image to imgbb...', '#fcd34d');
+        showToast('⏳ Uploading image to imgbb...');
+
         try {
           const url = await uploadToImgbb(base64);
           currentModelImageData = url;
           document.getElementById('new-model-image-data').value = url;
-          showToast('Image uploaded!');
+          imageUploadState = 'done';
+          setUploadStatus('✅ Uploaded! URL: ' + url, '#6ee7b7');
+          showToast('✅ Image uploaded to imgbb!');
         } catch (err) {
-          showToast('Upload failed: ' + err.message, 'error');
+          imageUploadState = 'error';
+          setUploadStatus('❌ Upload failed: ' + err.message, '#fda4af');
+          showToast('❌ Upload failed: ' + err.message, 'error');
         }
       };
       r.readAsDataURL(file);
     };
     window.clearModelImage = function() {
       currentModelImageData = ''; currentCrop = defaultCrop();
+      imageUploadState = 'idle';
       document.getElementById('new-model-image-data').value = '';
       document.getElementById('new-model-image-file').value = '';
       const img = document.getElementById('crop-image'); img.src = ''; img.style.display = 'none';
       document.getElementById('crop-empty').style.display = 'flex';
       document.getElementById('crop-preview-img').style.display = 'none';
       document.getElementById('crop-preview-empty').style.display = 'flex';
+      setUploadStatus('', '#94a3b8');
     };
     window.resetCrop = function() { currentCrop = defaultCrop(); applyCropToImage(); };
     window.onCropZoom = function(v) { currentCrop.zoom = Number(v); applyCropToImage(); };
@@ -2035,6 +1957,7 @@
       document.getElementById('new-model-desc').value = '';
       document.getElementById('new-model-new-arrival').checked = false;
       currentModelImageData = ''; currentCrop = defaultCrop();
+      imageUploadState = 'idle';
       document.getElementById('new-model-image-data').value = '';
       document.getElementById('new-model-image-file').value = '';
       document.getElementById('crop-image').style.display = 'none';
@@ -2044,6 +1967,7 @@
       document.getElementById('crop-zoom').value = 100;
       document.getElementById('crop-zoom-label').innerText = '100%';
       document.getElementById('crop-aspect').value = '4/3';
+      setUploadStatus('', '#94a3b8');
       editingOptions = [];
       renderOptionsBuilder();
       document.getElementById('modal-add-model').classList.remove('hidden');
@@ -2061,12 +1985,14 @@
       document.getElementById('new-model-new-arrival').checked = !!m.newArrival;
       currentModelImageData = m.imageUrl || '';
       currentCrop = m.imageCrop ? JSON.parse(JSON.stringify(m.imageCrop)) : defaultCrop();
+      imageUploadState = currentModelImageData ? 'done' : 'idle';
       document.getElementById('new-model-image-data').value = currentModelImageData;
       document.getElementById('new-model-image-file').value = '';
       const img = document.getElementById('crop-image');
       if (currentModelImageData) { img.src = currentModelImageData; img.style.display = 'block'; document.getElementById('crop-empty').style.display = 'none'; }
       else { img.src = ''; img.style.display = 'none'; document.getElementById('crop-empty').style.display = 'flex'; }
       applyCropToImage();
+      setUploadStatus(currentModelImageData ? '✅ Current image: ' + currentModelImageData : '', '#6ee7b7');
       editingOptions = JSON.parse(JSON.stringify(m.options || []));
       renderOptionsBuilder();
       document.getElementById('modal-add-model').classList.remove('hidden');
@@ -2084,20 +2010,39 @@
       const desc = document.getElementById('new-model-desc').value.trim() || 'Custom 3D printed model.';
       const newArrival = document.getElementById('new-model-new-arrival').checked;
       if (!title) { showToast('Enter a model title.', 'error'); return; }
+
+      // Wait for imgbb upload to finish
+      if (imageUploadState === 'uploading') {
+        showToast('⏳ Waiting for image upload to finish...');
+        let waited = 0;
+        while (imageUploadState === 'uploading' && waited < 20000) {
+          await new Promise(r => setTimeout(r, 500));
+          waited += 500;
+        }
+      }
+      if (imageUploadState === 'error') {
+        showToast('❌ Image upload failed. Please try again or remove the image.', 'error');
+        return;
+      }
+
       const cleanOpts = editingOptions.map(g => ({ id: g.id, name: (g.name || '').trim(), choices: g.choices.map(c => ({ value: (c.value || c.label || '').trim(), label: (c.label || c.value || '').trim(), priceDelta: Number(c.priceDelta) || 0 })).filter(c => c.value !== '') })).filter(g => g.name !== '' && g.choices.length > 0);
+
+      // Save the actual URL (not base64) into imageUrl
+      const finalImageUrl = (currentModelImageData && currentModelImageData.startsWith('http')) ? currentModelImageData : '';
+
       if (id) {
         const m = catalogMap.get(id);
         if (m) {
           m.title = title; m.category = category; m.icon = icon; m.price = price; m.desc = desc;
-          m.imageUrl = currentModelImageData || '';
-          m.imageCrop = currentModelImageData ? currentCrop : defaultCrop();
+          m.imageUrl = finalImageUrl;
+          m.imageCrop = finalImageUrl ? currentCrop : defaultCrop();
           m.options = cleanOpts; m.newArrival = newArrival;
           renderShopGrid(); renderOwnerCatalog();
           await saveModelToDb(m);
           showToast('Updated: ' + title);
         }
       } else {
-        const nm = { id: 'mod-' + Date.now(), title, category, icon, price, desc, imageUrl: currentModelImageData || '', imageCrop: currentModelImageData ? currentCrop : defaultCrop(), options: cleanOpts, newArrival };
+        const nm = { id: 'mod-' + Date.now(), title, category, icon, price, desc, imageUrl: finalImageUrl, imageCrop: finalImageUrl ? currentCrop : defaultCrop(), options: cleanOpts, newArrival };
         catalogModels.unshift(nm); rebuildMaps(); renderShopGrid();
         if (activeView === 'owner') renderOwnerCatalog();
         await saveModelToDb(nm);
