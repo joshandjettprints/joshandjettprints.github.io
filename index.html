@@ -103,12 +103,19 @@
     .pickup-message { font-size: clamp(1.75rem, 5vw, 3.5rem); font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; background: linear-gradient(90deg, #22d3ee 0%, #10b981 50%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-align: center; padding: .5rem 0; animation: pickupGlow 3s ease-in-out infinite; }
     @keyframes pickupGlow { 0%,100% { filter: drop-shadow(0 0 8px rgba(34,211,238,.35)); } 50% { filter: drop-shadow(0 0 20px rgba(16,185,129,.55)); } }
     .pickup-card { background: linear-gradient(135deg, rgba(6,182,212,.10), rgba(16,185,129,.10)); border: 1px solid rgba(34,211,238,.35); border-radius: 1.5rem; padding: 1.25rem 1rem; }
+    .payment-message { font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(90deg, #f59e0b 0%, #f97316 50%, #eab308 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-align: center; padding: .5rem 0; animation: paymentGlow 3s ease-in-out infinite; }
+    @keyframes paymentGlow { 0%,100% { filter: drop-shadow(0 0 8px rgba(245,158,11,.35)); } 50% { filter: drop-shadow(0 0 20px rgba(249,115,22,.55)); } }
+    .payment-card { background: linear-gradient(135deg, rgba(245,158,11,.10), rgba(249,115,22,.10)); border: 1px solid rgba(245,158,11,.35); border-radius: 1.5rem; padding: 1.25rem 1rem; }
+    .complete-message { font-size: clamp(1.75rem, 5vw, 3.5rem); font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; background: linear-gradient(90deg, #10b981 0%, #22d3ee 50%, #6ee7b7 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-align: center; padding: .5rem 0; animation: completeGlow 3s ease-in-out infinite; }
+    @keyframes completeGlow { 0%,100% { filter: drop-shadow(0 0 8px rgba(16,185,129,.35)); } 50% { filter: drop-shadow(0 0 20px rgba(110,231,183,.55)); } }
+    .complete-card { background: linear-gradient(135deg, rgba(16,185,129,.10), rgba(34,211,238,.10)); border: 1px solid rgba(16,185,129,.35); border-radius: 1.5rem; padding: 1.25rem 1rem; }
     .stage-select { background: rgba(2,6,23,.7); border: 1px solid rgba(255,255,255,.10); border-radius: .5rem; padding: .3rem .5rem; font-family: 'Fira Code', monospace; font-size: 10px; color: #e2e8f0; cursor: pointer; outline: none; transition: border-color .2s; }
     .stage-select:focus { border-color: #06b6d4; }
     .stage-select.s0 { border-color: rgba(148,163,184,.4); }
     .stage-select.s1 { border-color: rgba(245,158,11,.5); color: #fcd34d; }
     .stage-select.s2 { border-color: rgba(168,85,247,.5); color: #d8b4fe; }
-    .stage-select.s3 { border-color: rgba(16,185,129,.5); color: #6ee7b7; }
+    .stage-select.s3 { border-color: rgba(34,211,238,.5); color: #67e8f9; }
+    .stage-select.s4 { border-color: rgba(16,185,129,.5); color: #6ee7b7; }
     .cart-btn { position: relative; }
     .cart-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 9999px; background: linear-gradient(135deg, #06b6d4, #10b981); color: #020617; font-weight: 900; font-size: 10px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 4px 10px rgba(6,182,212,.4); font-family: 'Fira Code', monospace; }
     .cart-badge.empty { display: none; }
@@ -136,6 +143,8 @@
     .order-items-table td { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.03); }
     .kings-pill { display: inline-flex; align-items: center; gap: .4rem; font-size: 10px; font-family: 'Fira Code', monospace; padding: .3rem .7rem; border-radius: 9999px; background: linear-gradient(135deg, rgba(34,211,238,.15), rgba(16,185,129,.15)); border: 1px solid rgba(34,211,238,.4); color: #67e8f9; font-weight: 700; letter-spacing: .03em; box-shadow: 0 0 20px rgba(34,211,238,.15); }
     .kings-pill i { color: #fcd34d; }
+    .proof-thumb { width: 100%; max-height: 180px; object-fit: cover; border-radius: .75rem; border: 1px solid rgba(255,255,255,.08); cursor: pointer; }
+    .proof-thumb:hover { border-color: rgba(34,211,238,.4); }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
@@ -300,9 +309,10 @@
             <div id="progress-bar-fill" class="absolute top-1/2 left-0 h-1.5 bg-cyan-500 -translate-y-1/2 rounded-full transition-all duration-500" style="width: 0%"></div>
             <div class="relative flex justify-between">
               <div class="flex flex-col items-center gap-2"><div id="node-blob-0" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">1</div><span class="text-[10px] font-mono text-slate-400 text-center">Received</span></div>
-              <div class="flex flex-col items-center gap-2"><div id="node-blob-1" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">2</div><span class="text-[10px] font-mono text-slate-400 text-center">Printing</span></div>
-              <div class="flex flex-col items-center gap-2"><div id="node-blob-2" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">3</div><span class="text-[10px] font-mono text-slate-400 text-center">Packaged</span></div>
-              <div class="flex flex-col items-center gap-2"><div id="node-blob-3" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">4</div><span class="text-[10px] font-mono text-slate-400 text-center">Delivered</span></div>
+              <div class="flex flex-col items-center gap-2"><div id="node-blob-1" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">2</div><span class="text-[10px] font-mono text-slate-400 text-center">Payment</span></div>
+              <div class="flex flex-col items-center gap-2"><div id="node-blob-2" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">3</div><span class="text-[10px] font-mono text-slate-400 text-center">Printing</span></div>
+              <div class="flex flex-col items-center gap-2"><div id="node-blob-3" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">4</div><span class="text-[10px] font-mono text-slate-400 text-center">Packaged</span></div>
+              <div class="flex flex-col items-center gap-2"><div id="node-blob-4" class="w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all">5</div><span class="text-[10px] font-mono text-slate-400 text-center">Complete</span></div>
             </div>
           </div>
         </div>
@@ -316,6 +326,24 @@
             <p class="pickup-message">Pick up at The Heart</p>
             <p class="text-[10px] font-mono text-slate-400 text-center mt-2">Your order will be waiting for you!</p>
           </div>
+        </div>
+        <div id="payment-message-wrap" class="hidden pt-4">
+          <div class="payment-card">
+            <p class="text-[10px] font-mono uppercase tracking-widest text-amber-300 text-center mb-2"><i class="fa-solid fa-credit-card"></i> Payment Required</p>
+            <p class="payment-message">Pay ฿<span id="payment-amount-due">0</span></p>
+            <p class="text-xs font-mono text-amber-200 text-center mt-1">at The Heart at Break Time or Lunch Time</p>
+          </div>
+        </div>
+        <div id="complete-message-wrap" class="hidden pt-4">
+          <div class="complete-card">
+            <p class="text-[10px] font-mono uppercase tracking-widest text-emerald-300 text-center mb-2"><i class="fa-solid fa-circle-check"></i> Order Status</p>
+            <p class="complete-message">Complete! 🎉</p>
+            <p class="text-[10px] font-mono text-slate-400 text-center mt-2">Thank you for your order!</p>
+          </div>
+        </div>
+        <div id="proof-of-delivery-wrap" class="hidden pt-4 border-t border-slate-800">
+          <h4 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-camera text-emerald-400"></i> Proof of Delivery</h4>
+          <div id="proof-of-delivery-content" class="space-y-3"></div>
         </div>
         <div id="track-selected-options" class="pt-4 border-t border-slate-800 hidden">
           <h4 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Selected Options</h4>
@@ -759,6 +787,40 @@
     </div>
   </div>
 
+  <!-- 6. PROOF OF DELIVERY MODAL -->
+  <div id="modal-proof" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-camera text-emerald-400"></i> Attach Proof of Delivery</h3>
+        <button onclick="closeProofModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="proof-order-code" value="" />
+      <div class="space-y-4 font-mono text-xs">
+        <div>
+          <label class="text-slate-400 block mb-1">Proof Photo (optional)</label>
+          <div id="proof-preview-wrap" class="w-full aspect-video rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center overflow-hidden relative">
+            <img id="proof-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;" />
+            <div id="proof-preview-empty" class="flex flex-col items-center gap-2 text-slate-600"><i class="fa-solid fa-image text-3xl"></i><span class="text-[10px]">No photo selected</span></div>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <input type="file" id="proof-image-file" accept="image/*" class="hidden" onchange="handleProofImageUpload(event)" />
+            <button type="button" onclick="document.getElementById('proof-image-file').click()" class="flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-upload text-emerald-400"></i> Choose Photo</button>
+            <button type="button" onclick="clearProofImage()" class="px-3 py-2 rounded-xl bg-slate-800/60 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-mono transition"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <div id="proof-upload-status" class="mt-2 text-[10px] font-mono text-slate-400"></div>
+        </div>
+        <div>
+          <label class="text-slate-400 block mb-1">Note (optional)</label>
+          <textarea id="proof-note-input" rows="2" placeholder="e.g. Handed to student at The Heart" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeProofModal()" class="w-1/2 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">Cancel</button>
+          <button onclick="submitProofOfDelivery()" class="w-1/2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"><i class="fa-solid fa-check"></i> Save Proof</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const IMGBB_API_KEY = "1903836c7d3439d764613e772d95d741";
     const COL_MODELS = 'catalog_models';
@@ -965,6 +1027,7 @@
         logs: Array.isArray(row.logs) ? row.logs : [],
         selectedOptions: row.selectedOptions || {},
         items: Array.isArray(row.items) ? row.items : [],
+        proofOfDelivery: row.proofOfDelivery || null,
         createdAt: row.createdAt || ''
       };
     }
@@ -997,7 +1060,7 @@
         modelTitle: 'Articulated Crystal Dragon', modelIcon: 'fa-dragon',
         specs: 'Silk Neon Cyan PLA | 100% Scale (฿250)', printerName: 'Bambu Lab A2L',
         stage: 1, logs: ['▶ Order created.', '▶ Material loaded: Silk Neon Cyan PLA.', '▶ First layer calibration complete.'],
-        selectedOptions: {}, items: [], createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        selectedOptions: {}, items: [], proofOfDelivery: null, createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       }];
     }
 
@@ -1360,7 +1423,7 @@
         trackingCode: code, customerName,
         modelTitle: summaryTitle, modelIcon: cart[0].icon || 'fa-cube',
         specs: specsSummary, printerName: printer, stage: 0,
-        selectedOptions: {}, items: orderItems,
+        selectedOptions: {}, items: orderItems, proofOfDelivery: null,
         logs: [ '▶ Order created for ' + customerName + ' (฿' + totalPrice + ') — ' + totalQty + ' item(s).', '▶ Assigned to physical machine: ' + printer + '.' ],
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
@@ -1624,6 +1687,7 @@
         specs: fil.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
         printerName: printer, stage: 0, selectedOptions: humanOpts,
         items: [{ title: currentConfiguredModel.title, icon: currentConfiguredModel.icon || 'fa-cube', filamentName: fil.name, filamentColor: fil.color, scale: scale, options: humanOpts, unitPrice: finalPrice }],
+        proofOfDelivery: null,
         logs: [ '▶ Order created for ' + name + ' (฿' + finalPrice + ').', '▶ Filament selected: ' + fil.name + ' (+฿' + fil.surcharge + ').', '▶ Assigned to physical machine: ' + printer + '.' ],
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
@@ -1639,6 +1703,13 @@
       customerSync();
     };
 
+    function getOrderTotal(order) {
+      if (order.items && order.items.length > 0) {
+        return order.items.reduce((s, it) => s + (it.unitPrice || 0), 0);
+      }
+      return 0;
+    }
+
     window.viewOrderTracking = function(code, updateHash = true) {
       const o = orderMap.get(code);
       if (!o) { showToast('Tracking code not found.', 'error'); return; }
@@ -1647,16 +1718,51 @@
       document.getElementById('track-number-display').innerText = o.trackingCode;
       document.getElementById('track-item-title').innerHTML = '<i class="fa-solid ' + (o.modelIcon || 'fa-cube') + ' text-cyan-400 mr-1.5"></i> ' + escapeHtml(o.modelTitle);
       document.getElementById('track-item-specs').innerText = o.specs;
-      const stages = ['Order Received', 'Printing in Progress', 'Inspected & Packaged', 'Ready for Pickup'];
-      const st = Math.max(0, Math.min(3, o.stage));
+      
+      const stages = ['Order Received', 'Awaiting Payment', 'Printing in Progress', 'Inspected & Packaged', 'Complete!'];
+      const st = Math.max(0, Math.min(4, o.stage));
       document.getElementById('current-status-title').innerText = stages[st];
-      document.getElementById('progress-bar-fill').style.width = [0,33,66,100][st] + '%';
-      for (let i = 0; i <= 3; i++) {
+      document.getElementById('progress-bar-fill').style.width = [0,25,50,75,100][st] + '%';
+      for (let i = 0; i <= 4; i++) {
         const b = document.getElementById('node-blob-' + i);
         if (b) b.className = i <= st ? 'w-10 h-10 rounded-xl bg-cyan-500 text-slate-950 font-black border-2 border-cyan-400 flex items-center justify-center text-xs shadow-lg shadow-cyan-500/30 transition-all' : 'w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all';
       }
+      
+      // Payment message (stage 1)
+      const payWrap = document.getElementById('payment-message-wrap');
+      if (st === 1) {
+        const totalDue = getOrderTotal(o);
+        document.getElementById('payment-amount-due').innerText = totalDue;
+        payWrap.classList.remove('hidden');
+      } else {
+        payWrap.classList.add('hidden');
+      }
+      
+      // Pickup message (stages 2 and 3)
       const pickupWrap = document.getElementById('pickup-message-wrap');
-      if (st >= 1) pickupWrap.classList.remove('hidden'); else pickupWrap.classList.add('hidden');
+      if (st === 2 || st === 3) pickupWrap.classList.remove('hidden');
+      else pickupWrap.classList.add('hidden');
+      
+      // Complete message (stage 4)
+      const completeWrap = document.getElementById('complete-message-wrap');
+      if (st === 4) completeWrap.classList.remove('hidden');
+      else completeWrap.classList.add('hidden');
+      
+      // Proof of delivery
+      const proofWrap = document.getElementById('proof-of-delivery-wrap');
+      const proofContent = document.getElementById('proof-of-delivery-content');
+      if (o.proofOfDelivery && o.proofOfDelivery.imageUrl) {
+        proofWrap.classList.remove('hidden');
+        let html = '<img src="' + escapeAttr(o.proofOfDelivery.imageUrl) + '" class="proof-thumb" onclick="openLightbox(\'' + escapeAttr(o.proofOfDelivery.imageUrl) + '\')" />';
+        if (o.proofOfDelivery.note) {
+          html += '<p class="text-xs font-mono text-slate-300 bg-slate-950/60 border border-slate-800 rounded-xl p-3"><i class="fa-solid fa-note-sticky text-emerald-400 mr-1"></i> ' + escapeHtml(o.proofOfDelivery.note) + '</p>';
+        }
+        proofContent.innerHTML = html;
+      } else {
+        proofWrap.classList.add('hidden');
+        proofContent.innerHTML = '';
+      }
+      
       const itemsWrap = document.getElementById('track-items-wrap');
       const itemsList = document.getElementById('track-items-list');
       const items = o.items || [];
@@ -1718,8 +1824,8 @@
     };
 
     window.renderOwnerPortal = function() {
-      const ac = orders.filter(o => o.stage < 3).length;
-      const cc = orders.filter(o => o.stage === 3).length;
+      const ac = orders.filter(o => o.stage < 4).length;
+      const cc = orders.filter(o => o.stage === 4).length;
       document.getElementById('owner-stat-total').innerText = orders.length;
       document.getElementById('owner-stat-active').innerText = ac;
       document.getElementById('owner-stat-completed').innerText = cc;
@@ -2011,7 +2117,6 @@
       const newArrival = document.getElementById('new-model-new-arrival').checked;
       if (!title) { showToast('Enter a model title.', 'error'); return; }
 
-      // Wait for imgbb upload to finish
       if (imageUploadState === 'uploading') {
         showToast('⏳ Waiting for image upload to finish...');
         let waited = 0;
@@ -2027,7 +2132,6 @@
 
       const cleanOpts = editingOptions.map(g => ({ id: g.id, name: (g.name || '').trim(), choices: g.choices.map(c => ({ value: (c.value || c.label || '').trim(), label: (c.label || c.value || '').trim(), priceDelta: Number(c.priceDelta) || 0 })).filter(c => c.value !== '') })).filter(g => g.name !== '' && g.choices.length > 0);
 
-      // Save the actual URL (not base64) into imageUrl
       const finalImageUrl = (currentModelImageData && currentModelImageData.startsWith('http')) ? currentModelImageData : '';
 
       if (id) {
@@ -2064,9 +2168,9 @@
       const search = s.toLowerCase();
       const f = orders.filter(o => o.trackingCode.toLowerCase().includes(search) || (o.customerName || '').toLowerCase().includes(search) || (o.modelTitle || '').toLowerCase().includes(search));
       if (f.length === 0) { tb.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-500">No customer orders found.</td></tr>'; return; }
-      const sn = ['Received', 'Printing', 'Packaged', 'Ready for Pickup'];
+      const sn = ['Received', 'Awaiting Payment', 'Printing', 'Packaged', 'Complete!'];
       tb.innerHTML = f.map(o => {
-        const st = Math.max(0, Math.min(3, o.stage));
+        const st = Math.max(0, Math.min(4, o.stage));
         const items = o.items || [];
         let itemsHtml = '';
         if (items.length > 0) {
@@ -2082,14 +2186,17 @@
         const total = items.reduce((s, it) => s + (it.unitPrice || 0), 0);
         const totalHtml = items.length > 0 ? '<div class="text-[10px] text-emerald-400 font-bold mt-1">Total: ฿' + total + ' · ' + items.length + ' piece' + (items.length > 1 ? 's' : '') + '</div>' : '';
         const optionsHtml = sn.map((name, i) => '<option value="' + i + '"' + (i === st ? ' selected' : '') + '>' + (i + 1) + '. ' + name + '</option>').join('');
-        return '<tr class="hover:bg-slate-900/60 transition"><td class="p-3 font-bold text-cyan-400 align-top">' + o.trackingCode + '</td><td class="p-3 align-top"><span class="text-white block font-bold">' + escapeHtml(o.customerName) + '</span></td><td class="p-3 text-slate-200">' + itemsHtml + totalHtml + '</td><td class="p-3 align-top"><select class="stage-select s' + st + '" onchange="changeOrderStage(\'' + o.trackingCode + '\', this.value)">' + optionsHtml + '</select></td><td class="p-3 text-right align-top"><button onclick="deleteOrder(\'' + o.trackingCode + '\')" class="p-1.5 text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>';
+        const proofBtn = o.proofOfDelivery && o.proofOfDelivery.imageUrl
+          ? '<button onclick="openProofModal(\'' + o.trackingCode + '\')" class="ml-2 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold hover:bg-emerald-500/30 transition" title="Edit proof"><i class="fa-solid fa-camera"></i> Proof</button>'
+          : '<button onclick="openProofModal(\'' + o.trackingCode + '\')" class="ml-2 px-2 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold hover:bg-slate-700 transition" title="Attach proof"><i class="fa-solid fa-camera"></i> Proof</button>';
+        return '<tr class="hover:bg-slate-900/60 transition"><td class="p-3 font-bold text-cyan-400 align-top">' + o.trackingCode + '</td><td class="p-3 align-top"><span class="text-white block font-bold">' + escapeHtml(o.customerName) + '</span></td><td class="p-3 text-slate-200">' + itemsHtml + totalHtml + '</td><td class="p-3 align-top"><select class="stage-select s' + st + '" onchange="changeOrderStage(\'' + o.trackingCode + '\', this.value)">' + optionsHtml + '</select></td><td class="p-3 text-right align-top">' + proofBtn + '<button onclick="deleteOrder(\'' + o.trackingCode + '\')" class="ml-1 p-1.5 text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>';
       }).join('');
     };
     window.changeOrderStage = async function(code, newStage) {
       const o = orderMap.get(code); if (!o) return;
-      const st = Math.max(0, Math.min(3, Number(newStage)));
+      const st = Math.max(0, Math.min(4, Number(newStage)));
       if (st === o.stage) return;
-      const sn = ['Received', 'Printing in Progress', 'Inspected & Packaged', 'Ready for Pickup'];
+      const sn = ['Order Received', 'Awaiting Payment', 'Printing in Progress', 'Inspected & Packaged', 'Complete!'];
       o.stage = st; o.logs.push('▶ Status changed by Owner to: ' + sn[st]);
       renderOwnerPortalOrders(); renderOwnerPortal();
       await saveOrderToDb(o);
@@ -2100,6 +2207,95 @@
       rebuildMaps();
       if (activeView === 'owner') renderOwnerPortal();
       await removeOrderFromDb(code); showToast('Order ' + code + ' deleted.');
+    };
+
+    // ============================================================
+    // PROOF OF DELIVERY
+    // ============================================================
+    let currentProofImageData = '';
+    let proofUploadState = 'idle';
+
+    window.openProofModal = function(code) {
+      const o = orderMap.get(code); if (!o) return;
+      document.getElementById('proof-order-code').value = code;
+      currentProofImageData = (o.proofOfDelivery && o.proofOfDelivery.imageUrl) || '';
+      proofUploadState = currentProofImageData ? 'done' : 'idle';
+      document.getElementById('proof-note-input').value = (o.proofOfDelivery && o.proofOfDelivery.note) || '';
+      const img = document.getElementById('proof-preview-img');
+      const empty = document.getElementById('proof-preview-empty');
+      if (currentProofImageData) {
+        img.src = currentProofImageData; img.style.display = 'block'; empty.style.display = 'none';
+      } else {
+        img.src = ''; img.style.display = 'none'; empty.style.display = 'flex';
+      }
+      document.getElementById('proof-upload-status').innerHTML = '';
+      document.getElementById('modal-proof').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    };
+    window.closeProofModal = function() {
+      document.getElementById('modal-proof').classList.add('hidden');
+      document.body.style.overflow = '';
+      currentProofImageData = ''; proofUploadState = 'idle';
+    };
+    window.handleProofImageUpload = function(event) {
+      const file = event.target.files && event.target.files[0]; if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showToast('Image too large. Use under 5MB.', 'error'); event.target.value = ''; return; }
+      const r = new FileReader();
+      r.onload = async function(e) {
+        const base64 = e.target.result;
+        currentProofImageData = base64;
+        const img = document.getElementById('proof-preview-img');
+        img.src = base64; img.style.display = 'block';
+        document.getElementById('proof-preview-empty').style.display = 'none';
+        proofUploadState = 'uploading';
+        document.getElementById('proof-upload-status').innerHTML = '⏳ Uploading to imgbb...';
+        document.getElementById('proof-upload-status').style.color = '#fcd34d';
+        try {
+          const url = await uploadToImgbb(base64);
+          currentProofImageData = url;
+          proofUploadState = 'done';
+          document.getElementById('proof-upload-status').innerHTML = '✅ Uploaded!';
+          document.getElementById('proof-upload-status').style.color = '#6ee7b7';
+        } catch (err) {
+          proofUploadState = 'error';
+          document.getElementById('proof-upload-status').innerHTML = '❌ Upload failed: ' + err.message;
+          document.getElementById('proof-upload-status').style.color = '#fda4af';
+        }
+      };
+      r.readAsDataURL(file);
+    };
+    window.clearProofImage = function() {
+      currentProofImageData = ''; proofUploadState = 'idle';
+      document.getElementById('proof-image-file').value = '';
+      document.getElementById('proof-preview-img').src = '';
+      document.getElementById('proof-preview-img').style.display = 'none';
+      document.getElementById('proof-preview-empty').style.display = 'flex';
+      document.getElementById('proof-upload-status').innerHTML = '';
+    };
+    window.submitProofOfDelivery = async function() {
+      const code = document.getElementById('proof-order-code').value;
+      const o = orderMap.get(code); if (!o) { showToast('Order not found.', 'error'); return; }
+      if (proofUploadState === 'uploading') {
+        showToast('⏳ Waiting for upload to finish...');
+        let waited = 0;
+        while (proofUploadState === 'uploading' && waited < 20000) {
+          await new Promise(r => setTimeout(r, 500));
+          waited += 500;
+        }
+      }
+      if (proofUploadState === 'error') { showToast('❌ Upload failed. Try again.', 'error'); return; }
+      const note = document.getElementById('proof-note-input').value.trim();
+      if (currentProofImageData) {
+        o.proofOfDelivery = { imageUrl: currentProofImageData, note: note, attachedAt: new Date().toISOString().replace('T', ' ').substring(0, 16) };
+        o.logs.push('▶ Proof of delivery attached by Owner.');
+      } else {
+        o.proofOfDelivery = null;
+      }
+      await saveOrderToDb(o);
+      renderOwnerPortalOrders();
+      if (activeView === 'tracking' && activeTrackingCode === code) viewOrderTracking(code, false);
+      showToast(currentProofImageData ? 'Proof of delivery saved!' : 'Proof removed.');
+      closeProofModal();
     };
 
     window.addEventListener('load', function() {
