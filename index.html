@@ -39,49 +39,113 @@
     .input-error { border-color: #f43f5e !important; box-shadow: 0 0 0 3px rgba(244,63,94,.15); }
     .field-error-msg { color: #fda4af; font-size: 10px; font-family: 'Fira Code', monospace; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 
-    /* Mini action loader */
-    #mini-loader { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(2,6,23,.55); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .15s ease; }
-    #mini-loader.active { opacity: 1; pointer-events: auto; }
-    #mini-loader .spinner { width: 44px; height: 44px; border-radius: 14px; border: 3px solid rgba(34,211,238,.2); border-top-color: #22d3ee; animation: spin .7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
     .option-chip { cursor: pointer; user-select: none; }
     .option-chip.selected { border-color: #06b6d4 !important; background: rgba(8,145,178,.25) !important; color: #fff !important; }
 
-    /* Product image (uses crop data) */
     .product-img-wrap { position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #0f172a; border-radius: 1rem 1rem 0 0; }
     .product-img-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform, object-position; }
     .img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(16,185,129,.08)); }
 
-    /* Crop canvas */
     #crop-canvas { position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #020617; border-radius: 1rem; cursor: grab; }
     #crop-canvas.dragging { cursor: grabbing; }
     #crop-canvas img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; user-select: none; pointer-events: none; }
-    #crop-grid { position: absolute; inset: 0; pointer-events: none; opacity: .25;
-      background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px);
-      background-size: 33.33% 33.33%;
-    }
-    #crop-border { position: absolute; inset: 8px; border: 2px solid rgba(34,211,238,.7); border-radius: .75rem; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0,0,0,.35); }
+    #crop-grid { position: absolute; inset: 0; pointer-events: none; opacity: .25; background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px); background-size: 33.33% 33.33%; }
+    #crop-border { position: absolute; inset: 8px; border: 2px solid rgba(34,211,238,.7); border-radius: .75rem; pointer-events: none; }
 
-    /* Header sync pill */
     .sync-pill { display: inline-flex; align-items: center; gap: .4rem; font-size: 10px; font-family: 'Fira Code', monospace; padding: .25rem .55rem; border-radius: .6rem; border: 1px solid rgba(255,255,255,.08); background: rgba(15,23,42,.7); }
     .sync-pill.ok { border-color: rgba(16,185,129,.4); color: #6ee7b7; }
     .sync-pill.busy { border-color: rgba(34,211,238,.4); color: #67e8f9; }
     .sync-pill.err { border-color: rgba(244,63,94,.4); color: #fda4af; }
+    .sync-pill.failed { border-color: rgba(244,63,94,.6); color: #fda4af; background: rgba(76,5,25,.5); }
     .sync-dot { width: 6px; height: 6px; border-radius: 9999px; background: currentColor; }
     .sync-pill.busy .sync-dot { animation: pulse 1s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
 
-    /* Full screen purchase menu */
-    #modal-purchase .menu-shell { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
-    @media (min-width: 768px) {
-      #modal-purchase .menu-shell { width: 95vw; height: 95vh; border-radius: 1.5rem; }
+    /* Top-of-page sync banner */
+    #sync-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 70;
+      transform: translateY(-110%); transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+      opacity: 0; pointer-events: none;
     }
+    #sync-banner.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    #sync-banner .bar-fill { height: 3px; background: linear-gradient(90deg, #22d3ee, #10b981); transition: width .3s ease; }
+    #sync-banner.failed .bar-fill { background: linear-gradient(90deg, #f43f5e, #f97316); }
+    #sync-banner.failed #sync-banner-icon { color: #fda4af !important; }
+    #sync-banner.failed #sync-banner-sub { color: #fda4af; }
+    #sync-banner.success .bar-fill { background: linear-gradient(90deg, #10b981, #22d3ee); }
+
+    .count-badge {
+      display: inline-flex; align-items: center; gap: .35rem;
+      font-family: 'Fira Code', monospace; font-size: 10px;
+      padding: .2rem .5rem; border-radius: .5rem;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(2,6,23,.6);
+      transition: all .2s ease;
+      white-space: nowrap;
+    }
+    .count-badge.done { border-color: rgba(16,185,129,.5); color: #6ee7b7; }
+    .count-badge.pending { color: #94a3b8; }
+    .count-badge.partial { border-color: rgba(34,211,238,.5); color: #67e8f9; }
+    .count-badge.failed { border-color: rgba(244,63,94,.6); color: #fda4af; background: rgba(76,5,25,.5); }
+
+    .blink { animation: blink 1s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* Full screen menus */
+    .full-menu-shell { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
+    @media (min-width: 768px) {
+      .full-menu-shell { width: 95vw; height: 95vh; border-radius: 1.5rem; }
+    }
+
+    /* Filament card: name can wrap, buttons stay visible */
+    .filament-card { display: flex; flex-direction: column; gap: .75rem; min-height: 100px; }
+    .filament-card .filament-name {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.25;
+      flex: 1;
+      min-width: 0;
+    }
+    .filament-actions { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; flex-shrink: 0; }
+    .filament-actions button { flex-shrink: 0; }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
 
-  <!-- FULL-SCREEN LOADING OVERLAY -->
+  <!-- SYNC BANNER (top of page) -->
+  <div id="sync-banner">
+    <div class="glass-panel border-b border-slate-800 shadow-2xl">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <i id="sync-banner-icon" class="fa-solid fa-arrows-rotate fa-spin"></i>
+          </div>
+          <div>
+            <p id="sync-banner-title" class="text-xs font-black font-mono uppercase tracking-wider text-white">Syncing Data</p>
+            <p id="sync-banner-sub" class="text-[10px] font-mono text-cyan-300">Pushing local changes to the server...</p>
+          </div>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div id="sync-counts" class="flex flex-wrap items-center gap-2">
+            <span class="count-badge pending" data-badge="models"><i class="fa-solid fa-cube"></i> <span data-count="models">0/0</span> models</span>
+            <span class="count-badge pending" data-badge="filaments"><i class="fa-solid fa-palette"></i> <span data-count="filaments">0/0</span> filaments</span>
+            <span class="count-badge pending" data-badge="orders"><i class="fa-solid fa-list-check"></i> <span data-count="orders">0/0</span> orders</span>
+          </div>
+          <div class="mt-2 w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+            <div id="sync-bar-fill" class="bar-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="flex-shrink-0 flex items-center gap-3">
+          <span id="sync-warning" class="text-sm font-black font-mono text-rose-400 blink">PLEASE DO NOT CLOSE THIS PAGE</span>
+          <span id="sync-percent" class="text-xs font-mono text-slate-400">0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INITIAL BOOT LOADING (only at startup) -->
   <div id="global-loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl transition-opacity duration-300 hidden">
     <div class="relative w-24 h-24 mb-6">
       <div id="loading-spinner-ring" class="absolute inset-0 rounded-3xl border-4 border-cyan-500/20 animate-pulse"></div>
@@ -110,9 +174,6 @@
       </div>
     </div>
   </div>
-
-  <!-- MINI ACTION LOADER -->
-  <div id="mini-loader"><div class="spinner"></div></div>
 
   <header class="sticky top-0 z-40 border-b border-slate-800/80 glass-panel">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -331,10 +392,9 @@
     </div>
   </div>
 
-  <!-- 3. PURCHASE MODAL (FULL SCREEN MENU) -->
+  <!-- 3. PURCHASE MODAL (FULL SCREEN) -->
   <div id="modal-purchase" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md hidden p-0 sm:p-4">
-    <div class="menu-shell glass-panel flex flex-col md:flex-row overflow-hidden border border-slate-800 shadow-2xl">
-      <!-- LEFT: image + summary -->
+    <div class="full-menu-shell glass-panel flex flex-col md:flex-row overflow-hidden border border-slate-800 shadow-2xl">
       <div class="md:w-2/5 w-full flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40">
         <div class="relative w-full flex-1 min-h-[200px] overflow-hidden bg-slate-900">
           <div id="buy-hero-image-wrap" class="product-img-wrap" style="border-radius:0;height:100%;aspect-ratio:auto;">
@@ -359,7 +419,6 @@
         </div>
       </div>
 
-      <!-- RIGHT: options + form -->
       <div class="md:w-3/5 w-full flex flex-col overflow-hidden">
         <div class="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-800 flex items-center justify-between">
           <h3 class="text-base sm:text-lg font-black text-white flex items-center gap-2"><i class="fa-solid fa-sliders text-cyan-400"></i> Configure &amp; Order</h3>
@@ -367,13 +426,11 @@
         </div>
 
         <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-6">
-          <!-- Filament -->
           <div class="space-y-2">
             <label class="text-xs font-mono text-slate-400 uppercase tracking-wider">Filament Material &amp; Color</label>
             <div id="buy-filament-options" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
           </div>
 
-          <!-- Scale -->
           <div class="space-y-2">
             <div class="flex justify-between text-xs font-mono">
               <span class="text-slate-400 uppercase tracking-wider">Model Scale</span>
@@ -385,13 +442,11 @@
             </div>
           </div>
 
-          <!-- Options groups -->
           <div id="buy-options-section" class="hidden space-y-4 pt-2 border-t border-slate-800">
             <label class="text-xs font-mono text-slate-400 uppercase tracking-wider block">Customize Model Options</label>
             <div id="buy-options-container" class="space-y-4"></div>
           </div>
 
-          <!-- Customer info -->
           <div class="space-y-3 pt-2 border-t border-slate-800">
             <div>
               <label class="text-xs font-mono text-slate-400 block mb-1">Your Name / Handle <span class="text-rose-400">*</span></label>
@@ -406,7 +461,6 @@
           </div>
         </div>
 
-        <!-- Sticky footer -->
         <div class="px-6 sm:px-8 py-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 flex-shrink-0">
           <div>
             <span class="text-[10px] font-mono text-slate-500 block">FINAL PRICE (EST.)</span>
@@ -478,7 +532,6 @@
           </div>
         </div>
 
-        <!-- Image + Crop -->
         <div class="pt-2 border-t border-slate-800">
           <div class="flex items-center justify-between mb-2">
             <label class="text-slate-400 block">Model Photo (optional)</label>
@@ -486,7 +539,6 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <!-- Crop canvas -->
             <div class="sm:col-span-2">
               <div id="crop-canvas" class="border border-slate-800">
                 <img id="crop-image" src="" alt="" style="display:none;" />
@@ -511,7 +563,6 @@
               </div>
             </div>
 
-            <!-- Crop controls -->
             <div class="space-y-3">
               <div>
                 <label class="text-slate-400 block mb-1 text-[10px] uppercase tracking-wider">Zoom</label>
@@ -540,7 +591,6 @@
           <input type="hidden" id="new-model-image-data" value="" />
         </div>
 
-        <!-- Options builder -->
         <div class="pt-2 border-t border-slate-800">
           <div class="flex items-center justify-between mb-2">
             <label class="text-slate-400 block">Custom Options (Optional)</label>
@@ -555,31 +605,90 @@
     </div>
   </div>
 
-  <!-- 5. Add/Edit Filament Modal -->
-  <div id="modal-add-filament" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
-    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-amber-500/30 space-y-6 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-        <h3 id="filament-modal-title" class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plus text-amber-400"></i> Add New Filament</h3>
-        <button onclick="closeAddFilamentModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-4 font-mono text-xs">
-        <input type="hidden" id="edit-filament-id" value="" />
-        <div>
-          <label class="text-slate-400 block mb-1">Filament Name</label>
-          <input type="text" id="new-filament-name" placeholder="e.g. Neon Pink PLA" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500" />
+  <!-- 5. Add/Edit Filament Modal (FULL SCREEN) -->
+  <div id="modal-add-filament" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md hidden p-0 sm:p-4">
+    <div class="full-menu-shell glass-panel flex flex-col md:flex-row overflow-hidden border border-slate-800 shadow-2xl">
+      <!-- Left: live preview -->
+      <div class="md:w-2/5 w-full flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40">
+        <div class="relative w-full flex-1 min-h-[200px] overflow-hidden flex items-center justify-center" style="background: radial-gradient(circle at 50% 30%, rgba(236,72,153,.15), transparent 60%);">
+          <div class="text-center space-y-4 p-6">
+            <div id="filament-preview-swatch" class="w-32 h-32 rounded-full mx-auto shadow-2xl border-4 border-slate-900 transition-all duration-200" style="background-color: #ec4899;"></div>
+            <div>
+              <h3 id="filament-preview-name" class="text-xl font-black text-white break-words px-2">Neon Pink PLA</h3>
+              <p id="filament-preview-desc" class="text-xs text-slate-400 font-mono mt-1 px-4">Filament description preview</p>
+            </div>
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700">
+              <span class="text-[10px] font-mono text-slate-400 uppercase">Surcharge</span>
+              <span id="filament-preview-surcharge" class="text-sm font-black font-mono text-amber-400">+฿0</span>
+            </div>
+          </div>
+          <button onclick="closeAddFilamentModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center backdrop-blur">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
-        <div>
-          <label class="text-slate-400 block mb-2">Select Filament Color (Color Wheel)</label>
-          <div class="flex items-center gap-3 bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
-            <input type="color" id="new-filament-color" value="#ec4899" class="w-14 h-12 rounded-xl bg-slate-950 border border-slate-700 cursor-pointer p-1" />
-            <div class="space-y-0.5"><span class="text-white font-bold block">Color Wheel Picker</span><span class="text-[10px] text-slate-400">Click color block to open wheel</span></div>
+      </div>
+
+      <!-- Right: form -->
+      <div class="md:w-3/5 w-full flex flex-col overflow-hidden">
+        <div class="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-800 flex items-center justify-between">
+          <h3 id="filament-modal-title" class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+            <i class="fa-solid fa-plus text-amber-400"></i> Add New Filament
+          </h3>
+          <button onclick="closeAddFilamentModal()" class="hidden sm:flex text-slate-400 hover:text-white text-xs font-mono items-center gap-1"><i class="fa-solid fa-xmark"></i> Close</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-5 font-mono text-xs">
+          <input type="hidden" id="edit-filament-id" value="" />
+
+          <div>
+            <label class="text-slate-400 block mb-1">Filament Name <span class="text-rose-400">*</span></label>
+            <input type="text" id="new-filament-name" placeholder="e.g. Neon Pink PLA" oninput="updateFilamentPreview()"
+              class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-500" />
+          </div>
+
+          <div>
+            <label class="text-slate-400 block mb-1">Description (optional)</label>
+            <textarea id="new-filament-desc" rows="3" placeholder="e.g. Shiny silk finish with a smooth neon pink color. Best for decorative prints." oninput="updateFilamentPreview()"
+              class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-500"></textarea>
+          </div>
+
+          <div>
+            <label class="text-slate-400 block mb-2">Filament Color</label>
+            <div class="flex items-center gap-3 bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+              <input type="color" id="new-filament-color" value="#ec4899" oninput="updateFilamentPreview()" class="w-16 h-16 rounded-xl bg-slate-950 border border-slate-700 cursor-pointer p-1" />
+              <div class="space-y-1 flex-1">
+                <span class="text-white font-bold block">Color Wheel Picker</span>
+                <span class="text-[10px] text-slate-400">Click the swatch to open the picker</span>
+                <div class="flex gap-2 mt-2 flex-wrap">
+                  <button type="button" onclick="setFilamentColor('#ec4899')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#ec4899"></button>
+                  <button type="button" onclick="setFilamentColor('#06b6d4')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#06b6d4"></button>
+                  <button type="button" onclick="setFilamentColor('#10b981')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#10b981"></button>
+                  <button type="button" onclick="setFilamentColor('#f97316')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#f97316"></button>
+                  <button type="button" onclick="setFilamentColor('#eab308')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#eab308"></button>
+                  <button type="button" onclick="setFilamentColor('#a855f7')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#a855f7"></button>
+                  <button type="button" onclick="setFilamentColor('#ef4444')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#ef4444"></button>
+                  <button type="button" onclick="setFilamentColor('#ffffff')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#ffffff"></button>
+                  <button type="button" onclick="setFilamentColor('#334155')" class="w-6 h-6 rounded-lg border border-slate-700" style="background:#334155"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-400 block mb-1">Price Surcharge (฿)</label>
+            <input type="number" id="new-filament-surcharge" value="0" min="0" oninput="updateFilamentPreview()"
+              class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-500" />
           </div>
         </div>
-        <div>
-          <label class="text-slate-400 block mb-1">Price Surcharge (฿)</label>
-          <input type="number" id="new-filament-surcharge" value="0" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500" />
+
+        <div class="px-6 sm:px-8 py-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 flex-shrink-0">
+          <button onclick="closeAddFilamentModal()" class="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-black uppercase tracking-wider transition">
+            Cancel
+          </button>
+          <button onclick="submitNewFilament()" id="filament-submit-btn" class="px-6 sm:px-8 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-amber-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-palette"></i> <span id="filament-submit-label">Add Filament</span>
+          </button>
         </div>
-        <button onclick="submitNewFilament()" id="filament-submit-btn" class="w-full py-3 mt-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black uppercase tracking-wider transition">Add Filament</button>
       </div>
     </div>
   </div>
@@ -605,26 +714,85 @@
     let selectedFilamentId = null;
     let selectedOptions = {};
 
-    // Mini loader
-    window.showMiniLoader = function() { const e = document.getElementById('mini-loader'); if (e) e.classList.add('active'); };
-    window.hideMiniLoader = function() { const e = document.getElementById('mini-loader'); if (e) e.classList.remove('active'); };
-    async function withLoader(fn, minMs = 250) {
-      showMiniLoader();
-      const start = Date.now();
-      try { return await fn(); }
-      finally { setTimeout(hideMiniLoader, Math.max(0, minMs - (Date.now() - start))); }
+    // ============================================================
+    // SYNC BANNER CONTROL
+    // ============================================================
+    let syncState = {
+      active: false,
+      counts: { models: { done: 0, total: 0, failed: 0 }, filaments: { done: 0, total: 0, failed: 0 }, orders: { done: 0, total: 0, failed: 0 } },
+    };
+
+    function showSyncBanner(title) {
+      const b = document.getElementById('sync-banner');
+      b.classList.remove('failed', 'success');
+      b.classList.add('active');
+      document.getElementById('sync-banner-title').innerText = title || 'Syncing Data';
+      document.getElementById('sync-banner-sub').innerText = 'Pushing local changes to the server...';
+      document.getElementById('sync-banner-icon').className = 'fa-solid fa-arrows-rotate fa-spin';
+      document.getElementById('sync-warning').style.display = '';
+      syncState.active = true;
     }
 
-    // Sync pill
-    function setSyncStatus(state, text) {
-      const pill = document.getElementById('sync-pill');
-      const t = document.getElementById('sync-pill-text');
-      const icon = document.getElementById('sync-btn-icon');
-      if (!pill) return;
-      pill.classList.remove('ok', 'busy', 'err');
-      pill.classList.add(state);
-      if (t) t.innerText = text;
-      if (icon) icon.className = state === 'busy' ? 'fa-solid fa-arrows-rotate fa-spin' : 'fa-solid fa-arrows-rotate';
+    function hideSyncBanner() {
+      const b = document.getElementById('sync-banner');
+      b.classList.remove('active');
+      syncState.active = false;
+    }
+
+    function setSyncCounts(category, done, total, failed) {
+      if (syncState.counts[category]) {
+        syncState.counts[category].done = done;
+        syncState.counts[category].total = total;
+        syncState.counts[category].failed = failed || 0;
+      }
+      renderSyncCounts();
+    }
+
+    function renderSyncCounts() {
+      let totalDone = 0, totalAll = 0, totalFailed = 0;
+      const cats = ['models', 'filaments', 'orders'];
+      cats.forEach(c => {
+        const st = syncState.counts[c];
+        totalDone += st.done;
+        totalAll += st.total;
+        totalFailed += st.failed;
+        const badge = document.querySelector('[data-badge="' + c + '"]');
+        const span = document.querySelector('[data-count="' + c + '"]');
+        if (badge && span) {
+          span.innerText = st.done + '/' + st.total + (st.failed > 0 ? ' (' + st.failed + ' failed)' : '');
+          badge.classList.remove('done', 'pending', 'partial', 'failed');
+          if (st.failed > 0) badge.classList.add('failed');
+          else if (st.total > 0 && st.done === st.total) badge.classList.add('done');
+          else if (st.done > 0) badge.classList.add('partial');
+          else badge.classList.add('pending');
+        }
+      });
+      const pct = totalAll === 0 ? 0 : Math.round((totalDone / totalAll) * 100);
+      document.getElementById('sync-bar-fill').style.width = pct + '%';
+      document.getElementById('sync-percent').innerText = pct + '%';
+      return { totalDone, totalAll, totalFailed };
+    }
+
+    function finalizeSyncBanner(success, failedCount) {
+      const b = document.getElementById('sync-banner');
+      const sub = document.getElementById('sync-banner-sub');
+      const title = document.getElementById('sync-banner-title');
+      const icon = document.getElementById('sync-banner-icon');
+      const warn = document.getElementById('sync-warning');
+      if (success) {
+        b.classList.add('success');
+        icon.className = 'fa-solid fa-circle-check';
+        title.innerText = 'Sync Complete';
+        sub.innerText = 'All data saved and verified on the server.';
+        warn.style.display = 'none';
+      } else {
+        b.classList.add('failed');
+        icon.className = 'fa-solid fa-triangle-exclamation';
+        title.innerText = 'Sync Failed';
+        sub.innerText = failedCount + ' item(s) could not be verified after 3 retries.';
+        warn.style.display = 'none';
+      }
+      setTimeout(() => { hideSyncBanner(); }, success ? 2500 : 6000);
     }
 
     // ============================================================
@@ -657,12 +825,18 @@
       return {
         id: row.id, name: row.name, color: row.color,
         surcharge: Number(row.surcharge || 0),
+        description: row.description || '',
         inStock: row.in_stock !== undefined ? row.in_stock : (row.inStock !== undefined ? row.inStock : true),
         sortOrder: Number(row.sort_order || 0)
       };
     }
     function mapFilamentToDb(f, idx) {
-      return { id: f.id, name: f.name, color: f.color, surcharge: f.surcharge, in_stock: f.inStock, sort_order: typeof f.sortOrder === 'number' ? f.sortOrder : (typeof idx === 'number' ? idx : 0) };
+      return {
+        id: f.id, name: f.name, color: f.color, surcharge: f.surcharge,
+        description: f.description || null,
+        in_stock: f.inStock,
+        sort_order: typeof f.sortOrder === 'number' ? f.sortOrder : (typeof idx === 'number' ? idx : 0)
+      };
     }
     function mapOrderFromDb(row) {
       let logs = Array.isArray(row.logs) ? row.logs : safeParse(row.logs, []);
@@ -706,10 +880,10 @@
         { id: 'mod-4', title: 'Mechanical Screw Organizer', category: 'Tools', icon: 'fa-box', price: 210, desc: 'Precision threaded cylindrical storage box for hardware fasteners and tiny items.', imageUrl: '', imageCrop: defaultCrop(), options: [] }
       ];
       filaments = [
-        { id: 'neon-cyan', name: 'Silk Neon Cyan PLA', color: '#06b6d4', surcharge: 0, inStock: true, sortOrder: 0 },
-        { id: 'emerald-green', name: 'Emerald Green PLA', color: '#10b981', surcharge: 10, inStock: true, sortOrder: 1 },
-        { id: 'galaxy-black', name: 'Galaxy Glitter Black', color: '#334155', surcharge: 15, inStock: true, sortOrder: 2 },
-        { id: 'sunset-orange', name: 'Sunset Matte Orange', color: '#f97316', surcharge: 5, inStock: true, sortOrder: 3 }
+        { id: 'neon-cyan', name: 'Silk Neon Cyan PLA', color: '#06b6d4', surcharge: 0, description: 'Shiny silk finish with a bright neon cyan color.', inStock: true, sortOrder: 0 },
+        { id: 'emerald-green', name: 'Emerald Green PLA', color: '#10b981', surcharge: 10, description: 'Rich emerald green with a matte finish.', inStock: true, sortOrder: 1 },
+        { id: 'galaxy-black', name: 'Galaxy Glitter Black', color: '#334155', surcharge: 15, description: 'Deep black with sparkly glitter flecks.', inStock: true, sortOrder: 2 },
+        { id: 'sunset-orange', name: 'Sunset Matte Orange', color: '#f97316', surcharge: 5, description: 'Warm sunset orange with a soft matte surface.', inStock: true, sortOrder: 3 }
       ];
       orders = [{
         trackingCode: '8A7F9X2B', customerName: 'Josh Maker', customerAddress: 'Lab Room 302',
@@ -738,17 +912,13 @@
     function clearAllPurchaseErrors() { clearFieldError('buy-customer-name'); clearFieldError('buy-customer-address'); }
 
     // ============================================================
-    // LOADING SCREEN
+    // LOADING SCREEN (boot only)
     // ============================================================
     window.showLoading = function(title, subtitle = 'Loading...') {
       const s = document.getElementById('global-loading-screen'); if (!s) return;
       document.getElementById('loading-title').innerText = title;
-      document.getElementById('loading-title').className = "text-base font-black tracking-tight text-white font-mono uppercase";
       document.getElementById('loading-subtitle').innerText = subtitle;
       const bar = document.getElementById('loading-bar-fill'); if (bar) bar.style.width = '100%';
-      const icon = document.getElementById('loading-icon'); if (icon) icon.className = "fa-solid fa-cube text-cyan-400 text-2xl animate-bounce";
-      const sr = document.getElementById('loading-spinner-ring'); if (sr) sr.className = "absolute inset-0 rounded-3xl border-4 border-cyan-500/20 animate-pulse";
-      const ss = document.getElementById('loading-spinner-spin'); if (ss) ss.className = "absolute inset-0 rounded-3xl border-4 border-cyan-400 border-t-transparent animate-spin";
       document.getElementById('loading-bar-container').classList.remove('hidden');
       document.getElementById('loading-error-box').classList.add('hidden');
       document.getElementById('loading-error-actions').classList.add('hidden');
@@ -760,9 +930,6 @@
       document.getElementById('loading-title').innerText = "Connection Problem";
       document.getElementById('loading-title').className = "text-base font-black tracking-tight text-rose-400 font-mono uppercase";
       document.getElementById('loading-subtitle').innerText = "Unable to reach the shop server";
-      const sr = document.getElementById('loading-spinner-ring'); if (sr) sr.className = "absolute inset-0 rounded-3xl border-4 border-rose-500/20 animate-pulse";
-      const ss = document.getElementById('loading-spinner-spin'); if (ss) ss.className = "absolute inset-0 rounded-3xl border-4 border-rose-500 border-t-transparent animate-spin";
-      const icon = document.getElementById('loading-icon'); if (icon) icon.className = "fa-solid fa-triangle-exclamation text-rose-400 text-2xl animate-bounce";
       document.getElementById('loading-bar-container').classList.add('hidden');
       const eb = document.getElementById('loading-error-box');
       if (eb) { eb.classList.remove('hidden'); document.getElementById('loading-error-request').innerText = req || '—'; document.getElementById('loading-error-code').innerText = 'CODE: ' + (code || 'ERR'); document.getElementById('loading-error-desc').innerText = desc || 'Unable to reach the shop server.'; }
@@ -770,7 +937,7 @@
     };
     window.dismissLoadingErrorAndUseOffline = function() {
       loadDefaultInMemoryData(); renderCategoryPills(); renderShopGrid(); hideLoading();
-      showToast('Switched to offline mode', 'error'); setSyncStatus('err', 'Offline');
+      showToast('Switched to offline mode', 'error'); setSyncPill('err', 'Offline');
     };
     window.retrySupabaseConnection = function() { initBackend(); };
     window.hideLoading = function() {
@@ -778,12 +945,24 @@
       s.classList.add('opacity-0'); setTimeout(() => s.classList.add('hidden'), 300);
     };
 
+    // Sync pill (small one in header)
+    function setSyncPill(state, text) {
+      const pill = document.getElementById('sync-pill');
+      const t = document.getElementById('sync-pill-text');
+      const icon = document.getElementById('sync-btn-icon');
+      if (!pill) return;
+      pill.classList.remove('ok', 'busy', 'err', 'failed');
+      pill.classList.add(state);
+      if (t) t.innerText = text;
+      if (icon) icon.className = state === 'busy' ? 'fa-solid fa-arrows-rotate fa-spin' : (state === 'failed' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-arrows-rotate');
+    }
+
     // ============================================================
-    // BACKEND
+    // BACKEND INIT
     // ============================================================
     async function initBackend() {
       showLoading('Loading Shop...', 'Fetching catalog & orders');
-      setSyncStatus('busy', 'Connecting');
+      setSyncPill('busy', 'Connecting');
       try {
         if (window.supabase && window.supabase.createClient) {
           backendClient = window.supabase.createClient(BACKEND_URL, BACKEND_KEY);
@@ -793,12 +972,10 @@
           setupRealtimeSubscriptions();
           hideLoading();
           handleHashNavigation();
-          setSyncStatus('ok', 'Synced');
-        } else {
-          setSyncStatus('err', 'Error');
-        }
+          setSyncPill('ok', 'Synced');
+        } else setSyncPill('err', 'Error');
       } catch (err) {
-        setSyncStatus('err', 'Error');
+        setSyncPill('err', 'Error');
         showLoadingError('Shop Data', 'INIT_FAILED', err.message || 'Failed to load shop data.');
       }
     }
@@ -850,73 +1027,132 @@
       } catch (e) {}
     }
 
-    // Manual push & pull
+    // ============================================================
+    // VERIFIED UPSERT (write + read-back, 3 retries)
+    // ============================================================
+    async function verifiedUpsert(table, payload, pkField, pkValue) {
+      const maxAttempts = 3;
+      let lastError = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const { error: writeErr } = await backendClient.from(table).upsert(payload);
+          if (writeErr) {
+            lastError = writeErr;
+          } else {
+            // Read back to verify
+            const { data: verifyData, error: verifyErr } = await backendClient.from(table).select(pkField).eq(pkField, pkValue).limit(1);
+            if (!verifyErr && verifyData && verifyData.length > 0) {
+              return { ok: true, attempts: attempt };
+            }
+            lastError = verifyErr || new Error('Row not found after write');
+          }
+        } catch (e) { lastError = e; }
+        // small backoff between attempts
+        if (attempt < maxAttempts) await new Promise(r => setTimeout(r, 400 * attempt));
+      }
+      return { ok: false, attempts: maxAttempts, error: lastError };
+    }
+
+    // ============================================================
+    // MANUAL SYNC (the star of the show)
+    // ============================================================
     window.manualSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
-      setSyncStatus('busy', 'Syncing');
-      await withLoader(async () => {
-        try {
-          // PUSH local → server
-          const modelPayload = catalogModels.map(mapModelToDb);
-          if (modelPayload.length > 0) await backendClient.from('catalog_models').upsert(modelPayload);
-          const filPayload = filaments.map((f, i) => mapFilamentToDb(f, i));
-          if (filPayload.length > 0) await backendClient.from('filaments').upsert(filPayload);
-          const orderPayload = orders.map(mapOrderToDb);
-          if (orderPayload.length > 0) await backendClient.from('orders').upsert(orderPayload);
+      if (syncState.active) { showToast('Sync already in progress...'); return; }
 
-          // PULL server → local
-          await fetchAllData();
-          setSyncStatus('ok', 'Synced');
-          showToast('Synced ' + modelPayload.length + ' models, ' + filPayload.length + ' filaments, ' + orderPayload.length + ' orders.');
-        } catch (e) {
-          setSyncStatus('err', 'Error');
-          showToast('Sync failed: ' + e.message, 'error');
+      setSyncPill('busy', 'Syncing');
+      showSyncBanner('Syncing Data');
+
+      // Reset counts
+      syncState.counts = {
+        models: { done: 0, total: catalogModels.length, failed: 0 },
+        filaments: { done: 0, total: filaments.length, failed: 0 },
+        orders: { done: 0, total: orders.length, failed: 0 }
+      };
+      renderSyncCounts();
+
+      let totalFailed = 0;
+
+      // ---- MODELS ----
+      for (let i = 0; i < catalogModels.length; i++) {
+        const m = catalogModels[i];
+        const res = await verifiedUpsert('catalog_models', mapModelToDb(m), 'id', m.id);
+        if (res.ok) {
+          setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed);
+        } else {
+          syncState.counts.models.failed++;
+          totalFailed++;
+          setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed);
         }
-      }, 500);
+      }
+
+      // ---- FILAMENTS ----
+      for (let i = 0; i < filaments.length; i++) {
+        const f = filaments[i];
+        const res = await verifiedUpsert('filaments', mapFilamentToDb(f, i), 'id', f.id);
+        if (res.ok) {
+          setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed);
+        } else {
+          syncState.counts.filaments.failed++;
+          totalFailed++;
+          setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed);
+        }
+      }
+
+      // ---- ORDERS ----
+      for (let i = 0; i < orders.length; i++) {
+        const o = orders[i];
+        const res = await verifiedUpsert('orders', mapOrderToDb(o), 'tracking_code', o.trackingCode);
+        if (res.ok) {
+          setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed);
+        } else {
+          syncState.counts.orders.failed++;
+          totalFailed++;
+          setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed);
+        }
+      }
+
+      // Pull fresh data after push
+      try { await fetchAllData(); } catch (e) {}
+
+      if (totalFailed === 0) {
+        setSyncPill('ok', 'Synced');
+        finalizeSyncBanner(true, 0);
+        showToast('Sync complete! All data verified on server.');
+      } else {
+        setSyncPill('failed', totalFailed + ' failed');
+        finalizeSyncBanner(false, totalFailed);
+        showToast(totalFailed + ' item(s) failed to sync.', 'error');
+      }
     };
 
-    // DB writes
+    // DB writes (still used for individual saves)
     window.saveModelToDb = async function(model) {
       if (!backendClient) return;
-      await withLoader(async () => {
-        const { error } = await backendClient.from('catalog_models').upsert(mapModelToDb(model));
-        if (error) console.warn('Save model failed:', error.message);
-      });
+      await verifiedUpsert('catalog_models', mapModelToDb(model), 'id', model.id);
     };
     window.removeModelFromDb = async function(id) {
       if (!backendClient) return;
-      await withLoader(async () => {
-        const { error } = await backendClient.from('catalog_models').delete().eq('id', id);
-        if (error) console.warn('Delete model failed:', error.message);
-      });
+      const { error } = await backendClient.from('catalog_models').delete().eq('id', id);
+      if (error) console.warn('Delete model failed:', error.message);
     };
     window.saveFilamentToDb = async function(filament, idx) {
       if (!backendClient) return;
-      await withLoader(async () => {
-        const { error } = await backendClient.from('filaments').upsert(mapFilamentToDb(filament, idx));
-        if (error) console.warn('Save filament failed:', error.message);
-      });
+      await verifiedUpsert('filaments', mapFilamentToDb(filament, idx), 'id', filament.id);
     };
     window.removeFilamentFromDb = async function(id) {
       if (!backendClient) return;
-      await withLoader(async () => {
-        const { error } = await backendClient.from('filaments').delete().eq('id', id);
-        if (error) console.warn('Delete filament failed:', error.message);
-      });
+      const { error } = await backendClient.from('filaments').delete().eq('id', id);
+      if (error) console.warn('Delete filament failed:', error.message);
     };
     window.saveOrderToDb = async function(order) {
       if (!backendClient) return;
-      await withLoader(async () => {
-        const { error } = await backendClient.from('orders').upsert(mapOrderToDb(order));
-        if (error) console.warn('Save order failed:', error.message);
-      });
+      await verifiedUpsert('orders', mapOrderToDb(order), 'tracking_code', order.trackingCode);
     };
     window.removeOrderFromDb = async function(code) {
       if (!backendClient) return;
-      await withLoader(async () => {
-        const { error } = await backendClient.from('orders').delete().eq('tracking_code', code);
-        if (error) console.warn('Delete order failed:', error.message);
-      });
+      const { error } = await backendClient.from('orders').delete().eq('tracking_code', code);
+      if (error) console.warn('Delete order failed:', error.message);
     };
 
     // Toasts
@@ -963,10 +1199,9 @@
     function escapeHtml(str) { if (str == null) return ''; return String(str).replace(/[&<>"']/g, s => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); }
     function escapeAttr(str) { return escapeHtml(str).replace(/"/g, '&quot;'); }
 
-    // Shop rendering with crop data
-    function buildImageTag(model, extraClasses) {
+    function buildImageTag(model) {
       if (!model.imageUrl) {
-        return '<div class="img-placeholder ' + (extraClasses || '') + '"><i class="fa-solid ' + (model.icon || 'fa-cube') + ' text-5xl text-cyan-400/40"></i></div>';
+        return '<div class="img-placeholder"><i class="fa-solid ' + (model.icon || 'fa-cube') + ' text-5xl text-cyan-400/40"></i></div>';
       }
       const c = model.imageCrop || defaultCrop();
       const aspect = c.aspect || '4/3';
@@ -1143,43 +1378,35 @@
       const fil = filamentMap.get(selectedFilamentId) || filaments[0];
       if (!fil || !fil.inStock) { showToast('Please select a valid in-stock filament.', 'error'); return; }
 
-      showMiniLoader();
-      try {
-        const code = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
-        const sm = Math.pow(scale / 100, 1.5);
-        const finalPrice = Math.round((currentConfiguredModel.price * sm) + fil.surcharge + getSelectedOptionsCost());
-        const printers = ['Bambu Lab A2L', 'Bambu Lab A1 Mini'];
-        const printer = printers[Math.floor(Math.random() * printers.length)];
-        const humanOpts = {};
-        (currentConfiguredModel.options || []).forEach((g, gi) => {
-          const gid = g.id || ('g' + gi);
-          const v = selectedOptions[gid];
-          if (v !== undefined) humanOpts[g.name || gid] = v;
-        });
-        const newOrder = {
-          trackingCode: code, customerName: name, customerAddress: addr,
-          modelTitle: currentConfiguredModel.title,
-          modelIcon: currentConfiguredModel.icon || 'fa-cube',
-          specs: fil.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
-          printerName: printer, stage: 0, selectedOptions: humanOpts,
-          logs: [
-            '▶ Order created for ' + name + ' (฿' + finalPrice + ').',
-            '▶ Filament selected: ' + fil.name + ' (+฿' + fil.surcharge + ').',
-            '▶ Assigned to physical machine: ' + printer + '.'
-          ].concat(Object.keys(humanOpts).length > 0 ? ['▶ Options: ' + Object.keys(humanOpts).map(k => k + '=' + humanOpts[k]).join(', ')] : []),
-          createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
-        };
-        orders.unshift(newOrder); rebuildMaps();
-        await withLoader(async () => {
-          if (backendClient) {
-            const { error } = await backendClient.from('orders').upsert(mapOrderToDb(newOrder));
-            if (error) console.warn('Save order failed:', error.message);
-          }
-        });
-        closePurchaseModal();
-        showToast('Order placed! Tracking Code: ' + code);
-        viewOrderTracking(code);
-      } finally { hideMiniLoader(); }
+      const code = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const sm = Math.pow(scale / 100, 1.5);
+      const finalPrice = Math.round((currentConfiguredModel.price * sm) + fil.surcharge + getSelectedOptionsCost());
+      const printers = ['Bambu Lab A2L', 'Bambu Lab A1 Mini'];
+      const printer = printers[Math.floor(Math.random() * printers.length)];
+      const humanOpts = {};
+      (currentConfiguredModel.options || []).forEach((g, gi) => {
+        const gid = g.id || ('g' + gi);
+        const v = selectedOptions[gid];
+        if (v !== undefined) humanOpts[g.name || gid] = v;
+      });
+      const newOrder = {
+        trackingCode: code, customerName: name, customerAddress: addr,
+        modelTitle: currentConfiguredModel.title,
+        modelIcon: currentConfiguredModel.icon || 'fa-cube',
+        specs: fil.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
+        printerName: printer, stage: 0, selectedOptions: humanOpts,
+        logs: [
+          '▶ Order created for ' + name + ' (฿' + finalPrice + ').',
+          '▶ Filament selected: ' + fil.name + ' (+฿' + fil.surcharge + ').',
+          '▶ Assigned to physical machine: ' + printer + '.'
+        ].concat(Object.keys(humanOpts).length > 0 ? ['▶ Options: ' + Object.keys(humanOpts).map(k => k + '=' + humanOpts[k]).join(', ')] : []),
+        createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+      };
+      orders.unshift(newOrder); rebuildMaps();
+      await saveOrderToDb(newOrder);
+      closePurchaseModal();
+      showToast('Order placed! Tracking Code: ' + code);
+      viewOrderTracking(code);
     };
 
     // Tracking
@@ -1273,20 +1500,30 @@
       document.getElementById('owner-stat-completed').innerText = cc;
       renderOwnerFilaments(); renderOwnerCatalog(); renderOwnerPortalOrders();
     };
+
+    // Filaments with proper long-name handling
     window.renderOwnerFilaments = function() {
       const c = document.getElementById('owner-filaments-container'); if (!c) return;
       if (filaments.length === 0) { c.innerHTML = '<p class="col-span-full text-xs font-mono text-slate-500">No filaments.</p>'; return; }
       c.innerHTML = filaments.map((f, i) => {
         const first = i === 0, last = i === filaments.length - 1;
-        return '<div class="glass-card p-4 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-3 font-mono text-xs">'
-          + '<div class="flex items-center justify-between"><div class="flex items-center gap-2.5"><span class="w-4 h-4 rounded-full shadow-md" style="background-color: ' + f.color + '"></span><span class="text-slate-200 font-bold truncate">' + escapeHtml(f.name) + '</span></div>'
-          + '<div class="flex items-center space-x-0.5">'
-          + '<button onclick="moveFilament(\'' + f.id + '\', -1)" ' + (first ? 'disabled' : '') + ' class="p-1 transition ' + (first ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '"><i class="fa-solid fa-arrow-up"></i></button>'
-          + '<button onclick="moveFilament(\'' + f.id + '\', 1)" ' + (last ? 'disabled' : '') + ' class="p-1 transition ' + (last ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '"><i class="fa-solid fa-arrow-down"></i></button>'
-          + '<button onclick="openEditFilamentModal(\'' + f.id + '\')" class="text-slate-400 hover:text-amber-400 transition p-1"><i class="fa-solid fa-pen-to-square"></i></button>'
-          + '<button onclick="deleteFilament(\'' + f.id + '\')" class="text-slate-500 hover:text-rose-400 transition p-1"><i class="fa-solid fa-trash-can"></i></button>'
+        return '<div class="glass-card p-4 rounded-2xl border border-slate-800 filament-card font-mono text-xs">'
+          + '<div class="flex items-start justify-between gap-2">'
+          + '<div class="flex items-start gap-2.5 min-w-0 flex-1">'
+          + '<span class="w-4 h-4 rounded-full shadow-md flex-shrink-0 mt-0.5" style="background-color: ' + f.color + '"></span>'
+          + '<div class="min-w-0 flex-1">'
+          + '<span class="text-slate-200 font-bold filament-name">' + escapeHtml(f.name) + '</span>'
+          + (f.description ? '<p class="text-[10px] text-slate-500 filament-name mt-0.5">' + escapeHtml(f.description) + '</p>' : '')
+          + '</div>'
+          + '</div>'
+          + '<div class="filament-actions">'
+          + '<button onclick="moveFilament(\'' + f.id + '\', -1)" ' + (first ? 'disabled' : '') + ' class="p-1 transition ' + (first ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '" title="Move up"><i class="fa-solid fa-arrow-up"></i></button>'
+          + '<button onclick="moveFilament(\'' + f.id + '\', 1)" ' + (last ? 'disabled' : '') + ' class="p-1 transition ' + (last ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-cyan-400') + '" title="Move down"><i class="fa-solid fa-arrow-down"></i></button>'
+          + '<button onclick="openEditFilamentModal(\'' + f.id + '\')" class="text-slate-400 hover:text-amber-400 transition p-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>'
+          + '<button onclick="deleteFilament(\'' + f.id + '\')" class="text-slate-500 hover:text-rose-400 transition p-1" title="Delete"><i class="fa-solid fa-trash-can"></i></button>'
           + '</div></div>'
-          + '<div class="flex items-center justify-between pt-2 border-t border-slate-800"><span class="text-slate-400">+฿' + f.surcharge + ' surcharge</span>'
+          + '<div class="flex items-center justify-between pt-2 border-t border-slate-800 gap-2 flex-wrap">'
+          + '<span class="text-slate-400 text-[10px]">+฿' + f.surcharge + ' surcharge</span>'
           + '<button onclick="toggleFilamentStock(\'' + f.id + '\')" class="px-2.5 py-1 rounded-xl text-[10px] font-bold transition ' + (f.inStock ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30') + '">' + (f.inStock ? 'In Stock' : 'Out of Stock') + '</button>'
           + '</div></div>';
       }).join('');
@@ -1298,52 +1535,79 @@
       filaments.forEach((f, idx) => f.sortOrder = idx);
       renderOwnerFilaments();
       if (backendClient) {
-        await withLoader(async () => {
-          for (let j = 0; j < filaments.length; j++) {
-            await backendClient.from('filaments').upsert(mapFilamentToDb(filaments[j], j));
-          }
-        });
+        for (let j = 0; j < filaments.length; j++) {
+          await verifiedUpsert('filaments', mapFilamentToDb(filaments[j], j), 'id', filaments[j].id);
+        }
       }
     };
+
+    // Filament modal
+    function updateFilamentPreview() {
+      const name = (document.getElementById('new-filament-name').value || 'Neon Pink PLA').trim() || 'Neon Pink PLA';
+      const desc = (document.getElementById('new-filament-desc').value || '').trim() || 'Filament description preview';
+      const color = document.getElementById('new-filament-color').value;
+      const surcharge = parseInt(document.getElementById('new-filament-surcharge').value) || 0;
+      document.getElementById('filament-preview-swatch').style.backgroundColor = color;
+      document.getElementById('filament-preview-name').innerText = name;
+      document.getElementById('filament-preview-desc').innerText = desc;
+      document.getElementById('filament-preview-surcharge').innerText = '+฿' + surcharge;
+    }
+    window.setFilamentColor = function(c) {
+      document.getElementById('new-filament-color').value = c;
+      updateFilamentPreview();
+    };
+
     window.openAddFilamentModal = function() {
       document.getElementById('edit-filament-id').value = '';
       document.getElementById('filament-modal-title').innerHTML = '<i class="fa-solid fa-plus text-amber-400"></i> Add New Filament';
-      document.getElementById('filament-submit-btn').innerText = 'Add Filament';
+      document.getElementById('filament-submit-label').innerText = 'Add Filament';
       document.getElementById('new-filament-name').value = '';
+      document.getElementById('new-filament-desc').value = '';
       document.getElementById('new-filament-color').value = '#ec4899';
       document.getElementById('new-filament-surcharge').value = '10';
+      updateFilamentPreview();
       document.getElementById('modal-add-filament').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
     };
     window.openEditFilamentModal = function(id) {
       const f = filamentMap.get(id); if (!f) return;
       document.getElementById('edit-filament-id').value = f.id;
       document.getElementById('filament-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Filament';
-      document.getElementById('filament-submit-btn').innerText = 'Save Changes';
+      document.getElementById('filament-submit-label').innerText = 'Save Changes';
       document.getElementById('new-filament-name').value = f.name;
+      document.getElementById('new-filament-desc').value = f.description || '';
       document.getElementById('new-filament-color').value = f.color;
       document.getElementById('new-filament-surcharge').value = f.surcharge;
+      updateFilamentPreview();
       document.getElementById('modal-add-filament').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
     };
-    window.closeAddFilamentModal = function() { document.getElementById('modal-add-filament').classList.add('hidden'); };
+    window.closeAddFilamentModal = function() {
+      document.getElementById('modal-add-filament').classList.add('hidden');
+      document.body.style.overflow = '';
+    };
     window.submitNewFilament = async function() {
       const id = document.getElementById('edit-filament-id').value;
       const name = document.getElementById('new-filament-name').value.trim();
+      const desc = document.getElementById('new-filament-desc').value.trim();
       const color = document.getElementById('new-filament-color').value;
       const surcharge = parseInt(document.getElementById('new-filament-surcharge').value) || 0;
       if (!name) { showToast('Enter filament name.', 'error'); return; }
-      showMiniLoader();
-      try {
-        if (id) {
-          const f = filamentMap.get(id);
-          if (f) { f.name = name; f.color = color; f.surcharge = surcharge; renderOwnerFilaments(); await saveFilamentToDb(f); showToast('Updated: ' + name); }
-        } else {
-          const nf = { id: 'fil-' + Date.now(), name, color, surcharge, inStock: true, sortOrder: filaments.length };
-          filaments.push(nf); rebuildMaps(); renderOwnerFilaments();
-          await saveFilamentToDb(nf, filaments.length - 1);
-          showToast('Added: ' + name);
+      if (id) {
+        const f = filamentMap.get(id);
+        if (f) {
+          f.name = name; f.color = color; f.surcharge = surcharge; f.description = desc;
+          renderOwnerFilaments();
+          await saveFilamentToDb(f);
+          showToast('Updated: ' + name);
         }
-        closeAddFilamentModal();
-      } finally { hideMiniLoader(); }
+      } else {
+        const nf = { id: 'fil-' + Date.now(), name, color, surcharge, description: desc, inStock: true, sortOrder: filaments.length };
+        filaments.push(nf); rebuildMaps(); renderOwnerFilaments();
+        await saveFilamentToDb(nf, filaments.length - 1);
+        showToast('Added: ' + name);
+      }
+      closeAddFilamentModal();
     };
     window.toggleFilamentStock = async function(id) {
       const f = filamentMap.get(id); if (!f) return;
@@ -1397,19 +1661,15 @@
       const pEmpty = document.getElementById('crop-preview-empty');
       const preview = document.getElementById('crop-preview');
 
-      if (!img || img.style.display === 'none' || !currentModelImageData) {
-        return;
-      }
+      if (!img || img.style.display === 'none' || !currentModelImageData) return;
       const z = (currentCrop.zoom || 100) / 100;
       img.style.objectPosition = currentCrop.x + '% ' + currentCrop.y + '%';
       img.style.transform = 'scale(' + z + ')';
       img.style.transformOrigin = currentCrop.x + '% ' + currentCrop.y + '%';
-
       if (zoom) zoom.value = currentCrop.zoom || 100;
       if (zl) zl.innerText = (currentCrop.zoom || 100) + '%';
       if (aspectSel) aspectSel.value = currentCrop.aspect || '4/3';
       if (canvas) canvas.style.aspectRatio = currentCrop.aspect || '4/3';
-
       if (preview) preview.style.aspectRatio = currentCrop.aspect || '4/3';
       if (pImg && currentModelImageData) {
         pImg.src = currentModelImageData;
@@ -1449,7 +1709,6 @@
     window.onCropZoom = function(v) { currentCrop.zoom = Number(v); applyCropToImage(); };
     window.onCropAspectChange = function(v) { currentCrop.aspect = v; applyCropToImage(); };
 
-    // Crop drag
     (function setupCropDrag() {
       const canvas = document.getElementById('crop-canvas');
       if (!canvas) return;
@@ -1574,30 +1833,27 @@
         id: g.id, name: (g.name || '').trim(),
         choices: g.choices.map(c => ({ value: (c.value || c.label || '').trim(), label: (c.label || c.value || '').trim(), priceDelta: Number(c.priceDelta) || 0 })).filter(c => c.value !== '')
       })).filter(g => g.name !== '' && g.choices.length > 0);
-      showMiniLoader();
-      try {
-        if (id) {
-          const m = catalogMap.get(id);
-          if (m) {
-            m.title = title; m.category = category; m.icon = icon;
-            m.price = price; m.desc = desc;
-            m.imageUrl = currentModelImageData || '';
-            m.imageCrop = currentModelImageData ? currentCrop : defaultCrop();
-            m.options = cleanOpts;
-            renderShopGrid();
-            if (activeView === 'owner') renderOwnerCatalog();
-            await saveModelToDb(m);
-            showToast('Updated: ' + title);
-          }
-        } else {
-          const nm = { id: 'mod-' + Date.now(), title, category, icon, price, desc, imageUrl: currentModelImageData || '', imageCrop: currentModelImageData ? currentCrop : defaultCrop(), options: cleanOpts };
-          catalogModels.unshift(nm); rebuildMaps(); renderShopGrid();
+      if (id) {
+        const m = catalogMap.get(id);
+        if (m) {
+          m.title = title; m.category = category; m.icon = icon;
+          m.price = price; m.desc = desc;
+          m.imageUrl = currentModelImageData || '';
+          m.imageCrop = currentModelImageData ? currentCrop : defaultCrop();
+          m.options = cleanOpts;
+          renderShopGrid();
           if (activeView === 'owner') renderOwnerCatalog();
-          await saveModelToDb(nm);
-          showToast('Added: ' + title);
+          await saveModelToDb(m);
+          showToast('Updated: ' + title);
         }
-        closeAddModelModal();
-      } finally { hideMiniLoader(); }
+      } else {
+        const nm = { id: 'mod-' + Date.now(), title, category, icon, price, desc, imageUrl: currentModelImageData || '', imageCrop: currentModelImageData ? currentCrop : defaultCrop(), options: cleanOpts };
+        catalogModels.unshift(nm); rebuildMaps(); renderShopGrid();
+        if (activeView === 'owner') renderOwnerCatalog();
+        await saveModelToDb(nm);
+        showToast('Added: ' + title);
+      }
+      closeAddModelModal();
     };
     window.deleteCatalogModel = async function(id) {
       catalogModels = catalogModels.filter(m => m.id !== id);
@@ -1646,15 +1902,12 @@
     window.advanceOrderStage = async function(code) {
       const o = orderMap.get(code); if (!o) return;
       if (o.stage >= 3) { showToast('Order ' + code + ' already delivered.'); return; }
-      showMiniLoader();
-      try {
-        o.stage++;
-        const sn = ['Received', 'Printing in Progress', 'Inspected & Packaged', 'Delivered to Customer'];
-        o.logs.push('▶ Status updated by Owner to: ' + sn[o.stage]);
-        renderOwnerPortalOrders(); renderOwnerPortal();
-        await saveOrderToDb(o);
-        showToast('Order ' + code + ' → ' + sn[o.stage]);
-      } finally { hideMiniLoader(); }
+      o.stage++;
+      const sn = ['Received', 'Printing in Progress', 'Inspected & Packaged', 'Delivered to Customer'];
+      o.logs.push('▶ Status updated by Owner to: ' + sn[o.stage]);
+      renderOwnerPortalOrders(); renderOwnerPortal();
+      await saveOrderToDb(o);
+      showToast('Order ' + code + ' → ' + sn[o.stage]);
     };
     window.deleteOrder = async function(code) {
       orders = orders.filter(o => o.trackingCode !== code);
