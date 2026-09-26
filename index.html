@@ -38,7 +38,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <!-- Backend client library (kept for functionality, never shown in UI) -->
+  <!-- Backend client library (internal) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -83,6 +83,21 @@
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Error state for inputs */
+    .input-error {
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
+    }
+    .field-error-msg {
+      color: #fda4af;
+      font-size: 10px;
+      font-family: 'Fira Code', monospace;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
@@ -104,7 +119,7 @@
         <div id="loading-bar-fill" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-300 w-1/3"></div>
       </div>
 
-      <!-- Error card (generic wording, no backend names exposed) -->
+      <!-- Error card -->
       <div id="loading-error-box" class="hidden mt-4 p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-left font-mono text-xs space-y-2.5 shadow-2xl">
         <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
           <span class="text-rose-400 font-bold uppercase flex items-center gap-1.5">
@@ -496,15 +511,29 @@
           <input type="range" id="buy-scale-slider" min="50" max="250" step="25" value="100" oninput="updateBuyTotal()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer" />
         </div>
 
-        <!-- Customer Info -->
+        <!-- Customer Info (REQUIRED FIELDS) -->
         <div class="space-y-3 pt-2 border-t border-slate-800">
           <div>
-            <label class="text-xs font-mono text-slate-400 block mb-1">Your Name / Handle</label>
-            <input type="text" id="buy-customer-name" placeholder="e.g. Alex Ranger" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500" />
+            <label class="text-xs font-mono text-slate-400 block mb-1">
+              Your Name / Handle <span class="text-rose-400">*</span>
+            </label>
+            <input type="text" id="buy-customer-name" placeholder="e.g. Alex Ranger"
+              oninput="clearFieldError('buy-customer-name')"
+              class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition" />
+            <p id="error-buy-customer-name" class="field-error-msg hidden">
+              <i class="fa-solid fa-circle-exclamation"></i> Name is required
+            </p>
           </div>
           <div>
-            <label class="text-xs font-mono text-slate-400 block mb-1">Shipping Address / Contact Note</label>
-            <input type="text" id="buy-customer-address" placeholder="e.g. Bangkok University Lab #4" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500" />
+            <label class="text-xs font-mono text-slate-400 block mb-1">
+              Delivery Location / Address <span class="text-rose-400">*</span>
+            </label>
+            <input type="text" id="buy-customer-address" placeholder="e.g. Bangkok University Lab #4"
+              oninput="clearFieldError('buy-customer-address')"
+              class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition" />
+            <p id="error-buy-customer-address" class="field-error-msg hidden">
+              <i class="fa-solid fa-circle-exclamation"></i> Delivery location is required
+            </p>
           </div>
         </div>
 
@@ -629,7 +658,7 @@
 
   <script>
     // ============================================================
-    // BACKEND CONFIG (internal — never shown to the user)
+    // BACKEND CONFIG (internal)
     // ============================================================
     const BACKEND_URL = "https://evqycmmnqnvfppcnxscr.supabase.co";
     const BACKEND_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cXljbW1ucW52ZnBwY254c2NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjAzMDIsImV4cCI6MjEwNTkzNjMwMn0.G704LYY5gNkLXn6CaKrCssSxw_h0bcFb5mGBWk7ZqMw";
@@ -782,7 +811,32 @@
     }
 
     // ============================================================
-    // LOADING SCREEN (generic, no backend names)
+    // FORM VALIDATION HELPERS
+    // ============================================================
+    function showFieldError(fieldId, message) {
+      const input = document.getElementById(fieldId);
+      const err = document.getElementById('error-' + fieldId);
+      if (input) input.classList.add('input-error');
+      if (err) {
+        if (message) err.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + message;
+        err.classList.remove('hidden');
+      }
+    }
+
+    window.clearFieldError = function(fieldId) {
+      const input = document.getElementById(fieldId);
+      const err = document.getElementById('error-' + fieldId);
+      if (input) input.classList.remove('input-error');
+      if (err) err.classList.add('hidden');
+    };
+
+    function clearAllPurchaseErrors() {
+      clearFieldError('buy-customer-name');
+      clearFieldError('buy-customer-address');
+    }
+
+    // ============================================================
+    // LOADING SCREEN
     // ============================================================
     window.showLoading = function(title, subtitle = 'Loading shop data...') {
       const screen = document.getElementById('global-loading-screen');
@@ -891,16 +945,11 @@
 
       let firstError = null;
 
-      // 1. Catalog Models
       const { data: dbModels, error: modelsErr } = await backendClient.from('catalog_models').select('*');
       if (modelsErr) {
         const errorMsg = modelsErr.message || String(modelsErr);
         if (!firstError) {
-          firstError = {
-            request: "Catalog",
-            code: modelsErr.code || modelsErr.status || "ERR",
-            desc: errorMsg
-          };
+          firstError = { request: "Catalog", code: modelsErr.code || modelsErr.status || "ERR", desc: errorMsg };
         }
       } else if (dbModels && dbModels.length > 0) {
         catalogModels = dbModels.map(mapModelFromDb);
@@ -911,16 +960,11 @@
         }
       }
 
-      // 2. Filaments
       const { data: dbFilaments, error: filErr } = await backendClient.from('filaments').select('*');
       if (filErr) {
         const errorMsg = filErr.message || String(filErr);
         if (!firstError) {
-          firstError = {
-            request: "Filaments",
-            code: filErr.code || filErr.status || "ERR",
-            desc: errorMsg
-          };
+          firstError = { request: "Filaments", code: filErr.code || filErr.status || "ERR", desc: errorMsg };
         }
       } else if (dbFilaments && dbFilaments.length > 0) {
         filaments = dbFilaments.map(mapFilamentFromDb);
@@ -931,16 +975,11 @@
         }
       }
 
-      // 3. Orders
       const { data: dbOrders, error: ordersErr } = await backendClient.from('orders').select('*');
       if (ordersErr) {
         const errorMsg = ordersErr.message || String(ordersErr);
         if (!firstError) {
-          firstError = {
-            request: "Orders",
-            code: ordersErr.code || ordersErr.status || "ERR",
-            desc: errorMsg
-          };
+          firstError = { request: "Orders", code: ordersErr.code || ordersErr.status || "ERR", desc: errorMsg };
         }
       } else if (dbOrders) {
         orders = dbOrders.map(mapOrderFromDb);
@@ -980,9 +1019,7 @@
           .channel('public:orders')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchAllData())
           .subscribe();
-      } catch (e) {
-        // Silent — realtime is optional
-      }
+      } catch (e) {}
     }
 
     // ============================================================
@@ -1198,6 +1235,11 @@
       document.getElementById('buy-scale-slider').value = 100;
       document.getElementById('buy-scale-val').innerText = '100% (Standard)';
 
+      // Clear previous entries + errors
+      document.getElementById('buy-customer-name').value = '';
+      document.getElementById('buy-customer-address').value = '';
+      clearAllPurchaseErrors();
+
       renderPurchaseModalFilamentChoices();
       updateBuyTotal();
       document.getElementById('modal-purchase').classList.remove('hidden');
@@ -1252,12 +1294,37 @@
 
     window.closePurchaseModal = function() {
       document.getElementById('modal-purchase').classList.add('hidden');
+      clearAllPurchaseErrors();
     };
 
     window.confirmPurchaseOrder = function() {
       if (!currentConfiguredModel) return;
-      const customerName = document.getElementById('buy-customer-name').value.trim() || 'Anonymous Maker';
-      const customerAddress = document.getElementById('buy-customer-address').value.trim() || 'Bangkok, Thailand';
+
+      const customerNameInput = document.getElementById('buy-customer-name');
+      const customerAddressInput = document.getElementById('buy-customer-address');
+      const customerName = customerNameInput.value.trim();
+      const customerAddress = customerAddressInput.value.trim();
+
+      // ===== VALIDATION =====
+      let hasError = false;
+
+      if (!customerName) {
+        showFieldError('buy-customer-name', 'Name is required');
+        hasError = true;
+      }
+      if (!customerAddress) {
+        showFieldError('buy-customer-address', 'Delivery location is required');
+        hasError = true;
+      }
+
+      if (hasError) {
+        showToast('Please fill in all required fields.', 'error');
+        // Focus first empty field
+        if (!customerName) customerNameInput.focus();
+        else if (!customerAddress) customerAddressInput.focus();
+        return;
+      }
+
       const scale = document.getElementById('buy-scale-slider').value;
       const filamentObj = filamentMap.get(selectedFilamentId) || filaments[0];
 
