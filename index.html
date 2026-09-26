@@ -743,8 +743,8 @@
     </div>
   </div>
 
-  <script>
-    const APP_VERSION = 'v17';
+ <script>
+    const APP_VERSION = 'v18';
 
     // ============================================================
     // BACKEND CONFIG
@@ -767,11 +767,15 @@
     let selectedOptions = {};
 
     // ============================================================
-    // SYNC BANNER — full mode & flash mode
+    // SYNC BANNER
     // ============================================================
     let syncState = {
       active: false,
-      counts: { models: { done: 0, total: 0, failed: 0 }, filaments: { done: 0, total: 0, failed: 0 }, orders: { done: 0, total: 0, failed: 0 } },
+      counts: {
+        models:    { done: 0, total: 0, failed: 0, dir: 'push' },
+        filaments: { done: 0, total: 0, failed: 0, dir: 'push' },
+        orders:    { done: 0, total: 0, failed: 0, dir: 'push' }
+      }
     };
     let flashTimer = null;
 
@@ -780,7 +784,7 @@
       b.classList.remove('failed', 'success', 'flash');
       b.classList.add('active');
       document.getElementById('sync-banner-title').innerText = title || 'Syncing Data';
-      document.getElementById('sync-banner-sub').innerText = subtitle || 'Pushing local changes to the server...';
+      document.getElementById('sync-banner-sub').innerText = subtitle || 'Syncing with the server...';
       document.getElementById('sync-banner-icon').className = 'fa-solid fa-arrows-rotate fa-spin';
       document.getElementById('sync-warning').style.display = '';
       syncState.active = true;
@@ -792,9 +796,7 @@
       syncState.active = false;
     }
 
-    // Lightweight flash for small actions
     window.flashBanner = function(text, icon) {
-      // If a full sync is running, don't interrupt
       if (syncState.active) return;
       const b = document.getElementById('sync-banner');
       clearTimeout(flashTimer);
@@ -802,16 +804,15 @@
       document.getElementById('flash-icon').className = 'fa-solid ' + (icon || 'fa-bolt');
       b.classList.remove('failed', 'success', 'active');
       b.classList.add('flash');
-      flashTimer = setTimeout(() => {
-        b.classList.remove('flash');
-      }, 1100);
+      flashTimer = setTimeout(() => { b.classList.remove('flash'); }, 1100);
     };
 
-    function setSyncCounts(category, done, total, failed) {
+    function setSyncCounts(category, done, total, failed, dir) {
       if (syncState.counts[category]) {
         syncState.counts[category].done = done;
         syncState.counts[category].total = total;
         syncState.counts[category].failed = failed || 0;
+        if (dir) syncState.counts[category].dir = dir;
       }
       renderSyncCounts();
     }
@@ -825,6 +826,7 @@
         totalFailed += st.failed;
         const badge = document.querySelector('[data-badge="' + c + '"]');
         const span = document.querySelector('[data-count="' + c + '"]');
+        const arrow = document.querySelector('[data-arrow="' + c + '"]');
         if (badge && span) {
           span.innerText = st.done + '/' + st.total + (st.failed > 0 ? ' (' + st.failed + ' failed)' : '');
           badge.classList.remove('done', 'pending', 'partial', 'failed');
@@ -832,6 +834,10 @@
           else if (st.total > 0 && st.done === st.total) badge.classList.add('done');
           else if (st.done > 0) badge.classList.add('partial');
           else badge.classList.add('pending');
+        }
+        if (arrow) {
+          arrow.innerText = st.dir === 'pull' ? '↓' : '↑';
+          arrow.title = st.dir === 'pull' ? 'Downloading' : 'Uploading';
         }
       });
       const pct = totalAll === 0 ? 0 : Math.round((totalDone / totalAll) * 100);
@@ -922,7 +928,6 @@
       };
     }
     function mapOrderToDb(o) {
-      // NOTE: customer_address is intentionally NOT sent anymore
       return {
         tracking_code: o.trackingCode, customer_name: o.customerName,
         model_title: o.modelTitle,
@@ -1117,42 +1122,76 @@
     }
 
     // ============================================================
-    // CUSTOMER SYNC (from shop / tracking — pushes only orders)
+    // CUSTOMER SYNC — push orders, pull models + filaments
     // ============================================================
     window.customerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
 
       setSyncPill('busy', 'Syncing');
-      showSyncBanner('Syncing My Order', 'Sending your order & tracking info...');
+      showSyncBanner('Syncing My Order', 'Uploading your order & downloading latest shop data...');
 
-      // Only count orders for the customer sync
       syncState.counts = {
-        models: { done: 0, total: 0, failed: 0 },
-        filaments: { done: 0, total: 0, failed: 0 },
-        orders: { done: 0, total: orders.length, failed: 0 }
+        models:    { done: 0, total: 0, failed: 0, dir: 'pull' },
+        filaments: { done: 0, total: 0, failed: 0, dir: 'pull' },
+        orders:    { done: 0, total: orders.length, failed: 0, dir: 'push' }
       };
-      // Hide the empty badges visually
-      document.querySelector('[data-badge="models"]').style.display = 'none';
-      document.querySelector('[data-badge="filaments"]').style.display = 'none';
-      document.querySelector('[data-badge="orders"]').style.display = '';
       renderSyncCounts();
 
       let totalFailed = 0;
+
+      // 1) PULL models — download latest from server
+      try {
+        const { data: dbModels, error: modelsErr } = await backendClient.from('catalog_models').select('*');
+        if (modelsErr) {
+          syncState.counts.models.failed = 1;
+          totalFailed++;
+          setSyncCounts('models', 0, 1, 1, 'pull');
+        } else if (dbModels) {
+          catalogModels = dbModels.map(mapModelFromDb);
+          setSyncCounts('models', dbModels.length, dbModels.length, 0, 'pull');
+        }
+      } catch (e) {
+        syncState.counts.models.failed = 1;
+        totalFailed++;
+        setSyncCounts('models', 0, 1, 1, 'pull');
+      }
+
+      // 2) PULL filaments — download latest from server
+      try {
+        const { data: dbFilaments, error: filErr } = await backendClient.from('filaments').select('*');
+        if (filErr) {
+          syncState.counts.filaments.failed = 1;
+          totalFailed++;
+          setSyncCounts('filaments', 0, 1, 1, 'pull');
+        } else if (dbFilaments) {
+          filaments = dbFilaments.map(mapFilamentFromDb).sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name));
+          setSyncCounts('filaments', dbFilaments.length, dbFilaments.length, 0, 'pull');
+        }
+      } catch (e) {
+        syncState.counts.filaments.failed = 1;
+        totalFailed++;
+        setSyncCounts('filaments', 0, 1, 1, 'pull');
+      }
+
+      // 3) PUSH orders — upload local orders to server
       for (let i = 0; i < orders.length; i++) {
         const o = orders[i];
         const res = await verifiedUpsert('orders', mapOrderToDb(o), 'tracking_code', o.trackingCode);
-        if (res.ok) setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed);
-        else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed); }
+        if (res.ok) setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push');
+        else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push'); }
       }
 
-      // Restore full badges
-      document.querySelector('[data-badge="models"]').style.display = '';
-      document.querySelector('[data-badge="filaments"]').style.display = '';
+      // Refresh UI from updated local arrays
+      rebuildMaps();
+      renderCategoryPills();
+      renderShopGrid();
+      if (activeView === 'owner') renderOwnerPortal();
+      if (activeView === 'tracking' && activeTrackingCode) viewOrderTracking(activeTrackingCode, false);
 
       if (totalFailed === 0) {
         setSyncPill('ok', 'Synced');
-        finalizeSyncBanner(true, 0, 'Your Order Synced');
+        finalizeSyncBanner(true, 0, 'Order Synced');
       } else {
         setSyncPill('failed', totalFailed + ' failed');
         finalizeSyncBanner(false, totalFailed);
@@ -1161,7 +1200,7 @@
     };
 
     // ============================================================
-    // OWNER SYNC (full push of everything)
+    // OWNER SYNC — full push (models + filaments + orders)
     // ============================================================
     window.ownerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
@@ -1170,14 +1209,10 @@
       setSyncPill('busy', 'Syncing');
       showSyncBanner('Owner Sync', 'Pushing catalog, filaments & orders...');
 
-      document.querySelector('[data-badge="models"]').style.display = '';
-      document.querySelector('[data-badge="filaments"]').style.display = '';
-      document.querySelector('[data-badge="orders"]').style.display = '';
-
       syncState.counts = {
-        models: { done: 0, total: catalogModels.length, failed: 0 },
-        filaments: { done: 0, total: filaments.length, failed: 0 },
-        orders: { done: 0, total: orders.length, failed: 0 }
+        models:    { done: 0, total: catalogModels.length, failed: 0, dir: 'push' },
+        filaments: { done: 0, total: filaments.length, failed: 0, dir: 'push' },
+        orders:    { done: 0, total: orders.length, failed: 0, dir: 'push' }
       };
       renderSyncCounts();
 
@@ -1186,20 +1221,20 @@
       for (let i = 0; i < catalogModels.length; i++) {
         const m = catalogModels[i];
         const res = await verifiedUpsert('catalog_models', mapModelToDb(m), 'id', m.id);
-        if (res.ok) setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed);
-        else { syncState.counts.models.failed++; totalFailed++; setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed); }
+        if (res.ok) setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed, 'push');
+        else { syncState.counts.models.failed++; totalFailed++; setSyncCounts('models', i + 1, catalogModels.length, syncState.counts.models.failed, 'push'); }
       }
       for (let i = 0; i < filaments.length; i++) {
         const f = filaments[i];
         const res = await verifiedUpsert('filaments', mapFilamentToDb(f, i), 'id', f.id);
-        if (res.ok) setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed);
-        else { syncState.counts.filaments.failed++; totalFailed++; setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed); }
+        if (res.ok) setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed, 'push');
+        else { syncState.counts.filaments.failed++; totalFailed++; setSyncCounts('filaments', i + 1, filaments.length, syncState.counts.filaments.failed, 'push'); }
       }
       for (let i = 0; i < orders.length; i++) {
         const o = orders[i];
         const res = await verifiedUpsert('orders', mapOrderToDb(o), 'tracking_code', o.trackingCode);
-        if (res.ok) setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed);
-        else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed); }
+        if (res.ok) setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push');
+        else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push'); }
       }
 
       if (totalFailed === 0) {
@@ -1213,8 +1248,9 @@
       }
     };
 
-    // DB writes — these push individual items but do NOT trigger a sync
-    // (the sync is fired explicitly by the caller after all local changes are done)
+    // ============================================================
+    // DB WRITE HELPERS
+    // ============================================================
     window.saveModelToDb = async function(model) {
       if (!backendClient) return;
       await verifiedUpsert('catalog_models', mapModelToDb(model), 'id', model.id);
@@ -1243,7 +1279,9 @@
       if (error) console.warn('Delete order failed:', error.message);
     };
 
-    // Toasts
+    // ============================================================
+    // TOASTS
+    // ============================================================
     window.showToast = function(message, type = 'success') {
       const c = document.getElementById('toast-container'); if (!c) return;
       const t = document.createElement('div');
@@ -1256,7 +1294,9 @@
       setTimeout(() => { t.classList.add('translate-y-2', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
     };
 
-    // Navigation (each route change flashes the banner)
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
     window.navigateTo = function(viewName, updateHash = true) {
       if (viewName === 'owner') { openOwnerPinModal(); return; }
       if (updateHash) {
@@ -1476,11 +1516,9 @@
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
       orders.unshift(newOrder); rebuildMaps();
-      await saveOrderToDb(newOrder);
       closePurchaseModal();
       showToast('Order placed! Tracking Code: ' + code);
       viewOrderTracking(code);
-      // Auto customer sync
       customerSync();
     };
 
@@ -1502,7 +1540,6 @@
           ? 'w-10 h-10 rounded-xl bg-cyan-500 text-slate-950 font-black border-2 border-cyan-400 flex items-center justify-center text-xs shadow-lg shadow-cyan-500/30 transition-all'
           : 'w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all';
       }
-      // Pickup message shows for stage >= 2 (Packaged)
       const pickupWrap = document.getElementById('pickup-message-wrap');
       if (st >= 2) pickupWrap.classList.remove('hidden');
       else pickupWrap.classList.add('hidden');
@@ -1968,7 +2005,6 @@
         const optHtml = Object.keys(so).length > 0
           ? Object.keys(so).map(k => '<span class="inline-block bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] px-2 py-0.5 rounded-md mr-1 mb-1">' + escapeHtml(k) + ': <strong class="text-white">' + escapeHtml(so[k]) + '</strong></span>').join('')
           : '<span class="text-slate-600 italic">None</span>';
-        // Dropdown for stage selection
         const optionsHtml = sn.map((name, i) =>
           '<option value="' + i + '"' + (i === st ? ' selected' : '') + '>' + (i + 1) + '. ' + name + '</option>'
         ).join('');
@@ -2004,7 +2040,11 @@
       flashBanner('Order deleted', 'fa-trash-can');
     };
 
-    window.onload = function() { initBackend(); };
+    window.onload = function() {
+      const versionEl = document.getElementById('app-version');
+      if (versionEl) versionEl.innerText = APP_VERSION;
+      initBackend();
+    };
   </script>
 </body>
 </html>
