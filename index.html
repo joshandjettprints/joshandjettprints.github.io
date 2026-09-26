@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Josh &amp; Jett 3D Printing | Shop &amp; Owner Portal (Supabase Edition)</title>
+  <title>Josh and Jetts (3D Prints) | Shop &amp; Owner Portal</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,7 +38,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <!-- Supabase JS Client Library v2 -->
+  <!-- Backend client library (kept for functionality, never shown in UI) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -92,139 +92,44 @@
     <div class="relative w-24 h-24 mb-6">
       <div id="loading-spinner-ring" class="absolute inset-0 rounded-3xl border-4 border-cyan-500/20 animate-pulse"></div>
       <div id="loading-spinner-spin" class="absolute inset-0 rounded-3xl border-4 border-cyan-400 border-t-transparent animate-spin"></div>
-      <div id="loading-icon-container" class="absolute inset-0 flex items-center justify-center text-cyan-400 text-2xl font-black">
+      <div class="absolute inset-0 flex items-center justify-center text-cyan-400 text-2xl font-black">
         <i id="loading-icon" class="fa-solid fa-cube animate-bounce"></i>
       </div>
     </div>
     <div class="space-y-2 text-center max-w-md px-4">
-      <h2 id="loading-title" class="text-base font-black tracking-tight text-white font-mono uppercase">Processing...</h2>
-      <p id="loading-subtitle" class="text-xs text-slate-400 font-mono">Synchronizing with Supabase Database</p>
+      <h2 id="loading-title" class="text-base font-black tracking-tight text-white font-mono uppercase">Loading Shop...</h2>
+      <p id="loading-subtitle" class="text-xs text-slate-400 font-mono">Fetching catalog &amp; orders</p>
 
       <div id="loading-bar-container" class="w-48 h-1.5 bg-slate-900 rounded-full mx-auto overflow-hidden border border-slate-800 mt-3">
         <div id="loading-bar-fill" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-300 w-1/3"></div>
       </div>
 
-      <!-- Enhanced Error Diagnostic Card -->
+      <!-- Error card (generic wording, no backend names exposed) -->
       <div id="loading-error-box" class="hidden mt-4 p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-left font-mono text-xs space-y-2.5 shadow-2xl">
         <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
           <span class="text-rose-400 font-bold uppercase flex items-center gap-1.5">
-            <i class="fa-solid fa-circle-xmark"></i> Supabase Request Error
+            <i class="fa-solid fa-circle-xmark"></i> Connection Problem
           </span>
-          <span id="loading-error-code" class="text-[10px] bg-rose-900/80 text-rose-200 px-2 py-0.5 rounded border border-rose-500/30">CODE: FETCH_FAILED</span>
+          <span id="loading-error-code" class="text-[10px] bg-rose-900/80 text-rose-200 px-2 py-0.5 rounded border border-rose-500/30">CODE: ERR</span>
         </div>
         <div>
-          <span class="text-slate-400 text-[10px] block uppercase">Web Request Endpoint:</span>
-          <span id="loading-error-request" class="text-cyan-300 text-xs font-bold break-all">GET /rest/v1/catalog_models</span>
+          <span class="text-slate-400 text-[10px] block uppercase">Request:</span>
+          <span id="loading-error-request" class="text-cyan-300 text-xs font-bold break-all">—</span>
         </div>
         <div>
-          <span class="text-slate-400 text-[10px] block uppercase">Error Description:</span>
-          <p id="loading-error-desc" class="text-rose-300 text-[11px] leading-relaxed break-words">TypeError: Failed to fetch</p>
+          <span class="text-slate-400 text-[10px] block uppercase">Details:</span>
+          <p id="loading-error-desc" class="text-rose-300 text-[11px] leading-relaxed break-words">Unable to reach the shop server.</p>
         </div>
       </div>
 
-      <!-- Interactive Actions on Error -->
+      <!-- Actions on error -->
       <div id="loading-error-actions" class="hidden flex flex-wrap items-center justify-center gap-2 pt-3">
         <button onclick="dismissLoadingErrorAndUseOffline()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono font-semibold transition flex items-center gap-1.5 shadow-md">
           <i class="fa-solid fa-wifi text-amber-400"></i> Continue Offline
         </button>
-        <button onclick="openSqlSetupModal()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-md">
-          <i class="fa-solid fa-database"></i> Fix: Copy SQL Schema
-        </button>
         <button onclick="retrySupabaseConnection()" class="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-md">
           <i class="fa-solid fa-rotate-right"></i> Retry Connection
         </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SQL SCHEMA SETUP MODAL (only opened on error / from badge) -->
-  <div id="modal-sql-setup" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
-    <div class="glass-panel rounded-3xl p-6 max-w-2xl w-full border border-amber-500/50 space-y-4 shadow-2xl flex flex-col max-h-[85vh]">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></span>
-          <h3 class="text-sm font-black text-white font-mono uppercase tracking-wider">Supabase Table Schema Setup Required</h3>
-        </div>
-        <button onclick="closeSqlSetupModal()" class="text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono">Close</button>
-      </div>
-
-      <p class="text-xs text-slate-300 font-mono leading-relaxed">
-        Error <code class="text-amber-400">PGRST205</code> occurs because the database tables do not exist in your Supabase project yet. Copy the SQL code below, go to your <strong class="text-white">Supabase Dashboard &rarr; SQL Editor</strong>, paste it, and click <strong class="text-emerald-400">RUN</strong>!
-      </p>
-
-      <div class="relative bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-[11px] text-cyan-300 overflow-y-auto max-h-60 select-all">
-        <pre id="sql-schema-code" class="whitespace-pre-wrap leading-relaxed">-- Run this script in your Supabase SQL Editor
-CREATE TABLE IF NOT EXISTS public.catalog_models (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    category TEXT NOT NULL,
-    icon TEXT,
-    price NUMERIC NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.filaments (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    color TEXT NOT NULL,
-    surcharge NUMERIC DEFAULT 0,
-    in_stock BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.orders (
-    tracking_code TEXT PRIMARY KEY,
-    customer_name TEXT NOT NULL,
-    customer_address TEXT,
-    model_title TEXT NOT NULL,
-    model_icon TEXT,
-    specs TEXT,
-    printer_name TEXT,
-    stage INTEGER DEFAULT 0,
-    logs JSONB DEFAULT '[]'::jsonb,
-    created_at TEXT
-);
-
-ALTER TABLE public.catalog_models ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.filaments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Allow public access on catalog_models" ON public.catalog_models;
-DROP POLICY IF EXISTS "Allow public access on filaments" ON public.filaments;
-DROP POLICY IF EXISTS "Allow public access on orders" ON public.orders;
-
-CREATE POLICY "Allow public access on catalog_models" ON public.catalog_models FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public access on filaments" ON public.filaments FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public access on orders" ON public.orders FOR ALL USING (true) WITH CHECK (true);
-
-NOTIFY pgrst, 'reload schema';</pre>
-      </div>
-
-      <div class="flex items-center justify-between pt-2">
-        <button onclick="dismissLoadingErrorAndUseOffline(); closeSqlSetupModal();" class="text-xs font-mono text-slate-400 hover:text-white underline">
-          Skip for now &amp; use offline mode
-        </button>
-        <button onclick="copySqlSchemaScript()" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono font-black text-xs transition flex items-center gap-2 shadow-lg">
-          <i class="fa-solid fa-copy"></i> Copy SQL Schema Script
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- DEV MODE MODAL (Shift + 5 toggle) -->
-  <div id="dev-mode-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
-    <div class="glass-panel rounded-3xl p-6 max-w-3xl w-full border border-emerald-500/50 space-y-4 shadow-2xl flex flex-col max-h-[85vh]">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-          <h3 class="text-sm font-black text-white font-mono uppercase tracking-wider">Exact Supabase Dev Diagnostic Console (Shift+5)</h3>
-        </div>
-        <button onclick="toggleDevMode()" class="text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono">Close [Shift+5]</button>
-      </div>
-      <p class="text-[11px] text-slate-400 font-mono">Showing exact unsimplified Supabase queries, payload states, database responses, and real-time socket updates.</p>
-      <div id="dev-log-container" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-[11px] text-emerald-300 overflow-y-auto flex-grow space-y-1.5 select-all">
-        <div>[System Initialized] Listening to Supabase database tables...</div>
       </div>
     </div>
   </div>
@@ -241,13 +146,13 @@ NOTIFY pgrst, 'reload schema';</pre>
           </div>
           <div>
             <h1 class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-              Josh &amp; Jett <span class="text-emerald-400 font-extrabold text-xs uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30">Supabase 3D</span>
+              Josh and Jetts <span class="text-emerald-400 font-extrabold text-xs uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30">3D Prints</span>
             </h1>
             <p class="text-[11px] text-slate-400 hidden sm:block font-mono">Precision Models &amp; Custom Filament Shop</p>
           </div>
         </div>
 
-        <!-- Header Actions & Navigation (SQL Setup button removed) -->
+        <!-- Header Actions & Navigation -->
         <div class="flex items-center space-x-1.5 sm:space-x-3">
           <button onclick="navigateTo('shop')" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
             <i class="fa-solid fa-store text-cyan-400"></i> <span class="hidden xs:inline">Shop</span>
@@ -266,14 +171,6 @@ NOTIFY pgrst, 'reload schema';</pre>
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
 
-  <!-- Hidden diagnostic badge — only appears on Supabase errors -->
-  <button id="hidden-error-badge" onclick="openSqlSetupModal()"
-    class="hidden fixed bottom-5 left-5 z-40 px-3.5 py-2.5 rounded-xl bg-rose-950/95 hover:bg-rose-900 border border-rose-500/50 text-rose-200 text-xs font-mono font-bold shadow-2xl shadow-rose-500/20 transition flex items-center gap-2 animate-pulse">
-    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
-    <span>Supabase Error</span>
-    <span id="hidden-error-badge-code" class="text-[10px] bg-rose-900/80 px-1.5 py-0.5 rounded border border-rose-500/30">ERR</span>
-  </button>
-
   <!-- Main Application Views -->
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
@@ -283,7 +180,7 @@ NOTIFY pgrst, 'reload schema';</pre>
         <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="relative z-10 max-w-2xl space-y-3">
           <span class="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 inline-block">
-            High Quality Filament Prints &amp; Custom Models (Supabase Cloud Powered)
+            High Quality Filament Prints &amp; Custom Models
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
             Bring Digital Designs into <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">Physical Reality</span>
@@ -510,7 +407,7 @@ NOTIFY pgrst, 'reload schema';</pre>
   <!-- Footer -->
   <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 mt-12 text-center text-xs text-slate-500 font-mono">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p>&copy; 2026 Josh &amp; Jett 3D Printing Lab. All rights reserved. (No Electronics Involved)</p>
+      <p>&copy; 2026 Josh and Jetts (3D Prints). All rights reserved. (No Electronics Involved)</p>
       <div class="flex items-center space-x-4">
         <button onclick="openQuickTrackModal()" class="hover:text-cyan-400 transition">Track Order</button>
         <button onclick="openOwnerPinModal()" class="hover:text-amber-400 transition">Owner Login</button>
@@ -732,12 +629,12 @@ NOTIFY pgrst, 'reload schema';</pre>
 
   <script>
     // ============================================================
-    // SUPABASE CONFIGURATION
+    // BACKEND CONFIG (internal — never shown to the user)
     // ============================================================
-    const SUPABASE_URL = "https://evqycmmnqnvfppcnxscr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cXljbW1ucW52ZnBwY254c2NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjAzMDIsImV4cCI6MjEwNTkzNjMwMn0.G704LYY5gNkLXn6CaKrCssSxw_h0bcFb5mGBWk7ZqMw";
+    const BACKEND_URL = "https://evqycmmnqnvfppcnxscr.supabase.co";
+    const BACKEND_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cXljbW1ucW52ZnBwY254c2NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjAzMDIsImV4cCI6MjEwNTkzNjMwMn0.G704LYY5gNkLXn6CaKrCssSxw_h0bcFb5mGBWk7ZqMw";
 
-    let supabaseClient = null;
+    let backendClient = null;
 
     // ============================================================
     // STATE
@@ -760,47 +657,7 @@ NOTIFY pgrst, 'reload schema';</pre>
     let selectedFilamentId = null;
 
     // ============================================================
-    // DEV MODE LOGGER (Shift + 5)
-    // ============================================================
-    let devModeActive = false;
-
-    window.logDev = function(label, payload) {
-      const container = document.getElementById('dev-log-container');
-      if (!container) return;
-      const time = new Date().toLocaleTimeString();
-      const line = document.createElement('div');
-      let payloadStr = '';
-      try {
-        payloadStr = payload ? JSON.stringify(payload) : '';
-      } catch (e) {
-        payloadStr = String(payload);
-      }
-      line.className = 'text-emerald-300';
-      line.innerHTML = '<span class="text-slate-500">[' + time + ']</span> <span class="text-cyan-400 font-bold">' + label + '</span> <span class="text-emerald-200">' + payloadStr + '</span>';
-      container.appendChild(line);
-      container.scrollTop = container.scrollHeight;
-      while (container.children.length > 200) container.removeChild(container.firstChild);
-    };
-
-    window.toggleDevMode = function() {
-      devModeActive = !devModeActive;
-      const modal = document.getElementById('dev-mode-modal');
-      if (devModeActive) modal.classList.remove('hidden');
-      else modal.classList.add('hidden');
-    };
-
-    document.addEventListener('keydown', function(e) {
-      if (e.shiftKey && (e.key === '%' || e.key === '5' || e.code === 'Digit5')) {
-        const tag = (e.target.tagName || '').toLowerCase();
-        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-        e.preventDefault();
-        toggleDevMode();
-      }
-      if (e.key === 'Escape' && devModeActive) toggleDevMode();
-    });
-
-    // ============================================================
-    // DATA MAPPING HELPERS
+    // DATA MAPPING HELPERS (DB <-> Local)
     // ============================================================
     function mapModelFromDb(row) {
       return {
@@ -925,61 +782,11 @@ NOTIFY pgrst, 'reload schema';</pre>
     }
 
     // ============================================================
-    // SQL SETUP MODAL
+    // LOADING SCREEN (generic, no backend names)
     // ============================================================
-    window.openSqlSetupModal = function() {
-      document.getElementById('modal-sql-setup').classList.remove('hidden');
-    };
-
-    window.closeSqlSetupModal = function() {
-      document.getElementById('modal-sql-setup').classList.add('hidden');
-    };
-
-    window.copySqlSchemaScript = function() {
-      const code = document.getElementById('sql-schema-code').innerText;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(code).then(() => {
-          showToast('SQL Schema script copied to clipboard!');
-        }).catch(() => fallbackCopy(code));
-      } else {
-        fallbackCopy(code);
-      }
-    };
-
-    function fallbackCopy(text) {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      document.body.appendChild(textarea);
-      textarea.select();
-      try { document.execCommand('copy'); showToast('SQL Schema script copied to clipboard!'); }
-      catch (e) { showToast('Copy failed. Please select manually.', 'error'); }
-      document.body.removeChild(textarea);
-    }
-
-    // ============================================================
-    // ERROR BADGE HELPERS
-    // ============================================================
-    function showErrorBadge(code) {
-      const badge = document.getElementById('hidden-error-badge');
-      const badgeCode = document.getElementById('hidden-error-badge-code');
-      if (badge) badge.classList.remove('hidden');
-      if (badgeCode) badgeCode.innerText = code || 'ERR';
-    }
-
-    function hideErrorBadge() {
-      const badge = document.getElementById('hidden-error-badge');
-      if (badge) badge.classList.add('hidden');
-    }
-
-    // ============================================================
-    // LOADING SCREEN
-    // ============================================================
-    window.showLoading = function(title, subtitle = 'Communicating with Supabase...') {
+    window.showLoading = function(title, subtitle = 'Loading shop data...') {
       const screen = document.getElementById('global-loading-screen');
       if (!screen) return;
-
-      // Hide the error badge on a fresh loading attempt (unless it's an error screen)
-      hideErrorBadge();
 
       document.getElementById('loading-title').innerText = title;
       document.getElementById('loading-title').className = "text-base font-black tracking-tight text-white font-mono uppercase";
@@ -1002,7 +809,6 @@ NOTIFY pgrst, 'reload schema';</pre>
       document.getElementById('loading-error-actions').classList.add('hidden');
 
       screen.classList.remove('hidden', 'opacity-0');
-      window.logDev("SHOW_LOADING_SCREEN", { title, subtitle });
     };
 
     window.showLoadingError = function(requestName, errorCode, description) {
@@ -1011,69 +817,43 @@ NOTIFY pgrst, 'reload schema';</pre>
 
       screen.classList.remove('hidden', 'opacity-0');
 
-      // Show the persistent error badge
-      showErrorBadge(errorCode || 'ERR');
+      document.getElementById('loading-title').innerText = "Connection Problem";
+      document.getElementById('loading-title').className = "text-base font-black tracking-tight text-rose-400 font-mono uppercase";
+      document.getElementById('loading-subtitle').innerText = "Unable to reach the shop server";
 
-      const isMissingTable = String(errorCode).includes('PGRST205')
-        || String(description).includes('Could not find the table')
-        || String(description).toLowerCase().includes('schema cache');
+      const spinnerRing = document.getElementById('loading-spinner-ring');
+      if (spinnerRing) spinnerRing.className = "absolute inset-0 rounded-3xl border-4 border-rose-500/20 animate-pulse";
 
-      if (isMissingTable) {
-        document.getElementById('loading-title').innerText = "Supabase Tables Missing (PGRST205)";
-        document.getElementById('loading-title').className = "text-base font-black tracking-tight text-amber-400 font-mono uppercase";
-        document.getElementById('loading-subtitle').innerText = "Database tables need to be created in Supabase SQL Editor";
+      const spinnerSpin = document.getElementById('loading-spinner-spin');
+      if (spinnerSpin) spinnerSpin.className = "absolute inset-0 rounded-3xl border-4 border-rose-500 border-t-transparent animate-spin";
 
-        const spinnerRing = document.getElementById('loading-spinner-ring');
-        if (spinnerRing) spinnerRing.className = "absolute inset-0 rounded-3xl border-4 border-amber-500/20 animate-pulse";
-
-        const spinnerSpin = document.getElementById('loading-spinner-spin');
-        if (spinnerSpin) spinnerSpin.className = "absolute inset-0 rounded-3xl border-4 border-amber-400 border-t-transparent animate-spin";
-
-        const icon = document.getElementById('loading-icon');
-        if (icon) icon.className = "fa-solid fa-database text-amber-400 text-2xl animate-bounce";
-      } else {
-        document.getElementById('loading-title').innerText = "Supabase Connection Error";
-        document.getElementById('loading-title').className = "text-base font-black tracking-tight text-rose-400 font-mono uppercase";
-        document.getElementById('loading-subtitle').innerText = "Failed to communicate with Supabase backend server";
-
-        const spinnerRing = document.getElementById('loading-spinner-ring');
-        if (spinnerRing) spinnerRing.className = "absolute inset-0 rounded-3xl border-4 border-rose-500/20 animate-pulse";
-
-        const spinnerSpin = document.getElementById('loading-spinner-spin');
-        if (spinnerSpin) spinnerSpin.className = "absolute inset-0 rounded-3xl border-4 border-rose-500 border-t-transparent animate-spin";
-
-        const icon = document.getElementById('loading-icon');
-        if (icon) icon.className = "fa-solid fa-triangle-exclamation text-rose-400 text-2xl animate-bounce";
-      }
+      const icon = document.getElementById('loading-icon');
+      if (icon) icon.className = "fa-solid fa-triangle-exclamation text-rose-400 text-2xl animate-bounce";
 
       document.getElementById('loading-bar-container').classList.add('hidden');
 
       const errorBox = document.getElementById('loading-error-box');
       if (errorBox) {
         errorBox.classList.remove('hidden');
-        document.getElementById('loading-error-request').innerText = requestName || 'GET /rest/v1/catalog_models';
-        document.getElementById('loading-error-code').innerText = 'CODE: ' + (errorCode || 'PGRST205');
-        document.getElementById('loading-error-desc').innerText = isMissingTable
-          ? "Table was not found in schema cache. Click 'Fix: Copy SQL Schema' below to create required tables in Supabase!"
-          : (description || 'Failed to fetch data from Supabase web request.');
+        document.getElementById('loading-error-request').innerText = requestName || '—';
+        document.getElementById('loading-error-code').innerText = 'CODE: ' + (errorCode || 'ERR');
+        document.getElementById('loading-error-desc').innerText = description || 'Unable to reach the shop server.';
       }
 
       const actions = document.getElementById('loading-error-actions');
       if (actions) actions.classList.remove('hidden');
-
-      window.logDev("SHOW_LOADING_ERROR", { requestName, errorCode, description, isMissingTable });
     };
 
     window.dismissLoadingErrorAndUseOffline = function() {
       loadDefaultInMemoryData();
       renderCategoryPills();
       renderShopGrid();
-      hideLoading();  // this hides the badge too
-      showToast('Switched to Local In-Memory Offline Mode', 'error');
+      hideLoading();
+      showToast('Switched to offline mode', 'error');
     };
 
     window.retrySupabaseConnection = function() {
-      initSupabase();
+      initBackend();
     };
 
     window.hideLoading = function() {
@@ -1081,61 +861,50 @@ NOTIFY pgrst, 'reload schema';</pre>
       if (!screen) return;
       screen.classList.add('opacity-0');
       setTimeout(() => screen.classList.add('hidden'), 300);
-
-      // Hide the error badge — connection is healthy
-      hideErrorBadge();
-
-      window.logDev("HIDE_LOADING_SCREEN", {});
     };
 
     // ============================================================
-    // SUPABASE INIT & DATA FETCH
+    // BACKEND INIT & DATA FETCH
     // ============================================================
-    async function initSupabase() {
-      showLoading('Connecting to Supabase...', 'Initializing Supabase JS Client');
+    async function initBackend() {
+      showLoading('Loading Shop...', 'Fetching catalog & orders');
       try {
         if (window.supabase && window.supabase.createClient) {
-          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-          window.logDev("CLIENT_INITIALIZED", { url: SUPABASE_URL });
+          backendClient = window.supabase.createClient(BACKEND_URL, BACKEND_KEY);
         } else {
-          throw new Error('Supabase SDK script not loaded properly');
+          throw new Error('Backend library failed to load');
         }
 
-        const success = await fetchAllDataFromSupabase();
+        const success = await fetchAllData();
         if (success) {
-          setupSupabaseRealtimeSubscriptions();
+          setupRealtimeSubscriptions();
           hideLoading();
           handleHashNavigation();
         }
       } catch (err) {
-        window.logDev("INITIALIZATION_FALLBACK", { error: err.message });
-        showLoadingError('Supabase Client Initialization', 'INIT_FAILED', err.message || 'Failed to connect to Supabase.');
+        showLoadingError('Shop Data', 'INIT_FAILED', err.message || 'Failed to load shop data.');
       }
     }
 
-    async function fetchAllDataFromSupabase() {
-      if (!supabaseClient) return false;
+    async function fetchAllData() {
+      if (!backendClient) return false;
 
       let firstError = null;
 
       // 1. Catalog Models
-      const { data: dbModels, error: modelsErr } = await supabaseClient.from('catalog_models').select('*');
+      const { data: dbModels, error: modelsErr } = await backendClient.from('catalog_models').select('*');
       if (modelsErr) {
-        const errorMsg = modelsErr.message || (typeof modelsErr === 'object' ? JSON.stringify(modelsErr) : String(modelsErr));
-        window.logDev("FETCH_MODELS_ERROR", { error: errorMsg });
+        const errorMsg = modelsErr.message || String(modelsErr);
         if (!firstError) {
           firstError = {
-            request: "GET /rest/v1/catalog_models",
-            code: modelsErr.code || modelsErr.status || "ERR_FETCH_MODELS",
+            request: "Catalog",
+            code: modelsErr.code || modelsErr.status || "ERR",
             desc: errorMsg
           };
         }
       } else if (dbModels && dbModels.length > 0) {
         catalogModels = dbModels.map(mapModelFromDb);
-        window.logDev("FETCHED_MODELS_SUCCESS", { count: catalogModels.length });
       } else {
-        // Table is empty — seed defaults
-        window.logDev("SEEDING_DEFAULT_MODELS", {});
         loadDefaultInMemoryData();
         for (const m of catalogModels) {
           await saveModelToDb(m);
@@ -1143,22 +912,19 @@ NOTIFY pgrst, 'reload schema';</pre>
       }
 
       // 2. Filaments
-      const { data: dbFilaments, error: filErr } = await supabaseClient.from('filaments').select('*');
+      const { data: dbFilaments, error: filErr } = await backendClient.from('filaments').select('*');
       if (filErr) {
-        const errorMsg = filErr.message || (typeof filErr === 'object' ? JSON.stringify(filErr) : String(filErr));
-        window.logDev("FETCH_FILAMENTS_ERROR", { error: errorMsg });
+        const errorMsg = filErr.message || String(filErr);
         if (!firstError) {
           firstError = {
-            request: "GET /rest/v1/filaments",
-            code: filErr.code || filErr.status || "ERR_FETCH_FILAMENTS",
+            request: "Filaments",
+            code: filErr.code || filErr.status || "ERR",
             desc: errorMsg
           };
         }
       } else if (dbFilaments && dbFilaments.length > 0) {
         filaments = dbFilaments.map(mapFilamentFromDb);
-        window.logDev("FETCHED_FILAMENTS_SUCCESS", { count: filaments.length });
       } else if (!firstError) {
-        // Table exists but is empty — seed defaults
         if (filaments.length === 0) loadDefaultInMemoryData();
         for (const f of filaments) {
           await saveFilamentToDb(f);
@@ -1166,20 +932,18 @@ NOTIFY pgrst, 'reload schema';</pre>
       }
 
       // 3. Orders
-      const { data: dbOrders, error: ordersErr } = await supabaseClient.from('orders').select('*');
+      const { data: dbOrders, error: ordersErr } = await backendClient.from('orders').select('*');
       if (ordersErr) {
-        const errorMsg = ordersErr.message || (typeof ordersErr === 'object' ? JSON.stringify(ordersErr) : String(ordersErr));
-        window.logDev("FETCH_ORDERS_ERROR", { error: errorMsg });
+        const errorMsg = ordersErr.message || String(ordersErr);
         if (!firstError) {
           firstError = {
-            request: "GET /rest/v1/orders",
-            code: ordersErr.code || ordersErr.status || "ERR_FETCH_ORDERS",
+            request: "Orders",
+            code: ordersErr.code || ordersErr.status || "ERR",
             desc: errorMsg
           };
         }
       } else if (dbOrders) {
         orders = dbOrders.map(mapOrderFromDb);
-        window.logDev("FETCHED_ORDERS_SUCCESS", { count: orders.length });
       }
 
       if (firstError) {
@@ -1198,41 +962,26 @@ NOTIFY pgrst, 'reload schema';</pre>
       return true;
     }
 
-    function setupSupabaseRealtimeSubscriptions() {
-      if (!supabaseClient) return;
+    function setupRealtimeSubscriptions() {
+      if (!backendClient) return;
 
       try {
-        supabaseClient
+        backendClient
           .channel('public:catalog_models')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_models' }, payload => {
-            window.logDev("REALTIME_CATALOG_CHANGE", payload);
-            fetchAllDataFromSupabase();
-          })
-          .subscribe((status, err) => {
-            if (err) window.logDev("REALTIME_CATALOG_SUB_ERROR", { status, error: err.message });
-          });
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_models' }, () => fetchAllData())
+          .subscribe();
 
-        supabaseClient
+        backendClient
           .channel('public:filaments')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'filaments' }, payload => {
-            window.logDev("REALTIME_FILAMENTS_CHANGE", payload);
-            fetchAllDataFromSupabase();
-          })
-          .subscribe((status, err) => {
-            if (err) window.logDev("REALTIME_FILAMENTS_SUB_ERROR", { status, error: err.message });
-          });
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'filaments' }, () => fetchAllData())
+          .subscribe();
 
-        supabaseClient
+        backendClient
           .channel('public:orders')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => {
-            window.logDev("REALTIME_ORDERS_CHANGE", payload);
-            fetchAllDataFromSupabase();
-          })
-          .subscribe((status, err) => {
-            if (err) window.logDev("REALTIME_ORDERS_SUB_ERROR", { status, error: err.message });
-          });
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchAllData())
+          .subscribe();
       } catch (e) {
-        window.logDev("REALTIME_SETUP_EXCEPTION", { error: e.message });
+        // Silent — realtime is optional
       }
     }
 
@@ -1240,45 +989,39 @@ NOTIFY pgrst, 'reload schema';</pre>
     // DB WRITE HELPERS
     // ============================================================
     window.saveModelToDb = async function(model) {
-      if (!supabaseClient) return;
-      window.logDev("DB_UPSERT_MODEL", { id: model.id });
-      const { error } = await supabaseClient.from('catalog_models').upsert(mapModelToDb(model));
-      if (error) window.logDev("UPSERT_MODEL_ERROR", { error: error.message });
+      if (!backendClient) return;
+      const { error } = await backendClient.from('catalog_models').upsert(mapModelToDb(model));
+      if (error) console.warn('Save model failed:', error.message);
     };
 
     window.removeModelFromDb = async function(id) {
-      if (!supabaseClient) return;
-      window.logDev("DB_DELETE_MODEL", { id });
-      const { error } = await supabaseClient.from('catalog_models').delete().eq('id', id);
-      if (error) window.logDev("DELETE_MODEL_ERROR", { error: error.message });
+      if (!backendClient) return;
+      const { error } = await backendClient.from('catalog_models').delete().eq('id', id);
+      if (error) console.warn('Delete model failed:', error.message);
     };
 
     window.saveFilamentToDb = async function(filament) {
-      if (!supabaseClient) return;
-      window.logDev("DB_UPSERT_FILAMENT", { id: filament.id });
-      const { error } = await supabaseClient.from('filaments').upsert(mapFilamentToDb(filament));
-      if (error) window.logDev("UPSERT_FILAMENT_ERROR", { error: error.message });
+      if (!backendClient) return;
+      const { error } = await backendClient.from('filaments').upsert(mapFilamentToDb(filament));
+      if (error) console.warn('Save filament failed:', error.message);
     };
 
     window.removeFilamentFromDb = async function(id) {
-      if (!supabaseClient) return;
-      window.logDev("DB_DELETE_FILAMENT", { id });
-      const { error } = await supabaseClient.from('filaments').delete().eq('id', id);
-      if (error) window.logDev("DELETE_FILAMENT_ERROR", { error: error.message });
+      if (!backendClient) return;
+      const { error } = await backendClient.from('filaments').delete().eq('id', id);
+      if (error) console.warn('Delete filament failed:', error.message);
     };
 
     window.saveOrderToDb = async function(order) {
-      if (!supabaseClient) return;
-      window.logDev("DB_UPSERT_ORDER", { trackingCode: order.trackingCode });
-      const { error } = await supabaseClient.from('orders').upsert(mapOrderToDb(order));
-      if (error) window.logDev("UPSERT_ORDER_ERROR", { error: error.message });
+      if (!backendClient) return;
+      const { error } = await backendClient.from('orders').upsert(mapOrderToDb(order));
+      if (error) console.warn('Save order failed:', error.message);
     };
 
     window.removeOrderFromDb = async function(code) {
-      if (!supabaseClient) return;
-      window.logDev("DB_DELETE_ORDER", { code });
-      const { error } = await supabaseClient.from('orders').delete().eq('tracking_code', code);
-      if (error) window.logDev("DELETE_ORDER_ERROR", { error: error.message });
+      if (!backendClient) return;
+      const { error } = await backendClient.from('orders').delete().eq('tracking_code', code);
+      if (error) console.warn('Delete order failed:', error.message);
     };
 
     // ============================================================
@@ -1619,6 +1362,16 @@ NOTIFY pgrst, 'reload schema';</pre>
         fallbackCopy(text);
       }
     };
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try { document.execCommand('copy'); showToast('Copied to clipboard!'); }
+      catch (e) { showToast('Copy failed. Please select manually.', 'error'); }
+      document.body.removeChild(textarea);
+    }
 
     window.openQuickTrackModal = function() {
       document.getElementById('modal-quick-track').classList.remove('hidden');
@@ -2011,7 +1764,7 @@ NOTIFY pgrst, 'reload schema';</pre>
     // BOOT
     // ============================================================
     window.onload = function() {
-      initSupabase();
+      initBackend();
     };
   </script>
 </body>
