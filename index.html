@@ -72,10 +72,6 @@
     #sync-banner.failed #sync-banner-icon { color: #fda4af !important; }
     #sync-banner.failed #sync-banner-sub { color: #fda4af; }
     #sync-banner.success .bar-fill { background: linear-gradient(90deg, #10b981, #22d3ee); }
-    #sync-banner.flash { transform: translateY(0); opacity: 1; }
-    #sync-banner.flash .flash-content { display: flex; }
-    #sync-banner.flash .sync-full { display: none !important; }
-    .flash-content { display: none; align-items: center; gap: .75rem; padding: .4rem .25rem; }
 
     .count-badge {
       display: inline-flex; align-items: center; gap: .35rem;
@@ -104,7 +100,6 @@
     .filament-actions { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; flex-shrink: 0; }
     .filament-actions button { flex-shrink: 0; }
 
-    /* Big themed "Pick up at The Heart" message */
     .pickup-message {
       font-size: clamp(1.75rem, 5vw, 3.5rem);
       font-weight: 900;
@@ -129,7 +124,6 @@
       padding: 1.25rem 1rem;
     }
 
-    /* Dropdown stage selector */
     .stage-select {
       background: rgba(2,6,23,.7);
       border: 1px solid rgba(255,255,255,.10);
@@ -147,39 +141,105 @@
     .stage-select.s1 { border-color: rgba(245,158,11,.5); color: #fcd34d; }
     .stage-select.s2 { border-color: rgba(168,85,247,.5); color: #d8b4fe; }
     .stage-select.s3 { border-color: rgba(16,185,129,.5); color: #6ee7b7; }
+
+    /* Cart badge */
+    .cart-btn { position: relative; }
+    .cart-badge {
+      position: absolute; top: -6px; right: -6px;
+      min-width: 18px; height: 18px;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #06b6d4, #10b981);
+      color: #020617;
+      font-weight: 900;
+      font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 4px;
+      box-shadow: 0 4px 10px rgba(6,182,212,.4);
+      font-family: 'Fira Code', monospace;
+    }
+    .cart-badge.empty { display: none; }
+
+    /* New Arrival glow badge */
+    .new-badge {
+      position: absolute; top: 12px; right: 12px;
+      background: linear-gradient(135deg, #22d3ee, #10b981);
+      color: #020617;
+      font-size: 9px; font-weight: 900;
+      padding: 4px 8px;
+      border-radius: .5rem;
+      font-family: 'Fira Code', monospace;
+      z-index: 10;
+      letter-spacing: .05em;
+      box-shadow: 0 0 16px rgba(34,211,238,.55);
+      animation: newBadgePulse 2s ease-in-out infinite;
+    }
+    @keyframes newBadgePulse {
+      0%,100% { box-shadow: 0 0 16px rgba(34,211,238,.55); }
+      50% { box-shadow: 0 0 26px rgba(16,185,129,.75); }
+    }
+
+    /* Cart items */
+    .cart-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px;
+      background: rgba(15,23,42,.6);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 1rem;
+      transition: border-color .2s;
+    }
+    .cart-item:hover { border-color: rgba(34,211,238,.3); }
+    .cart-thumb {
+      width: 56px; height: 56px;
+      border-radius: .75rem;
+      background: #020617;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .cart-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .qty-btn {
+      width: 22px; height: 22px;
+      border-radius: .4rem;
+      background: rgba(15,23,42,.8);
+      border: 1px solid rgba(255,255,255,.1);
+      color: #cbd5e1;
+      font-size: 11px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: 'Fira Code', monospace;
+    }
+    .qty-btn:hover { background: rgba(6,182,212,.2); border-color: rgba(6,182,212,.4); color: #fff; }
+
+    /* Cart table in owner panel */
+    .cart-table { width: 100%; font-family: 'Fira Code', monospace; font-size: 11px; }
+    .cart-table th { text-align: left; padding: 8px; color: #64748b; text-transform: uppercase; font-size: 9px; letter-spacing: .05em; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .cart-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.04); }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
 
-  <!-- SYNC BANNER (top of page) -->
+  <!-- SYNC BANNER -->
   <div id="sync-banner">
     <div class="glass-panel border-b border-slate-800 shadow-2xl">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <!-- Quick flash content (short messages like "Opened Shop") -->
-        <div class="flash-content">
-          <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 flex-shrink-0">
-            <i id="flash-icon" class="fa-solid fa-bolt"></i>
-          </div>
-          <p id="flash-text" class="text-xs font-mono text-cyan-200 font-bold">Action</p>
-        </div>
-
-        <!-- Full sync content -->
-        <div class="sync-full flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <div class="flex items-center gap-3 flex-shrink-0">
             <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <i id="sync-banner-icon" class="fa-solid fa-arrows-rotate fa-spin"></i>
             </div>
             <div>
               <p id="sync-banner-title" class="text-xs font-black font-mono uppercase tracking-wider text-white">Syncing Data</p>
-              <p id="sync-banner-sub" class="text-[10px] font-mono text-cyan-300">Pushing local changes to the server...</p>
+              <p id="sync-banner-sub" class="text-[10px] font-mono text-cyan-300">Syncing with the server...</p>
             </div>
           </div>
 
           <div class="flex-1 min-w-0">
             <div id="sync-counts" class="flex flex-wrap items-center gap-2">
-              <span class="count-badge pending" data-badge="models"><i class="fa-solid fa-cube"></i> <span data-count="models">0/0</span> models</span>
-              <span class="count-badge pending" data-badge="filaments"><i class="fa-solid fa-palette"></i> <span data-count="filaments">0/0</span> filaments</span>
-              <span class="count-badge pending" data-badge="orders"><i class="fa-solid fa-list-check"></i> <span data-count="orders">0/0</span> orders</span>
+              <span class="count-badge pending" data-badge="models"><span data-arrow="models">↑</span> <i class="fa-solid fa-cube"></i> <span data-count="models">0/0</span> models</span>
+              <span class="count-badge pending" data-badge="filaments"><span data-arrow="filaments">↑</span> <i class="fa-solid fa-palette"></i> <span data-count="filaments">0/0</span> filaments</span>
+              <span class="count-badge pending" data-badge="orders"><span data-arrow="orders">↑</span> <i class="fa-solid fa-list-check"></i> <span data-count="orders">0/0</span> orders</span>
             </div>
             <div class="mt-2 w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
               <div id="sync-bar-fill" class="bar-fill" style="width:0%"></div>
@@ -247,6 +307,12 @@
           <button onclick="customerSync()" id="sync-btn" class="px-2.5 py-2 rounded-xl text-xs font-semibold text-cyan-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-cyan-500/30 transition flex items-center gap-1.5" title="Sync my order & tracking">
             <i class="fa-solid fa-arrows-rotate" id="sync-btn-icon"></i> <span class="hidden sm:inline">Sync</span>
           </button>
+
+          <button onclick="openCartModal()" class="cart-btn px-3 py-2 rounded-xl text-xs font-semibold text-emerald-300 hover:text-emerald-200 hover:bg-emerald-950/40 border border-emerald-500/30 transition flex items-center gap-1.5" title="View cart">
+            <i class="fa-solid fa-cart-shopping"></i> <span class="hidden sm:inline">Cart</span>
+            <span id="cart-badge" class="cart-badge empty">0</span>
+          </button>
+
           <button onclick="navigateTo('shop')" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
             <i class="fa-solid fa-store text-cyan-400"></i> <span class="hidden xs:inline">Shop</span>
           </button>
@@ -323,7 +389,6 @@
           </div>
         </div>
 
-        <!-- PICKUP MESSAGE (shows at Packaged & Delivered) -->
         <div id="pickup-message-wrap" class="hidden pt-4">
           <div class="pickup-card">
             <p class="text-[10px] font-mono uppercase tracking-widest text-cyan-300 text-center mb-2"><i class="fa-solid fa-location-dot"></i> Pickup Location</p>
@@ -361,6 +426,17 @@
         <div class="glass-panel p-4 rounded-2xl border border-slate-800"><span class="text-[10px] font-mono text-emerald-400 uppercase">Completed</span><p id="owner-stat-completed" class="text-2xl font-black text-emerald-400 mt-1">0</p></div>
       </div>
 
+      <!-- Active carts summary -->
+      <div class="glass-panel rounded-3xl p-6 border border-emerald-500/20 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-emerald-400"></i> Active Cart (Local Session)</h3>
+          <span id="owner-cart-count" class="text-xs font-mono text-emerald-300">0 items</span>
+        </div>
+        <div id="owner-cart-table-container">
+          <p class="text-xs font-mono text-slate-500 text-center py-4">No items in cart.</p>
+        </div>
+      </div>
+
       <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
@@ -376,7 +452,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
             <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-cyan-400"></i> Catalog Model Management</h3>
-            <p class="text-xs text-slate-400">Add/edit models, upload photos, crop, and define customer options</p>
+            <p class="text-xs text-slate-400">Star models to show them in New Arrivals</p>
           </div>
           <button onclick="openAddModelModal()" class="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-md"><i class="fa-solid fa-plus"></i> Add New Model</button>
         </div>
@@ -408,7 +484,7 @@
 
   <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 mt-12 text-center text-xs text-slate-500 font-mono">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved) <span class="ml-2 text-cyan-400/70 font-bold">v17</span></p>
+      <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved) <span class="ml-2 text-cyan-400/70 font-bold">v20</span></p>
       <div class="flex items-center space-x-4">
         <button onclick="openQuickTrackModal()" class="hover:text-cyan-400 transition">Track Order</button>
         <button onclick="openOwnerPinModal()" class="hover:text-amber-400 transition">Owner Login</button>
@@ -451,7 +527,46 @@
     </div>
   </div>
 
-  <!-- 3. PURCHASE MODAL (FULL SCREEN) -->
+  <!-- 2b. CART MODAL -->
+  <div id="modal-cart" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-0 sm:p-4">
+    <div class="full-menu-shell glass-panel flex flex-col overflow-hidden border border-slate-800 shadow-2xl">
+      <div class="px-6 sm:px-8 py-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <i class="fa-solid fa-cart-shopping"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-white">Your Cart</h3>
+            <p id="cart-subtitle" class="text-[10px] font-mono text-slate-400">0 items</p>
+          </div>
+        </div>
+        <button onclick="closeCartModal()" class="w-10 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-6">
+        <div id="cart-items-container" class="space-y-3"></div>
+      </div>
+
+      <div class="px-6 sm:px-8 py-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 flex-shrink-0 flex-wrap">
+        <div>
+          <span class="text-[10px] font-mono text-slate-500 block">CART TOTAL</span>
+          <span id="cart-total" class="text-2xl font-black text-emerald-400">฿0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="clearCart()" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-black uppercase tracking-wider transition flex items-center gap-2">
+            <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Clear</span>
+          </button>
+          <button onclick="checkoutCart()" id="checkout-btn" class="px-5 sm:px-8 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-credit-card"></i> <span class="hidden sm:inline">Checkout All</span><span class="sm:hidden">Checkout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. PURCHASE MODAL -->
   <div id="modal-purchase" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md hidden p-0 sm:p-4">
     <div class="full-menu-shell glass-panel flex flex-col md:flex-row overflow-hidden border border-slate-800 shadow-2xl">
       <div class="md:w-2/5 w-full flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40">
@@ -515,14 +630,19 @@
           </div>
         </div>
 
-        <div class="px-6 sm:px-8 py-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 flex-shrink-0">
+        <div class="px-6 sm:px-8 py-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 flex-shrink-0 flex-wrap">
           <div>
             <span class="text-[10px] font-mono text-slate-500 block">FINAL PRICE (EST.)</span>
             <span id="buy-total-price" class="text-2xl font-black text-cyan-400">฿0</span>
           </div>
-          <button onclick="confirmPurchaseOrder()" class="px-5 sm:px-8 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 flex items-center gap-2">
-            <i class="fa-solid fa-paper-plane"></i> <span class="hidden sm:inline">Submit &amp; Get Tracking Number</span><span class="sm:hidden">Submit</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="addCurrentConfigToCart()" class="px-4 sm:px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 text-xs font-black uppercase tracking-wider transition flex items-center gap-2">
+              <i class="fa-solid fa-cart-plus"></i> <span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Cart</span>
+            </button>
+            <button onclick="confirmPurchaseOrder()" class="px-5 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+              <i class="fa-solid fa-bolt"></i> <span class="hidden sm:inline">Buy Now</span><span class="sm:hidden">Buy</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -583,6 +703,12 @@
           <div class="sm:col-span-2">
             <label class="text-slate-400 block mb-1">Description</label>
             <textarea id="new-model-desc" rows="2" placeholder="High detail 3D physical plastic print model..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"></textarea>
+          </div>
+          <div class="sm:col-span-2 flex items-center gap-3 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2.5">
+            <input type="checkbox" id="new-model-new-arrival" class="w-4 h-4 accent-cyan-500" />
+            <label for="new-model-new-arrival" class="text-slate-300 flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-star text-amber-400"></i> Feature in <strong class="text-white">New Arrivals</strong>
+            </label>
           </div>
         </div>
 
@@ -659,7 +785,7 @@
     </div>
   </div>
 
-  <!-- 5. Add/Edit Filament Modal (FULL SCREEN) -->
+  <!-- 5. Add/Edit Filament Modal -->
   <div id="modal-add-filament" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md hidden p-0 sm:p-4">
     <div class="full-menu-shell glass-panel flex flex-col md:flex-row overflow-hidden border border-slate-800 shadow-2xl">
       <div class="md:w-2/5 w-full flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40">
@@ -743,12 +869,9 @@
     </div>
   </div>
 
- <script>
-    const APP_VERSION = 'v18';
+  <script>
+    const APP_VERSION = 'v20';
 
-    // ============================================================
-    // BACKEND CONFIG
-    // ============================================================
     const BACKEND_URL = "https://evqycmmnqnvfppcnxscr.supabase.co";
     const BACKEND_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cXljbW1ucW52ZnBwY254c2NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjAzMDIsImV4cCI6MjEwNTkzNjMwMn0.G704LYY5gNkLXn6CaKrCssSxw_h0bcFb5mGBWk7ZqMw";
     let backendClient = null;
@@ -756,6 +879,7 @@
     let catalogModels = [];
     let filaments = [];
     let orders = [];
+    let cart = []; // [{cartId, modelId, title, icon, imageUrl, imageCrop, filamentId, filamentName, filamentColor, scale, options, unitPrice, qty}]
     let catalogMap = new Map(), filamentMap = new Map(), orderMap = new Map();
 
     let searchDebounceTimer = null, ownerSearchDebounceTimer = null;
@@ -777,7 +901,8 @@
         orders:    { done: 0, total: 0, failed: 0, dir: 'push' }
       }
     };
-    let flashTimer = null;
+
+    window.flashBanner = function() {};
 
     function showSyncBanner(title, subtitle) {
       const b = document.getElementById('sync-banner');
@@ -789,24 +914,11 @@
       document.getElementById('sync-warning').style.display = '';
       syncState.active = true;
     }
-
     function hideSyncBanner() {
       const b = document.getElementById('sync-banner');
       b.classList.remove('active');
       syncState.active = false;
     }
-
-    window.flashBanner = function(text, icon) {
-      if (syncState.active) return;
-      const b = document.getElementById('sync-banner');
-      clearTimeout(flashTimer);
-      document.getElementById('flash-text').innerText = text || 'Done';
-      document.getElementById('flash-icon').className = 'fa-solid ' + (icon || 'fa-bolt');
-      b.classList.remove('failed', 'success', 'active');
-      b.classList.add('flash');
-      flashTimer = setTimeout(() => { b.classList.remove('flash'); }, 1100);
-    };
-
     function setSyncCounts(category, done, total, failed, dir) {
       if (syncState.counts[category]) {
         syncState.counts[category].done = done;
@@ -816,7 +928,6 @@
       }
       renderSyncCounts();
     }
-
     function renderSyncCounts() {
       let totalDone = 0, totalAll = 0, totalFailed = 0;
       ['models', 'filaments', 'orders'].forEach(c => {
@@ -845,7 +956,6 @@
       document.getElementById('sync-percent').innerText = pct + '%';
       return { totalDone, totalAll, totalFailed };
     }
-
     function finalizeSyncBanner(success, failedCount, customTitle) {
       const b = document.getElementById('sync-banner');
       const sub = document.getElementById('sync-banner-sub');
@@ -882,7 +992,8 @@
         desc: row.description || row.desc || '',
         imageUrl: row.image_url || '',
         imageCrop: (row.image_crop && typeof row.image_crop === 'object') ? row.image_crop : safeParse(row.image_crop, defaultCrop()),
-        options: Array.isArray(row.options) ? row.options : safeParse(row.options, [])
+        options: Array.isArray(row.options) ? row.options : safeParse(row.options, []),
+        newArrival: row.new_arrival === true || row.new_arrival === 'true' || row.newArrival === true
       };
     }
     function mapModelToDb(m) {
@@ -891,7 +1002,8 @@
         price: m.price, description: m.desc,
         image_url: m.imageUrl || null,
         image_crop: m.imageCrop || defaultCrop(),
-        options: m.options || []
+        options: m.options || [],
+        new_arrival: m.newArrival === true
       };
     }
     function mapFilamentFromDb(row) {
@@ -946,10 +1058,10 @@
 
     function loadDefaultInMemoryData() {
       catalogModels = [
-        { id: 'mod-1', title: 'Articulated Crystal Dragon', category: 'Articulated', icon: 'fa-dragon', price: 250, desc: 'Fully flexible print-in-place crystal dragon with beautiful segmented joints.', imageUrl: '', imageCrop: defaultCrop(), options: [] },
-        { id: 'mod-2', title: 'Modular Gear Fidget Spinner', category: 'Fidget', icon: 'fa-gear', price: 120, desc: 'Satisfying mechanical interlocking print with smooth counter-rotational gears.', imageUrl: '', imageCrop: defaultCrop(), options: [] },
-        { id: 'mod-3', title: 'Self-Watering Planter Pot', category: 'Desk Decor', icon: 'fa-cube', price: 180, desc: 'Two-piece planter with internal reservoir wick system for low maintenance desk plants.', imageUrl: '', imageCrop: defaultCrop(), options: [] },
-        { id: 'mod-4', title: 'Mechanical Screw Organizer', category: 'Tools', icon: 'fa-box', price: 210, desc: 'Precision threaded cylindrical storage box for hardware fasteners and tiny items.', imageUrl: '', imageCrop: defaultCrop(), options: [] }
+        { id: 'mod-1', title: 'Articulated Crystal Dragon', category: 'Articulated', icon: 'fa-dragon', price: 250, desc: 'Fully flexible print-in-place crystal dragon with beautiful segmented joints.', imageUrl: '', imageCrop: defaultCrop(), options: [], newArrival: true },
+        { id: 'mod-2', title: 'Modular Gear Fidget Spinner', category: 'Fidget', icon: 'fa-gear', price: 120, desc: 'Satisfying mechanical interlocking print with smooth counter-rotational gears.', imageUrl: '', imageCrop: defaultCrop(), options: [], newArrival: false },
+        { id: 'mod-3', title: 'Self-Watering Planter Pot', category: 'Desk Decor', icon: 'fa-cube', price: 180, desc: 'Two-piece planter with internal reservoir wick system for low maintenance desk plants.', imageUrl: '', imageCrop: defaultCrop(), options: [], newArrival: false },
+        { id: 'mod-4', title: 'Mechanical Screw Organizer', category: 'Tools', icon: 'fa-box', price: 210, desc: 'Precision threaded cylindrical storage box for hardware fasteners and tiny items.', imageUrl: '', imageCrop: defaultCrop(), options: [], newArrival: true }
       ];
       filaments = [
         { id: 'neon-cyan', name: 'Silk Neon Cyan PLA', color: '#06b6d4', surcharge: 0, description: 'Shiny silk finish with a bright neon cyan color.', inStock: true, sortOrder: 0 },
@@ -967,6 +1079,215 @@
       selectedFilamentId = filaments[0] ? filaments[0].id : null;
       rebuildMaps();
     }
+
+    // ============================================================
+    // CART
+    // ============================================================
+    function saveCart() {
+      try { localStorage.setItem('jj_cart_v1', JSON.stringify(cart)); } catch(e) {}
+    }
+    function loadCart() {
+      try {
+        const raw = localStorage.getItem('jj_cart_v1');
+        if (raw) cart = JSON.parse(raw) || [];
+      } catch(e) { cart = []; }
+    }
+    window.updateCartBadge = function() {
+      const badge = document.getElementById('cart-badge');
+      const totalItems = cart.reduce((s, i) => s + (i.qty || 1), 0);
+      if (!badge) return;
+      if (totalItems > 0) { badge.classList.remove('empty'); badge.innerText = totalItems > 99 ? '99+' : String(totalItems); }
+      else { badge.classList.add('empty'); badge.innerText = '0'; }
+    };
+    window.openCartModal = function() {
+      document.getElementById('modal-cart').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      renderCartModal();
+    };
+    window.closeCartModal = function() {
+      document.getElementById('modal-cart').classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+    function renderCartModal() {
+      const container = document.getElementById('cart-items-container');
+      const subtitle = document.getElementById('cart-subtitle');
+      const totalEl = document.getElementById('cart-total');
+      if (cart.length === 0) {
+        container.innerHTML = '<div class="text-center py-16 space-y-3"><i class="fa-solid fa-cart-shopping text-5xl text-slate-700"></i><p class="text-sm font-mono text-slate-500">Your cart is empty.</p><p class="text-[11px] font-mono text-slate-600">Add models from the shop to see them here.</p></div>';
+        subtitle.innerText = '0 items';
+        totalEl.innerText = '฿0';
+        return;
+      }
+      const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+      subtitle.innerText = totalItems + ' item' + (totalItems !== 1 ? 's' : '');
+      const totalPrice = cart.reduce((s, i) => s + (i.unitPrice * i.qty), 0);
+      totalEl.innerText = '฿' + totalPrice;
+      container.innerHTML = cart.map(item => {
+        const crop = item.imageCrop || defaultCrop();
+        const thumb = item.imageUrl
+          ? '<img src="' + escapeAttr(item.imageUrl) + '" style="object-position:' + (crop.x || 50) + '% ' + (crop.y || 50) + '%;transform:scale(' + ((crop.zoom || 100) / 100) + ');transform-origin:' + (crop.x || 50) + '% ' + (crop.y || 50) + '%;" />'
+          : '<i class="fa-solid ' + (item.icon || 'fa-cube') + ' text-cyan-400/40 text-xl"></i>';
+        const optsList = Object.keys(item.options || {}).map(k => escapeHtml(k) + ': <strong class="text-white">' + escapeHtml(item.options[k]) + '</strong>').join(' · ');
+        return '<div class="cart-item">'
+          + '<div class="cart-thumb">' + thumb + '</div>'
+          + '<div class="flex-1 min-w-0">'
+          + '<div class="font-bold text-white text-sm truncate">' + escapeHtml(item.title) + '</div>'
+          + '<div class="text-[10px] font-mono text-slate-400 mt-0.5 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:' + item.filamentColor + '"></span> ' + escapeHtml(item.filamentName) + ' · ' + item.scale + '%</div>'
+          + (optsList ? '<div class="text-[10px] font-mono text-cyan-300 mt-0.5 truncate">' + optsList + '</div>' : '')
+          + '<div class="text-emerald-400 font-mono font-black text-sm mt-1">฿' + (item.unitPrice * item.qty) + '</div>'
+          + '</div>'
+          + '<div class="flex flex-col items-end gap-2">'
+          + '<div class="flex items-center gap-1.5">'
+          + '<button class="qty-btn" onclick="updateCartQty(\'' + item.cartId + '\', -1)">−</button>'
+          + '<span class="font-mono text-xs text-white px-1">' + item.qty + '</span>'
+          + '<button class="qty-btn" onclick="updateCartQty(\'' + item.cartId + '\', 1)">+</button>'
+          + '</div>'
+          + '<button onclick="removeFromCart(\'' + item.cartId + '\')" class="text-rose-400 hover:text-rose-300 text-[10px] font-mono transition"><i class="fa-solid fa-trash-can"></i></button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+    window.updateCartQty = function(cartId, delta) {
+      const it = cart.find(i => i.cartId === cartId); if (!it) return;
+      it.qty = Math.max(1, Math.min(99, it.qty + delta));
+      saveCart(); renderCartModal(); updateCartBadge(); renderOwnerCartTable();
+    };
+    window.removeFromCart = function(cartId) {
+      cart = cart.filter(i => i.cartId !== cartId);
+      saveCart(); renderCartModal(); updateCartBadge(); renderOwnerCartTable();
+    };
+    window.clearCart = function() {
+      if (cart.length === 0) return;
+      cart = []; saveCart(); renderCartModal(); updateCartBadge(); renderOwnerCartTable();
+      showToast('Cart cleared.');
+    };
+
+    // Add current config from purchase modal
+    window.addCurrentConfigToCart = function() {
+      if (!currentConfiguredModel) return;
+      const scale = parseInt(document.getElementById('buy-scale-slider').value);
+      const fil = filamentMap.get(selectedFilamentId);
+      if (!fil || !fil.inStock) { showToast('Please select a valid in-stock filament.', 'error'); return; }
+      const sm = Math.pow(scale / 100, 1.5);
+      const optionsCost = getSelectedOptionsCost();
+      const unitPrice = Math.round((currentConfiguredModel.price * sm) + fil.surcharge + optionsCost);
+      const humanOpts = {};
+      (currentConfiguredModel.options || []).forEach((g, gi) => {
+        const gid = g.id || ('g' + gi);
+        const v = selectedOptions[gid];
+        if (v !== undefined) humanOpts[g.name || gid] = v;
+      });
+      cart.push({
+        cartId: 'c-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+        modelId: currentConfiguredModel.id,
+        title: currentConfiguredModel.title,
+        icon: currentConfiguredModel.icon || 'fa-cube',
+        imageUrl: currentConfiguredModel.imageUrl || '',
+        imageCrop: currentConfiguredModel.imageCrop || defaultCrop(),
+        filamentId: fil.id,
+        filamentName: fil.name,
+        filamentColor: fil.color,
+        scale: scale,
+        options: humanOpts,
+        unitPrice: unitPrice,
+        qty: 1
+      });
+      saveCart(); updateCartBadge(); renderOwnerCartTable();
+      showToast('Added to cart: ' + currentConfiguredModel.title);
+      closePurchaseModal();
+      // Optionally open cart
+      // openCartModal();
+    };
+
+    // Checkout all items in cart
+    window.checkoutCart = async function() {
+      if (cart.length === 0) { showToast('Cart is empty.', 'error'); return; }
+      const nameEl = document.getElementById('buy-customer-name');
+      // Use whatever name is in the purchase modal, or prompt
+      let customerName = (nameEl && nameEl.value.trim()) || localStorage.getItem('jj_last_name') || '';
+      if (!customerName) {
+        customerName = prompt('Enter your name for the order:');
+        if (!customerName) { showToast('Name is required for checkout.', 'error'); return; }
+        customerName = customerName.trim();
+      }
+      localStorage.setItem('jj_last_name', customerName);
+
+      closeCartModal();
+      showSyncBanner('Placing Order', 'Creating ' + cart.length + ' order(s)...');
+      syncState.active = true;
+
+      const printers = ['Bambu Lab A2L', 'Bambu Lab A1 Mini'];
+      const createdCodes = [];
+      let failed = 0;
+
+      for (const item of cart) {
+        for (let q = 0; q < item.qty; q++) {
+          const code = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
+          const printer = printers[Math.floor(Math.random() * printers.length)];
+          const newOrder = {
+            trackingCode: code, customerName,
+            modelTitle: item.title,
+            modelIcon: item.icon || 'fa-cube',
+            specs: item.filamentName + ' | ' + item.scale + '% Scale (฿' + item.unitPrice + ')',
+            printerName: printer, stage: 0, selectedOptions: item.options || {},
+            logs: [
+              '▶ Order created for ' + customerName + ' (฿' + item.unitPrice + ').',
+              '▶ Filament selected: ' + item.filamentName + '.',
+              '▶ Assigned to physical machine: ' + printer + '.'
+            ].concat(Object.keys(item.options || {}).length > 0 ? ['▶ Options: ' + Object.keys(item.options).map(k => k + '=' + item.options[k]).join(', ')] : []),
+            createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+          };
+          orders.unshift(newOrder);
+          try {
+            await saveOrderToDb(newOrder);
+            createdCodes.push(code);
+          } catch (e) { failed++; }
+        }
+      }
+      rebuildMaps();
+      cart = []; saveCart(); updateCartBadge(); renderOwnerCartTable();
+
+      finalizeSyncBanner(failed === 0, failed, 'Order Placed');
+      if (failed === 0) {
+        showToast('Placed ' + createdCodes.length + ' order(s)! Last code: ' + createdCodes[createdCodes.length - 1]);
+        if (createdCodes.length > 0) viewOrderTracking(createdCodes[createdCodes.length - 1]);
+        customerSync();
+      } else {
+        showToast(failed + ' order(s) failed to sync.', 'error');
+      }
+    };
+
+    // Owner cart table
+    window.renderOwnerCartTable = function() {
+      const container = document.getElementById('owner-cart-table-container');
+      const countEl = document.getElementById('owner-cart-count');
+      if (!container) return;
+      const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+      if (countEl) countEl.innerText = totalItems + ' item' + (totalItems !== 1 ? 's' : '');
+      if (cart.length === 0) {
+        container.innerHTML = '<p class="text-xs font-mono text-slate-500 text-center py-4">No items in cart.</p>';
+        return;
+      }
+      const total = cart.reduce((s, i) => s + (i.unitPrice * i.qty), 0);
+      container.innerHTML = '<table class="cart-table">'
+        + '<thead><tr><th>Model</th><th>Filament</th><th>Scale</th><th>Options</th><th>Qty</th><th class="text-right">Price</th></tr></thead>'
+        + '<tbody>'
+        + cart.map(item => {
+            const optsList = Object.keys(item.options || {}).map(k => escapeHtml(k) + ': ' + escapeHtml(item.options[k])).join(', ') || '—';
+            return '<tr>'
+              + '<td class="text-white font-bold">' + escapeHtml(item.title) + '</td>'
+              + '<td><span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:' + item.filamentColor + '"></span> ' + escapeHtml(item.filamentName) + '</span></td>'
+              + '<td class="text-cyan-300">' + item.scale + '%</td>'
+              + '<td class="text-slate-400 text-[10px]">' + optsList + '</td>'
+              + '<td class="text-slate-200">' + item.qty + '</td>'
+              + '<td class="text-right text-emerald-400 font-bold">฿' + (item.unitPrice * item.qty) + '</td>'
+              + '</tr>';
+          }).join('')
+        + '</tbody></table>'
+        + '<div class="flex justify-end pt-3 border-t border-slate-800 mt-3">'
+        + '<div class="text-right"><span class="text-[10px] font-mono text-slate-500 block">CART TOTAL</span><span class="text-lg font-black text-emerald-400">฿' + total + '</span></div>'
+        + '</div>';
+    };
 
     // ============================================================
     // VALIDATION
@@ -1097,22 +1418,16 @@
       } catch (e) {}
     }
 
-    // ============================================================
-    // VERIFIED UPSERT
-    // ============================================================
     async function verifiedUpsert(table, payload, pkField, pkValue) {
       const maxAttempts = 3;
       let lastError = null;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           const { error: writeErr } = await backendClient.from(table).upsert(payload);
-          if (writeErr) {
-            lastError = writeErr;
-          } else {
+          if (writeErr) { lastError = writeErr; }
+          else {
             const { data: verifyData, error: verifyErr } = await backendClient.from(table).select(pkField).eq(pkField, pkValue).limit(1);
-            if (!verifyErr && verifyData && verifyData.length > 0) {
-              return { ok: true, attempts: attempt };
-            }
+            if (!verifyErr && verifyData && verifyData.length > 0) return { ok: true, attempts: attempt };
             lastError = verifyErr || new Error('Row not found after write');
           }
         } catch (e) { lastError = e; }
@@ -1122,7 +1437,7 @@
     }
 
     // ============================================================
-    // CUSTOMER SYNC — push orders, pull models + filaments
+    // CUSTOMER SYNC
     // ============================================================
     window.customerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
@@ -1137,44 +1452,23 @@
         orders:    { done: 0, total: orders.length, failed: 0, dir: 'push' }
       };
       renderSyncCounts();
-
       let totalFailed = 0;
 
-      // 1) PULL models — download latest from server
       try {
         const { data: dbModels, error: modelsErr } = await backendClient.from('catalog_models').select('*');
-        if (modelsErr) {
-          syncState.counts.models.failed = 1;
-          totalFailed++;
-          setSyncCounts('models', 0, 1, 1, 'pull');
-        } else if (dbModels) {
-          catalogModels = dbModels.map(mapModelFromDb);
-          setSyncCounts('models', dbModels.length, dbModels.length, 0, 'pull');
-        }
-      } catch (e) {
-        syncState.counts.models.failed = 1;
-        totalFailed++;
-        setSyncCounts('models', 0, 1, 1, 'pull');
-      }
+        if (modelsErr) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
+        else if (dbModels) { catalogModels = dbModels.map(mapModelFromDb); setSyncCounts('models', dbModels.length, dbModels.length, 0, 'pull'); }
+      } catch (e) { syncState.counts.models.failed = 1; totalFailed++; setSyncCounts('models', 0, 1, 1, 'pull'); }
 
-      // 2) PULL filaments — download latest from server
       try {
         const { data: dbFilaments, error: filErr } = await backendClient.from('filaments').select('*');
-        if (filErr) {
-          syncState.counts.filaments.failed = 1;
-          totalFailed++;
-          setSyncCounts('filaments', 0, 1, 1, 'pull');
-        } else if (dbFilaments) {
+        if (filErr) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
+        else if (dbFilaments) {
           filaments = dbFilaments.map(mapFilamentFromDb).sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name));
           setSyncCounts('filaments', dbFilaments.length, dbFilaments.length, 0, 'pull');
         }
-      } catch (e) {
-        syncState.counts.filaments.failed = 1;
-        totalFailed++;
-        setSyncCounts('filaments', 0, 1, 1, 'pull');
-      }
+      } catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, 1, 1, 'pull'); }
 
-      // 3) PUSH orders — upload local orders to server
       for (let i = 0; i < orders.length; i++) {
         const o = orders[i];
         const res = await verifiedUpsert('orders', mapOrderToDb(o), 'tracking_code', o.trackingCode);
@@ -1182,25 +1476,16 @@
         else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push'); }
       }
 
-      // Refresh UI from updated local arrays
-      rebuildMaps();
-      renderCategoryPills();
-      renderShopGrid();
+      rebuildMaps(); renderCategoryPills(); renderShopGrid();
       if (activeView === 'owner') renderOwnerPortal();
       if (activeView === 'tracking' && activeTrackingCode) viewOrderTracking(activeTrackingCode, false);
 
-      if (totalFailed === 0) {
-        setSyncPill('ok', 'Synced');
-        finalizeSyncBanner(true, 0, 'Order Synced');
-      } else {
-        setSyncPill('failed', totalFailed + ' failed');
-        finalizeSyncBanner(false, totalFailed);
-        showToast(totalFailed + ' item(s) failed to sync.', 'error');
-      }
+      if (totalFailed === 0) { setSyncPill('ok', 'Synced'); finalizeSyncBanner(true, 0, 'Order Synced'); }
+      else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
     };
 
     // ============================================================
-    // OWNER SYNC — full push (models + filaments + orders)
+    // OWNER SYNC
     // ============================================================
     window.ownerSync = async function() {
       if (!backendClient) { showToast('Offline — cannot sync.', 'error'); return; }
@@ -1215,7 +1500,6 @@
         orders:    { done: 0, total: orders.length, failed: 0, dir: 'push' }
       };
       renderSyncCounts();
-
       let totalFailed = 0;
 
       for (let i = 0; i < catalogModels.length; i++) {
@@ -1237,15 +1521,8 @@
         else { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, orders.length, syncState.counts.orders.failed, 'push'); }
       }
 
-      if (totalFailed === 0) {
-        setSyncPill('ok', 'Synced');
-        finalizeSyncBanner(true, 0, 'Owner Sync Complete');
-        showToast('Owner sync complete! Everything verified on server.');
-      } else {
-        setSyncPill('failed', totalFailed + ' failed');
-        finalizeSyncBanner(false, totalFailed);
-        showToast(totalFailed + ' item(s) failed to sync.', 'error');
-      }
+      if (totalFailed === 0) { setSyncPill('ok', 'Synced'); finalizeSyncBanner(true, 0, 'Owner Sync Complete'); showToast('Owner sync complete!'); }
+      else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
     };
 
     // ============================================================
@@ -1307,8 +1584,8 @@
       document.getElementById('view-shop').classList.add('hidden');
       document.getElementById('view-tracking').classList.add('hidden');
       document.getElementById('view-owner').classList.add('hidden');
-      if (viewName === 'shop') { document.getElementById('view-shop').classList.remove('hidden'); renderShopGrid(); flashBanner('Opened Shop', 'fa-store'); }
-      else if (viewName === 'tracking') { document.getElementById('view-tracking').classList.remove('hidden'); flashBanner('Opened Tracking', 'fa-truck-fast'); }
+      if (viewName === 'shop') { document.getElementById('view-shop').classList.remove('hidden'); renderShopGrid(); }
+      else if (viewName === 'tracking') { document.getElementById('view-tracking').classList.remove('hidden'); }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     window.handleHashNavigation = function() {
@@ -1321,7 +1598,7 @@
       else navigateTo('shop', false);
     };
     window.addEventListener('hashchange', handleHashNavigation);
-    window.exitOwnerPortal = function() { activeView = 'shop'; history.replaceState(null, '', '#shop'); navigateTo('shop', false); flashBanner('Locked Owner Portal', 'fa-lock'); };
+    window.exitOwnerPortal = function() { activeView = 'shop'; history.replaceState(null, '', '#shop'); navigateTo('shop', false); };
 
     function escapeHtml(str) { if (str == null) return ''; return String(str).replace(/[&<>"']/g, s => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); }
     function escapeAttr(str) { return escapeHtml(str).replace(/"/g, '&quot;'); }
@@ -1338,14 +1615,31 @@
 
     window.renderCategoryPills = function() {
       const c = document.getElementById('category-pills-container'); if (!c) return;
-      const cats = ['All', 'Articulated', 'Miniatures', 'Mechanical', 'Toys', 'Functional', 'Cosplay', 'Desk Decor', 'Fidget', 'Puzzles'];
+      const cats = [
+        { key: 'All', label: 'All', icon: 'fa-cube' },
+        { key: 'New Arrivals', label: 'New Arrivals', icon: 'fa-star' },
+        { key: 'Articulated', label: 'Articulated' },
+        { key: 'Miniatures', label: 'Miniatures' },
+        { key: 'Mechanical', label: 'Mechanical' },
+        { key: 'Toys', label: 'Toys' },
+        { key: 'Functional', label: 'Functional' },
+        { key: 'Cosplay', label: 'Cosplay' },
+        { key: 'Desk Decor', label: 'Desk Decor' },
+        { key: 'Fidget', label: 'Fidget' },
+        { key: 'Puzzles', label: 'Puzzles' }
+      ];
       c.innerHTML = cats.map(cat => {
-        const a = currentCategory === cat;
-        const cls = a ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-lg shadow-cyan-500/20' : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700';
-        return '<button onclick="setCategory(\'' + cat + '\')" class="px-3.5 py-1.5 rounded-xl text-xs font-mono border transition flex-shrink-0 ' + cls + '">' + cat + '</button>';
+        const a = currentCategory === cat.key;
+        const isNew = cat.key === 'New Arrivals';
+        let cls;
+        if (a && isNew) cls = 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold border-amber-400 shadow-lg shadow-amber-500/30';
+        else if (a) cls = 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-lg shadow-cyan-500/20';
+        else if (isNew) cls = 'bg-amber-950/40 text-amber-300 border-amber-500/30 hover:border-amber-400/60';
+        else cls = 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700';
+        return '<button onclick="setCategory(\'' + cat.key + '\')" class="px-3.5 py-1.5 rounded-xl text-xs font-mono border transition flex-shrink-0 flex items-center gap-1.5 ' + cls + '">' + (cat.icon ? '<i class="fa-solid ' + cat.icon + '"></i> ' : '') + cat.label + '</button>';
       }).join('');
     };
-    window.setCategory = function(cat) { currentCategory = cat; renderCategoryPills(); renderShopGrid(); flashBanner('Filter: ' + cat, 'fa-filter'); };
+    window.setCategory = function(cat) { currentCategory = cat; renderCategoryPills(); renderShopGrid(); };
     window.debounceRenderShopGrid = function() {
       if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
       searchDebounceTimer = setTimeout(() => renderShopGrid(), 150);
@@ -1355,18 +1649,22 @@
       const s = (document.getElementById('shop-search-input') || {}).value || '';
       const search = s.toLowerCase();
       const filtered = catalogModels.filter(m => {
-        const mc = currentCategory === 'All' || m.category === currentCategory;
+        let mc;
+        if (currentCategory === 'All') mc = true;
+        else if (currentCategory === 'New Arrivals') mc = !!m.newArrival;
+        else mc = m.category === currentCategory;
         return mc && (m.title + ' ' + (m.desc || '')).toLowerCase().includes(search);
       });
       if (filtered.length === 0) {
-        g.innerHTML = '<div class="col-span-full py-16 text-center space-y-3 glass-panel rounded-3xl border border-slate-800"><i class="fa-solid fa-cube text-4xl text-slate-600"></i><p class="text-sm font-mono text-slate-400">No 3D print models found.</p></div>';
+        g.innerHTML = '<div class="col-span-full py-16 text-center space-y-3 glass-panel rounded-3xl border border-slate-800"><i class="fa-solid ' + (currentCategory === 'New Arrivals' ? 'fa-star' : 'fa-cube') + ' text-4xl text-slate-600"></i><p class="text-sm font-mono text-slate-400">No 3D print models found.</p></div>';
         return;
       }
       g.innerHTML = filtered.map(model => {
         const optionsBadge = (model.options && model.options.length > 0)
-          ? '<span class="absolute top-3 right-3 bg-cyan-500/90 text-slate-950 text-[9px] font-black font-mono px-2 py-1 rounded-lg shadow-lg z-10"><i class="fa-solid fa-sliders"></i> ' + model.options.length + ' OPTION' + (model.options.length > 1 ? 'S' : '') + '</span>' : '';
-        return '<div class="glass-card rounded-3xl overflow-hidden border border-slate-800 flex flex-col justify-between group">'
-          + '<div class="relative">' + buildImageTag(model) + '<span class="absolute top-3 left-3 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-xl border border-slate-800 text-[10px] font-mono text-cyan-400 font-bold z-10">' + escapeHtml(model.category) + '</span>' + optionsBadge + '</div>'
+          ? '<span class="absolute bottom-3 right-3 bg-cyan-500/90 text-slate-950 text-[9px] font-black font-mono px-2 py-1 rounded-lg shadow-lg z-10"><i class="fa-solid fa-sliders"></i> ' + model.options.length + ' OPTION' + (model.options.length > 1 ? 'S' : '') + '</span>' : '';
+        const newBadge = model.newArrival ? '<span class="new-badge"><i class="fa-solid fa-star"></i> NEW</span>' : '';
+        return '<div class="glass-card rounded-3xl overflow-hidden border border-slate-800 flex flex-col justify-between group' + (model.newArrival ? ' ring-1 ring-amber-500/30' : '') + '">'
+          + '<div class="relative">' + buildImageTag(model) + '<span class="absolute top-3 left-3 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-xl border border-slate-800 text-[10px] font-mono text-cyan-400 font-bold z-10">' + escapeHtml(model.category) + '</span>' + newBadge + optionsBadge + '</div>'
           + '<div class="p-6 space-y-3">'
           + '<div class="flex items-center gap-2"><div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-sm"><i class="fa-solid ' + (model.icon || 'fa-cube') + '"></i></div><h3 class="text-base font-bold text-white tracking-tight">' + escapeHtml(model.title) + '</h3></div>'
           + '<p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">' + escapeHtml(model.desc || '') + '</p></div>'
@@ -1378,7 +1676,6 @@
 
     window.openPurchaseModal = function(modelId) {
       const m = catalogMap.get(modelId); if (!m) return;
-      flashBanner('Ordering: ' + m.title, 'fa-cart-shopping');
       currentConfiguredModel = m;
       selectedOptions = {};
       document.getElementById('buy-modal-name').innerText = m.title;
@@ -1403,7 +1700,7 @@
       }
       document.getElementById('buy-scale-slider').value = 100;
       document.getElementById('buy-scale-val').innerText = '100% (Standard)';
-      document.getElementById('buy-customer-name').value = '';
+      document.getElementById('buy-customer-name').value = localStorage.getItem('jj_last_name') || '';
       clearFieldError('buy-customer-name');
       renderPurchaseModalFilamentChoices();
       renderPurchaseOptions();
@@ -1487,10 +1784,10 @@
       const nEl = document.getElementById('buy-customer-name');
       const name = nEl.value.trim();
       if (!name) { showFieldError('buy-customer-name', 'Name is required'); showToast('Please enter your name.', 'error'); nEl.focus(); return; }
+      localStorage.setItem('jj_last_name', name);
       const scale = document.getElementById('buy-scale-slider').value;
       const fil = filamentMap.get(selectedFilamentId) || filaments[0];
       if (!fil || !fil.inStock) { showToast('Please select a valid in-stock filament.', 'error'); return; }
-      flashBanner('Placing order...', 'fa-paper-plane');
       const code = '8A' + Math.random().toString(36).substring(2, 8).toUpperCase();
       const sm = Math.pow(scale / 100, 1.5);
       const finalPrice = Math.round((currentConfiguredModel.price * sm) + fil.surcharge + getSelectedOptionsCost());
@@ -1561,7 +1858,6 @@
     window.copyTrackingNumber = function() {
       if (!activeTrackingCode) return;
       const t = activeTrackingCode;
-      flashBanner('Copied code', 'fa-copy');
       if (navigator.clipboard && navigator.clipboard.writeText)
         navigator.clipboard.writeText(t).then(() => showToast('Copied ' + t)).catch(() => fallbackCopy(t));
       else fallbackCopy(t);
@@ -1571,7 +1867,7 @@
       try { document.execCommand('copy'); showToast('Copied!'); } catch (e) { showToast('Copy failed.', 'error'); }
       document.body.removeChild(ta);
     }
-    window.openQuickTrackModal = function() { flashBanner('Track Order', 'fa-magnifying-glass'); document.getElementById('modal-quick-track').classList.remove('hidden'); };
+    window.openQuickTrackModal = function() { document.getElementById('modal-quick-track').classList.remove('hidden'); };
     window.closeQuickTrackModal = function() { document.getElementById('modal-quick-track').classList.add('hidden'); };
     window.submitQuickTrack = function() {
       const c = document.getElementById('quick-track-input').value.trim().toUpperCase();
@@ -1580,7 +1876,6 @@
     };
 
     window.openOwnerPinModal = function() {
-      flashBanner('Owner Login', 'fa-key');
       document.getElementById('owner-pin-input').value = '';
       document.getElementById('modal-owner-pin').classList.remove('hidden');
       setTimeout(() => document.getElementById('owner-pin-input').focus(), 50);
@@ -1597,7 +1892,6 @@
       if (pin === '85455') {
         document.getElementById('modal-owner-pin').classList.add('hidden');
         showToast('Owner Portal access granted!');
-        flashBanner('Owner Portal Opened', 'fa-unlock');
         activeView = 'owner'; history.replaceState(null, '', '#owner');
         document.getElementById('view-shop').classList.add('hidden');
         document.getElementById('view-tracking').classList.add('hidden');
@@ -1613,7 +1907,7 @@
       document.getElementById('owner-stat-total').innerText = orders.length;
       document.getElementById('owner-stat-active').innerText = ac;
       document.getElementById('owner-stat-completed').innerText = cc;
-      renderOwnerFilaments(); renderOwnerCatalog(); renderOwnerPortalOrders();
+      renderOwnerFilaments(); renderOwnerCatalog(); renderOwnerPortalOrders(); renderOwnerCartTable();
     };
 
     window.renderOwnerFilaments = function() {
@@ -1647,7 +1941,6 @@
       [filaments[i], filaments[ni]] = [filaments[ni], filaments[i]];
       filaments.forEach((f, idx) => f.sortOrder = idx);
       renderOwnerFilaments();
-      flashBanner('Reordered filaments', 'fa-arrow-up-arrow-down');
       if (backendClient) {
         for (let j = 0; j < filaments.length; j++) {
           await verifiedUpsert('filaments', mapFilamentToDb(filaments[j], j), 'id', filaments[j].id);
@@ -1668,7 +1961,6 @@
     window.setFilamentColor = function(c) { document.getElementById('new-filament-color').value = c; updateFilamentPreview(); };
 
     window.openAddFilamentModal = function() {
-      flashBanner('Add New Filament', 'fa-palette');
       document.getElementById('edit-filament-id').value = '';
       document.getElementById('filament-modal-title').innerHTML = '<i class="fa-solid fa-plus text-amber-400"></i> Add New Filament';
       document.getElementById('filament-submit-label').innerText = 'Add Filament';
@@ -1682,7 +1974,6 @@
     };
     window.openEditFilamentModal = function(id) {
       const f = filamentMap.get(id); if (!f) return;
-      flashBanner('Edit Filament', 'fa-pen-to-square');
       document.getElementById('edit-filament-id').value = f.id;
       document.getElementById('filament-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Filament';
       document.getElementById('filament-submit-label').innerText = 'Save Changes';
@@ -1712,14 +2003,12 @@
           renderOwnerFilaments();
           await saveFilamentToDb(f);
           showToast('Updated: ' + name);
-          flashBanner('Filament saved', 'fa-circle-check');
         }
       } else {
         const nf = { id: 'fil-' + Date.now(), name, color, surcharge, description: desc, inStock: true, sortOrder: filaments.length };
         filaments.push(nf); rebuildMaps(); renderOwnerFilaments();
         await saveFilamentToDb(nf, filaments.length - 1);
         showToast('Added: ' + name);
-        flashBanner('Filament added', 'fa-plus');
       }
       closeAddFilamentModal();
     };
@@ -1728,7 +2017,6 @@
       f.inStock = !f.inStock; renderOwnerFilaments();
       await saveFilamentToDb(f);
       showToast('Stock updated: ' + f.name);
-      flashBanner(f.inStock ? 'Marked In Stock' : 'Marked Out of Stock', 'fa-circle-check');
     };
     window.deleteFilament = async function(id) {
       filaments = filaments.filter(f => f.id !== id);
@@ -1736,7 +2024,6 @@
       rebuildMaps(); if (activeView === 'owner') renderOwnerFilaments();
       await removeFilamentFromDb(id);
       showToast('Filament removed.');
-      flashBanner('Filament removed', 'fa-trash-can');
     };
 
     window.renderOwnerCatalog = function() {
@@ -1747,18 +2034,29 @@
           ? '<div class="product-img-wrap" style="aspect-ratio:' + (c2.aspect || '4/3') + ';"><img src="' + escapeAttr(m.imageUrl) + '" style="object-position:' + (c2.x || 50) + '% ' + (c2.y || 50) + '%;transform:scale(' + ((c2.zoom || 100) / 100) + ');transform-origin:' + (c2.x || 50) + '% ' + (c2.y || 50) + '%;" /></div>'
           : '<div class="w-full h-32 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center"><i class="fa-solid ' + (m.icon || 'fa-cube') + ' text-3xl text-cyan-400/40"></i></div>';
         const oc = (m.options || []).length;
-        return '<div class="glass-card p-4 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-3">'
-          + img
-          + '<div class="space-y-1"><h4 class="text-xs font-bold text-white flex items-center gap-2"><i class="fa-solid ' + (m.icon || 'fa-cube') + ' text-cyan-400"></i> ' + escapeHtml(m.title) + '</h4>'
+        const starBtn = '<button onclick="toggleNewArrival(\'' + m.id + '\')" class="absolute top-3 right-3 z-10 w-8 h-8 rounded-xl flex items-center justify-center transition ' + (m.newArrival ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/40' : 'bg-slate-950/80 text-slate-400 hover:text-amber-400 border border-slate-700') + '" title="Toggle New Arrival"><i class="fa-solid fa-star"></i></button>';
+        return '<div class="glass-card rounded-2xl border ' + (m.newArrival ? 'border-amber-500/40' : 'border-slate-800') + ' flex flex-col justify-between space-y-3 overflow-hidden relative">'
+          + '<div class="relative">' + img + starBtn + '</div>'
+          + '<div class="p-4 space-y-1">'
+          + '<h4 class="text-xs font-bold text-white flex items-center gap-2"><i class="fa-solid ' + (m.icon || 'fa-cube') + ' text-cyan-400"></i> ' + escapeHtml(m.title) + '</h4>'
           + '<span class="text-[10px] font-mono text-cyan-400 block">' + escapeHtml(m.category) + ' | ฿' + m.price + '</span>'
           + '<p class="text-[11px] text-slate-400 line-clamp-2">' + escapeHtml(m.desc || '') + '</p>'
           + (oc > 0 ? '<span class="inline-block text-[9px] font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-2 py-0.5 rounded-lg mt-1"><i class="fa-solid fa-sliders"></i> ' + oc + ' option' + (oc > 1 ? 's' : '') + '</span>' : '')
+          + (m.newArrival ? '<span class="inline-block text-[9px] font-mono bg-amber-500/15 border border-amber-500/40 text-amber-300 px-2 py-0.5 rounded-lg mt-1 ml-1"><i class="fa-solid fa-star"></i> NEW ARRIVAL</span>' : '')
           + '</div>'
-          + '<div class="flex items-center justify-between pt-2 border-t border-slate-800 text-xs font-mono">'
+          + '<div class="flex items-center justify-between px-4 pb-4 pt-2 border-t border-slate-800 text-xs font-mono">'
           + '<button onclick="openEditCatalogModel(\'' + m.id + '\')" class="text-slate-400 hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-pen-to-square"></i> Edit</button>'
           + '<button onclick="deleteCatalogModel(\'' + m.id + '\')" class="text-slate-500 hover:text-rose-400 transition flex items-center gap-1"><i class="fa-solid fa-trash-can"></i> Remove</button>'
           + '</div></div>';
       }).join('');
+    };
+
+    window.toggleNewArrival = async function(id) {
+      const m = catalogMap.get(id); if (!m) return;
+      m.newArrival = !m.newArrival;
+      renderOwnerCatalog(); renderShopGrid();
+      await saveModelToDb(m);
+      showToast(m.newArrival ? 'Marked as New Arrival: ' + m.title : 'Removed from New Arrivals: ' + m.title);
     };
 
     let currentModelImageData = '';
@@ -1806,7 +2104,6 @@
         document.getElementById('crop-empty').style.display = 'none';
         currentCrop = defaultCrop();
         applyCropToImage();
-        flashBanner('Image loaded', 'fa-image');
       };
       r.readAsDataURL(file);
     };
@@ -1818,9 +2115,8 @@
       document.getElementById('crop-empty').style.display = 'flex';
       document.getElementById('crop-preview-img').style.display = 'none';
       document.getElementById('crop-preview-empty').style.display = 'flex';
-      flashBanner('Image removed', 'fa-trash-can');
     };
-    window.resetCrop = function() { currentCrop = defaultCrop(); applyCropToImage(); flashBanner('Crop reset', 'fa-arrows-to-dot'); };
+    window.resetCrop = function() { currentCrop = defaultCrop(); applyCropToImage(); };
     window.onCropZoom = function(v) { currentCrop.zoom = Number(v); applyCropToImage(); };
     window.onCropAspectChange = function(v) { currentCrop.aspect = v; applyCropToImage(); };
 
@@ -1858,7 +2154,6 @@
     window.addOptionGroup = function() {
       editingOptions.push({ id: 'g' + Date.now() + Math.random().toString(36).substring(2, 5), name: '', choices: [{ value: '', label: '', priceDelta: 0 }] });
       renderOptionsBuilder();
-      flashBanner('Option group added', 'fa-plus');
     };
     window.removeOptionGroup = function(id) { editingOptions = editingOptions.filter(g => g.id !== id); renderOptionsBuilder(); };
     window.updateOptionGroupName = function(id, name) { const g = editingOptions.find(x => x.id === id); if (g) g.name = name; };
@@ -1887,7 +2182,6 @@
     }
 
     window.openAddModelModal = function() {
-      flashBanner('Add New Model', 'fa-cube');
       document.getElementById('edit-model-id').value = '';
       document.getElementById('model-modal-title').innerHTML = '<i class="fa-solid fa-plus text-cyan-400"></i> Add New 3D Print Model';
       document.getElementById('model-submit-btn').innerText = 'Add Model to Catalog';
@@ -1896,6 +2190,7 @@
       document.getElementById('new-model-icon').value = 'fa-dragon';
       document.getElementById('new-model-price').value = '150';
       document.getElementById('new-model-desc').value = '';
+      document.getElementById('new-model-new-arrival').checked = false;
       currentModelImageData = ''; currentCrop = defaultCrop();
       document.getElementById('new-model-image-data').value = '';
       document.getElementById('new-model-image-file').value = '';
@@ -1912,7 +2207,6 @@
     };
     window.openEditCatalogModel = function(id) {
       const m = catalogMap.get(id); if (!m) return;
-      flashBanner('Edit Model', 'fa-pen-to-square');
       document.getElementById('edit-model-id').value = m.id;
       document.getElementById('model-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-cyan-400"></i> Edit 3D Print Model';
       document.getElementById('model-submit-btn').innerText = 'Save Changes';
@@ -1921,6 +2215,7 @@
       document.getElementById('new-model-icon').value = m.icon || 'fa-cube';
       document.getElementById('new-model-price').value = m.price;
       document.getElementById('new-model-desc').value = m.desc;
+      document.getElementById('new-model-new-arrival').checked = !!m.newArrival;
       currentModelImageData = m.imageUrl || '';
       currentCrop = m.imageCrop ? JSON.parse(JSON.stringify(m.imageCrop)) : defaultCrop();
       document.getElementById('new-model-image-data').value = currentModelImageData;
@@ -1944,6 +2239,7 @@
       const icon = document.getElementById('new-model-icon').value;
       const price = parseInt(document.getElementById('new-model-price').value) || 150;
       const desc = document.getElementById('new-model-desc').value.trim() || 'Custom 3D printed model.';
+      const newArrival = document.getElementById('new-model-new-arrival').checked;
       if (!title) { showToast('Enter a model title.', 'error'); return; }
       const cleanOpts = editingOptions.map(g => ({
         id: g.id, name: (g.name || '').trim(),
@@ -1957,19 +2253,17 @@
           m.imageUrl = currentModelImageData || '';
           m.imageCrop = currentModelImageData ? currentCrop : defaultCrop();
           m.options = cleanOpts;
-          renderShopGrid();
-          if (activeView === 'owner') renderOwnerCatalog();
+          m.newArrival = newArrival;
+          renderShopGrid(); renderOwnerCatalog();
           await saveModelToDb(m);
           showToast('Updated: ' + title);
-          flashBanner('Model saved', 'fa-circle-check');
         }
       } else {
-        const nm = { id: 'mod-' + Date.now(), title, category, icon, price, desc, imageUrl: currentModelImageData || '', imageCrop: currentModelImageData ? currentCrop : defaultCrop(), options: cleanOpts };
+        const nm = { id: 'mod-' + Date.now(), title, category, icon, price, desc, imageUrl: currentModelImageData || '', imageCrop: currentModelImageData ? currentCrop : defaultCrop(), options: cleanOpts, newArrival };
         catalogModels.unshift(nm); rebuildMaps(); renderShopGrid();
         if (activeView === 'owner') renderOwnerCatalog();
         await saveModelToDb(nm);
         showToast('Added: ' + title);
-        flashBanner('Model added', 'fa-plus');
       }
       closeAddModelModal();
     };
@@ -1979,7 +2273,6 @@
       if (activeView === 'owner') renderOwnerCatalog();
       await removeModelFromDb(id);
       showToast('Model removed.');
-      flashBanner('Model removed', 'fa-trash-can');
     };
 
     window.debounceRenderOwnerPortalOrders = function() {
@@ -1993,12 +2286,6 @@
       const f = orders.filter(o => o.trackingCode.toLowerCase().includes(search) || (o.customerName || '').toLowerCase().includes(search) || (o.modelTitle || '').toLowerCase().includes(search));
       if (f.length === 0) { tb.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">No customer orders found.</td></tr>'; return; }
       const sn = ['Received', 'Printing', 'Packaged', 'Ready for Pickup'];
-      const sb = [
-        'bg-slate-800 text-slate-300 border-slate-700',
-        'bg-amber-950/80 text-amber-300 border-amber-500/30',
-        'bg-purple-950/80 text-purple-300 border-purple-500/30',
-        'bg-emerald-950/80 text-emerald-300 border-emerald-500/30'
-      ];
       tb.innerHTML = f.map(o => {
         const st = Math.max(0, Math.min(3, o.stage));
         const so = o.selectedOptions || {};
@@ -2029,7 +2316,6 @@
       renderOwnerPortalOrders(); renderOwnerPortal();
       await saveOrderToDb(o);
       showToast('Order ' + code + ' → ' + sn[st]);
-      flashBanner('Order ' + code + ': ' + sn[st], 'fa-list-check');
     };
     window.deleteOrder = async function(code) {
       orders = orders.filter(o => o.trackingCode !== code);
@@ -2037,12 +2323,13 @@
       if (activeView === 'owner') renderOwnerPortal();
       await removeOrderFromDb(code);
       showToast('Order ' + code + ' deleted.');
-      flashBanner('Order deleted', 'fa-trash-can');
     };
 
     window.onload = function() {
       const versionEl = document.getElementById('app-version');
       if (versionEl) versionEl.innerText = APP_VERSION;
+      loadCart();
+      updateCartBadge();
       initBackend();
     };
   </script>
