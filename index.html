@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Josh and Jetts (3D Prints) | Shop &amp; Owner Portal</title>
+  <title>Josh and Jett's 3D Prints | Shop &amp; Owner Portal</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -161,7 +161,7 @@
           </div>
           <div>
             <h1 class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-              Josh and Jetts <span class="text-emerald-400 font-extrabold text-xs uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30">3D Prints</span>
+              Josh and Jett's <span class="text-emerald-400 font-extrabold text-xs uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30">3D Prints</span>
             </h1>
             <p class="text-[11px] text-slate-400 hidden sm:block font-mono">Precision Models &amp; Custom Filament Shop</p>
           </div>
@@ -422,7 +422,7 @@
   <!-- Footer -->
   <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 mt-12 text-center text-xs text-slate-500 font-mono">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p>&copy; 2026 Josh and Jetts (3D Prints). All rights reserved. (No Electronics Involved)</p>
+      <p>&copy; 2026 Josh and Jett's 3D Prints. All rights reserved. (No Electronics Involved)</p>
       <div class="flex items-center space-x-4">
         <button onclick="openQuickTrackModal()" class="hover:text-cyan-400 transition">Track Order</button>
         <button onclick="openOwnerPinModal()" class="hover:text-amber-400 transition">Owner Login</button>
@@ -544,7 +544,7 @@
             <span id="buy-total-price" class="text-xl font-black text-cyan-400">฿0</span>
           </div>
           <button onclick="confirmPurchaseOrder()" class="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20">
-            Submit &amp; Get 8A Code
+            Submit &amp; Get Tracking Number
           </button>
         </div>
       </div>
@@ -1319,7 +1319,6 @@
 
       if (hasError) {
         showToast('Please fill in all required fields.', 'error');
-        // Focus first empty field
         if (!customerName) customerNameInput.focus();
         else if (!customerAddress) customerAddressInput.focus();
         return;
