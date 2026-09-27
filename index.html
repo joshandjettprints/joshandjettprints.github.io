@@ -145,6 +145,10 @@
     .kings-pill i { color: #fcd34d; }
     .proof-thumb { width: 100%; max-height: 180px; object-fit: cover; border-radius: .75rem; border: 1px solid rgba(255,255,255,.08); cursor: pointer; }
     .proof-thumb:hover { border-color: rgba(34,211,238,.4); }
+    .return-badge { display: inline-flex; align-items: center; gap: .3rem; font-family: 'Fira Code', monospace; font-size: 9px; padding: .2rem .5rem; border-radius: .5rem; border: 1px solid; }
+    .return-badge.pending { border-color: rgba(245,158,11,.5); color: #fcd34d; background: rgba(120,53,15,.35); }
+    .return-badge.accepted { border-color: rgba(16,185,129,.5); color: #6ee7b7; background: rgba(6,78,59,.35); }
+    .return-badge.declined { border-color: rgba(244,63,94,.5); color: #fda4af; background: rgba(76,5,25,.5); }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
@@ -341,6 +345,16 @@
             <p class="text-[10px] font-mono text-slate-400 text-center mt-2">Thank you for your order!</p>
           </div>
         </div>
+
+        <!-- RETURN REQUEST SECTION -->
+        <div id="return-request-wrap" class="pt-4 border-t border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <h4 class="text-xs font-mono text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-rotate-left text-amber-400"></i> Return / Refund</h4>
+            <div id="return-status-badge-slot"></div>
+          </div>
+          <div id="return-request-content"></div>
+        </div>
+
         <div id="proof-of-delivery-wrap" class="hidden pt-4 border-t border-slate-800">
           <h4 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-camera text-emerald-400"></i> Proof of Delivery</h4>
           <div id="proof-of-delivery-content" class="space-y-3"></div>
@@ -470,7 +484,7 @@
         </div>
         <div>
           <p class="text-cyan-300 font-bold mb-1.5 flex items-center gap-2"><i class="fa-solid fa-comments"></i> How to Start a Return</p>
-          <p>Find one of us at The Heart during break or lunch. Give us your <strong class="text-white">tracking code</strong> (the 8A... one) and we'll pull up your order instantly. If it's broken, we'll refund you in cash on the spot. If you just changed your mind, we'll accept the return as long as it looks fine.</p>
+          <p>From your <strong class="text-white">tracking page</strong>, scroll to the <strong class="text-white">Return / Refund</strong> section and click <strong class="text-amber-300">Request Return</strong>. Attach a photo of the issue and tell us why. We'll review it and either accept or decline from the Owner Portal — you'll see the decision right on your tracking page.</p>
         </div>
         <div class="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-4">
           <p class="text-amber-300 font-bold flex items-center gap-2 mb-1"><i class="fa-solid fa-lightbulb"></i> Friendly Note</p>
@@ -479,6 +493,108 @@
       </div>
       <div class="pt-2 border-t border-slate-800 flex justify-end">
         <button onclick="closeReturnPolicyModal()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider transition flex items-center gap-2"><i class="fa-solid fa-check"></i> Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RETURN REQUEST MODAL (CUSTOMER) -->
+  <div id="modal-return-request" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-amber-500/30 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg"><i class="fa-solid fa-rotate-left"></i></div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-white">Request a Return</h3>
+            <p class="text-[10px] font-mono text-amber-300 uppercase tracking-widest" id="return-modal-code">—</p>
+          </div>
+        </div>
+        <button onclick="closeReturnRequestModal()" class="w-10 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-4 font-mono text-xs">
+        <div>
+          <label class="text-slate-400 block mb-1">Reason for return <span class="text-rose-400">*</span></label>
+          <textarea id="return-reason-input" rows="3" placeholder="e.g. The left wing snapped off when I took it out of the bag." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 resize-none"></textarea>
+          <p id="return-reason-error" class="field-error-msg hidden"><i class="fa-solid fa-circle-exclamation"></i> Please write at least 5 characters</p>
+        </div>
+        <div>
+          <label class="text-slate-400 block mb-1">Photo proof <span class="text-rose-400">*</span></label>
+          <p class="text-[10px] text-slate-500 mb-2">Show us the issue — broken part, wrong color, damaged piece, etc.</p>
+          <div id="return-preview-wrap" class="w-full aspect-video rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center overflow-hidden relative">
+            <img id="return-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;" />
+            <div id="return-preview-empty" class="flex flex-col items-center gap-2 text-slate-600"><i class="fa-solid fa-image text-3xl"></i><span class="text-[10px]">No photo selected</span></div>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <input type="file" id="return-image-file" accept="image/*" class="hidden" onchange="handleReturnImageUpload(event)" />
+            <button type="button" onclick="document.getElementById('return-image-file').click()" class="flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-upload text-amber-400"></i> Choose Photo</button>
+            <button type="button" onclick="clearReturnImage()" class="px-3 py-2 rounded-xl bg-slate-800/60 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-mono transition"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <div id="return-upload-status" class="mt-2 text-[10px] font-mono text-slate-400"></div>
+        </div>
+        <div class="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-3 text-[11px] text-amber-200">
+          <i class="fa-solid fa-circle-info mr-1"></i> We'll review your request and respond on your tracking page.
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button onclick="closeReturnRequestModal()" class="w-1/2 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">Cancel</button>
+          <button onclick="submitReturnRequest()" class="w-1/2 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane"></i> Submit Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OWNER RETURN REVIEW MODAL -->
+  <div id="modal-return-review" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-indigo-500/30 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-lg"><i class="fa-solid fa-clipboard-check"></i></div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-white">Review Return Request</h3>
+            <p class="text-[10px] font-mono text-indigo-300 uppercase tracking-widest" id="return-review-code">—</p>
+          </div>
+        </div>
+        <button onclick="closeReturnReviewModal()" class="w-10 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-4 font-mono text-xs">
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Customer</span>
+            <span id="return-review-customer" class="text-white font-bold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Order</span>
+            <span id="return-review-order" class="text-cyan-300 font-bold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Requested</span>
+            <span id="return-review-date" class="text-slate-300">—</span>
+          </div>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-1 uppercase tracking-wider text-[10px]">Reason</span>
+          <p id="return-review-reason" class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-200 whitespace-pre-wrap"></p>
+        </div>
+        <div id="return-review-photo-wrap">
+          <span class="text-slate-400 block mb-1 uppercase tracking-wider text-[10px]">Photo Proof</span>
+          <img id="return-review-photo" src="" alt="" class="proof-thumb" onclick="openLightbox(this.src)" />
+        </div>
+        <div>
+          <label class="text-slate-400 block mb-1">Note to customer (optional)</label>
+          <textarea id="return-review-note" rows="2" placeholder="e.g. Refunded in cash at The Heart." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+        </div>
+        <div id="return-review-actions-pending" class="flex gap-2 pt-1">
+          <button onclick="declineReturnRequest()" class="w-1/2 py-3 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-black uppercase tracking-wider transition flex items-center justify-center gap-2"><i class="fa-solid fa-xmark"></i> Decline</button>
+          <button onclick="acceptReturnRequest()" class="w-1/2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"><i class="fa-solid fa-check"></i> Accept</button>
+        </div>
+        <div id="return-review-actions-decided" class="hidden">
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+            <div class="flex items-center justify-between"><span class="text-slate-400">Decision</span><span id="return-review-decision" class="font-bold">—</span></div>
+            <div class="flex items-center justify-between"><span class="text-slate-400">Decided</span><span id="return-review-decision-date" class="text-slate-300">—</span></div>
+          </div>
+          <div id="return-review-decision-note-wrap" class="mt-3">
+            <span class="text-slate-400 block mb-1 uppercase tracking-wider text-[10px]">Note</span>
+            <p id="return-review-decision-note" class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-200 whitespace-pre-wrap"></p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -867,8 +983,7 @@
       </div>
     </div>
   </div>
-
-  <script>
+    <script>
     const IMGBB_API_KEY = "1903836c7d3439d764613e772d95d741";
     const COL_MODELS = 'catalog_models';
     const COL_FILAMENTS = 'filaments';
@@ -890,6 +1005,28 @@
 
     let fbReady = false;
     let firebase = null;
+
+    // Stable per-session map: modelId -> array of gids (one per option group)
+    const optionGidCache = new Map();
+    function getStableGids(model) {
+      if (!model || !Array.isArray(model.options)) return [];
+      const key = model.id || '_noname_';
+      if (optionGidCache.has(key)) return optionGidCache.get(key);
+      const gids = model.options.map((g, gi) => {
+        // Prefer the saved id, but only if it's unique within this model.
+        const saved = (g && typeof g.id === 'string' && g.id.trim()) ? g.id.trim() : '';
+        return saved || ('g' + gi + '_' + Math.random().toString(36).substring(2, 7));
+      });
+      // Dedupe: if two groups somehow share the same saved id, force uniqueness.
+      const seen = new Set();
+      const fixed = gids.map((id, gi) => {
+        if (seen.has(id)) return 'g' + gi + '_' + Math.random().toString(36).substring(2, 7);
+        seen.add(id);
+        return id;
+      });
+      optionGidCache.set(key, fixed);
+      return fixed;
+    }
 
     let syncState = {
       active: false,
@@ -1075,6 +1212,7 @@
         selectedOptions: row.selectedOptions || {},
         items: Array.isArray(row.items) ? row.items : [],
         proofOfDelivery: row.proofOfDelivery || null,
+        returnRequest: row.returnRequest || null,
         createdAt: row.createdAt || ''
       };
     }
@@ -1107,7 +1245,7 @@
         modelTitle: 'Articulated Crystal Dragon', modelIcon: 'fa-dragon',
         specs: 'Silk Neon Cyan PLA | 100% Scale (฿250)', printerName: 'Bambu Lab A2L',
         stage: 1, logs: ['▶ Order created.', '▶ Material loaded: Silk Neon Cyan PLA.', '▶ First layer calibration complete.'],
-        selectedOptions: {}, items: [], proofOfDelivery: null, createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        selectedOptions: {}, items: [], proofOfDelivery: null, returnRequest: null, createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       }];
     }
 
@@ -1170,6 +1308,33 @@
       } catch (e) {}
     }
 
+    // After a sync, refresh every image surface so the <img> tags
+    // get re-created with their (possibly new) src from Firestore.
+    function refreshAllImages() {
+      renderShopGrid();
+      renderCategoryPills();
+      if (cart.length > 0) renderCartModal();
+      if (currentConfiguredModel) {
+        const fresh = catalogMap.get(currentConfiguredModel.id);
+        if (fresh) {
+          currentConfiguredModel = fresh;
+          const heroImg = document.getElementById('buy-hero-image');
+          const heroPh = document.getElementById('buy-hero-placeholder');
+          if (fresh.imageUrl) {
+            heroImg.src = fresh.imageUrl;
+            heroImg.style.display = 'block';
+            heroPh.style.display = 'none';
+          }
+        }
+      }
+      if (activeView === 'owner') {
+        renderOwnerCatalog();
+      }
+      if (activeView === 'tracking' && activeTrackingCode) {
+        viewOrderTracking(activeTrackingCode, false);
+      }
+    }
+
     window.customerSync = async function() {
       if (!firebase || !firebase.db) { showToast('Offline — cannot sync.', 'error'); return; }
       if (syncState.active) { showToast('Sync already in progress...'); return; }
@@ -1195,7 +1360,8 @@
         try { await writeDoc(COL_ORDERS, myOrdersList[i].trackingCode, myOrdersList[i]); setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push'); }
         catch (e) { syncState.counts.orders.failed++; totalFailed++; setSyncCounts('orders', i + 1, myOrdersList.length, syncState.counts.orders.failed, 'push'); }
       }
-      rebuildMaps(); renderCategoryPills(); renderShopGrid();
+      rebuildMaps();
+      refreshAllImages();
       if (activeView === 'owner') renderOwnerPortal();
       if (totalFailed === 0) { setSyncPill('ok', 'Synced'); finalizeSyncBanner(true, 0, 'Order Synced'); }
       else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
@@ -1219,6 +1385,13 @@
       catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, filaments.length, 1, 'push'); }
       try { await bulkWrite(COL_ORDERS, orders.map(o => ({ ...o })), o => o.trackingCode); setSyncCounts('orders', orders.length, orders.length, 0, 'push'); }
       catch (e) { syncState.counts.orders.failed = 1; totalFailed++; setSyncCounts('orders', 0, orders.length, 1, 'push'); }
+      // Pull again so images render from the latest server copy
+      try {
+        const arr = await readCollection(COL_MODELS);
+        if (arr.length > 0) catalogModels = arr.map(normalizeModel);
+      } catch (e) {}
+      rebuildMaps();
+      refreshAllImages();
       if (totalFailed === 0) { setSyncPill('ok', 'Synced'); finalizeSyncBanner(true, 0, 'Owner Sync Complete'); showToast('Owner sync complete!'); }
       else { setSyncPill('failed', totalFailed + ' failed'); finalizeSyncBanner(false, totalFailed); showToast(totalFailed + ' item(s) failed to sync.', 'error'); }
     };
@@ -1281,6 +1454,7 @@
         cart = []; saveCart(); updateCartBadge();
         localStorage.removeItem('jj_my_orders_v1');
         selectedFilamentId = filaments[0] ? filaments[0].id : null;
+        optionGidCache.clear();
         rebuildMaps(); renderCategoryPills(); renderShopGrid();
         if (activeView === 'owner') renderOwnerPortal();
         finalizeSyncBanner(true, 0, 'Wipe & Reset Complete');
@@ -1412,12 +1586,7 @@
       const sm = Math.pow(scale / 100, 1.5);
       const optionsCost = getSelectedOptionsCost();
       const unitPrice = Math.round((currentConfiguredModel.price * sm) + fil.surcharge + optionsCost);
-      const humanOpts = {};
-      (currentConfiguredModel.options || []).forEach((g, gi) => {
-        const gid = g.id || ('g' + gi);
-        const v = selectedOptions[gid];
-        if (v !== undefined) humanOpts[g.name || gid] = v;
-      });
+      const humanOpts = buildHumanOptions();
       cart.push({
         cartId: 'c-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
         modelId: currentConfiguredModel.id, title: currentConfiguredModel.title,
@@ -1470,7 +1639,7 @@
         trackingCode: code, customerName,
         modelTitle: summaryTitle, modelIcon: cart[0].icon || 'fa-cube',
         specs: specsSummary, printerName: printer, stage: 0,
-        selectedOptions: {}, items: orderItems, proofOfDelivery: null,
+        selectedOptions: {}, items: orderItems, proofOfDelivery: null, returnRequest: null,
         logs: [ '▶ Order created for ' + customerName + ' (฿' + totalPrice + ') — ' + totalQty + ' item(s).', '▶ Assigned to physical machine: ' + printer + '.' ],
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
@@ -1625,45 +1794,47 @@
       document.body.style.overflow = 'hidden';
     };
 
+    // ============================================================
+    // OPTION RENDERING (FIXED)
+    // ============================================================
     function renderPurchaseOptions() {
       const section = document.getElementById('buy-options-section');
       const container = document.getElementById('buy-options-container');
       const opts = (currentConfiguredModel && currentConfiguredModel.options) || [];
       if (opts.length === 0) { section.classList.add('hidden'); container.innerHTML = ''; return; }
       section.classList.remove('hidden');
+      const gids = getStableGids(currentConfiguredModel);
       container.innerHTML = opts.map((group, gi) => {
-        const gid = group.id || ('g' + gi);
-        const choices = group.choices || [];
-        if (selectedOptions[gid] === undefined && choices.length > 0) {
-          selectedOptions[gid] = choices[0].value !== undefined ? choices[0].value : choices[0];
+        const gid = gids[gi];
+        const choices = (group.choices || []).map(c => (c && typeof c === 'object') ? c : { value: String(c), label: String(c), priceDelta: 0 });
+        if (choices.length === 0) return '';
+        // Only default to the first choice if the user hasn't picked one yet.
+        if (selectedOptions[gid] === undefined) {
+          selectedOptions[gid] = choices[0].value;
         }
         const cur = selectedOptions[gid];
-        return '<div class="space-y-2"><div class="flex items-center justify-between"><span class="text-xs font-mono text-slate-300 font-bold">' + escapeHtml(group.name || 'Option') + '</span><span class="text-[10px] font-mono text-cyan-400">' + escapeHtml(cur || '—') + '</span></div><div class="flex flex-wrap gap-2">' + choices.map(c => {
-          const val = c.value !== undefined ? c.value : c;
-          const label = c.label !== undefined ? c.label : val;
-          const delta = Number(c.priceDelta || c.surcharge || 0);
+        const chips = choices.map(c => {
+          const val = c.value;
+          const label = c.label || c.value;
+          const delta = Number(c.priceDelta || 0);
           const sel = cur === val;
           const pt = delta > 0 ? ' (+฿' + delta + ')' : '';
-          return '<div data-option-group="' + escapeAttr(gid) + '" data-option-value="' + escapeAttr(val) + '" class="option-chip px-3 py-1.5 rounded-xl border text-xs font-mono transition cursor-pointer ' + (sel ? 'selected' : 'border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700') + '">' + escapeHtml(label) + '<span class="text-cyan-400/80 text-[10px]">' + pt + '</span></div>';
-        }).join('') + '</div></div>';
+          const safeGid = escapeAttr(gid);
+          const safeVal = escapeAttr(val);
+          const cls = sel ? 'selected' : 'border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700';
+          return '<button type="button" onclick="selectOption(\'' + safeGid.replace(/'/g, "\\'") + '\', \'' + safeVal.replace(/'/g, "\\'") + '\')" class="option-chip px-3 py-1.5 rounded-xl border text-xs font-mono transition cursor-pointer ' + cls + '">' + escapeHtml(label) + '<span class="text-cyan-400/80 text-[10px]">' + pt + '</span></button>';
+        }).join('');
+        return '<div class="space-y-2"><div class="flex items-center justify-between"><span class="text-xs font-mono text-slate-300 font-bold">' + escapeHtml(group.name || 'Option') + '</span><span class="text-[10px] font-mono text-cyan-400">' + escapeHtml(cur || '—') + '</span></div><div class="flex flex-wrap gap-2">' + chips + '</div></div>';
       }).join('');
     }
+
     window.selectOption = function(gid, val) {
       if (selectedOptions[gid] === val) return;
       selectedOptions[gid] = val;
+      // Re-render only the chips, not the whole modal, to avoid losing focus.
       renderPurchaseOptions();
       updateBuyTotal();
     };
-    document.addEventListener('click', function(e) {
-      const chip = e.target.closest('[data-option-group]');
-      if (!chip) return;
-      const purchaseModal = document.getElementById('modal-purchase');
-      if (!purchaseModal || purchaseModal.classList.contains('hidden')) return;
-      e.preventDefault(); e.stopPropagation();
-      const gid = chip.getAttribute('data-option-group');
-      const val = chip.getAttribute('data-option-value');
-      selectOption(gid, val);
-    }, true);
 
     function renderPurchaseModalFilamentChoices() {
       const fc = document.getElementById('buy-filament-options'); if (!fc) return;
@@ -1681,17 +1852,32 @@
       }).join('');
     }
     window.selectFilament = function(id) { selectedFilamentId = id; renderPurchaseModalFilamentChoices(); updateBuyTotal(); };
+
     function getSelectedOptionsCost() {
       if (!currentConfiguredModel || !currentConfiguredModel.options) return 0;
+      const gids = getStableGids(currentConfiguredModel);
       let t = 0;
       currentConfiguredModel.options.forEach((g, gi) => {
-        const gid = g.id || ('g' + gi);
+        const gid = gids[gi];
         const val = selectedOptions[gid]; if (val === undefined) return;
-        const c = (g.choices || []).find(x => (x.value !== undefined ? x.value : x) === val);
+        const c = (g.choices || []).map(x => (x && typeof x === 'object') ? x : { value: String(x), priceDelta: 0 }).find(x => x.value === val);
         if (c && c.priceDelta) t += Number(c.priceDelta);
       });
       return t;
     }
+
+    function buildHumanOptions() {
+      const out = {};
+      if (!currentConfiguredModel || !currentConfiguredModel.options) return out;
+      const gids = getStableGids(currentConfiguredModel);
+      currentConfiguredModel.options.forEach((g, gi) => {
+        const gid = gids[gi];
+        const v = selectedOptions[gid];
+        if (v !== undefined) out[g.name || ('Option ' + (gi + 1))] = v;
+      });
+      return out;
+    }
+
     window.updateBuyTotal = function() {
       if (!currentConfiguredModel) return;
       const scale = parseInt(document.getElementById('buy-scale-slider').value);
@@ -1721,12 +1907,7 @@
       const finalPrice = Math.round((currentConfiguredModel.price * sm) + fil.surcharge + getSelectedOptionsCost());
       const printers = ['Bambu Lab A2L', 'Bambu Lab A1 Mini'];
       const printer = printers[Math.floor(Math.random() * printers.length)];
-      const humanOpts = {};
-      (currentConfiguredModel.options || []).forEach((g, gi) => {
-        const gid = g.id || ('g' + gi);
-        const v = selectedOptions[gid];
-        if (v !== undefined) humanOpts[g.name || gid] = v;
-      });
+      const humanOpts = buildHumanOptions();
       const newOrder = {
         trackingCode: code, customerName: name,
         modelTitle: currentConfiguredModel.title,
@@ -1734,7 +1915,7 @@
         specs: fil.name + ' | ' + scale + '% Scale (฿' + finalPrice + ')',
         printerName: printer, stage: 0, selectedOptions: humanOpts,
         items: [{ title: currentConfiguredModel.title, icon: currentConfiguredModel.icon || 'fa-cube', filamentName: fil.name, filamentColor: fil.color, scale: scale, options: humanOpts, unitPrice: finalPrice }],
-        proofOfDelivery: null,
+        proofOfDelivery: null, returnRequest: null,
         logs: [ '▶ Order created for ' + name + ' (฿' + finalPrice + ').', '▶ Filament selected: ' + fil.name + ' (+฿' + fil.surcharge + ').', '▶ Assigned to physical machine: ' + printer + '.' ],
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
@@ -1757,6 +1938,9 @@
       return 0;
     }
 
+    // ============================================================
+    // TRACKING PAGE (with return request section)
+    // ============================================================
     window.viewOrderTracking = function(code, updateHash = true) {
       const o = orderMap.get(code);
       if (!o) { showToast('Tracking code not found.', 'error'); return; }
@@ -1765,7 +1949,7 @@
       document.getElementById('track-number-display').innerText = o.trackingCode;
       document.getElementById('track-item-title').innerHTML = '<i class="fa-solid ' + (o.modelIcon || 'fa-cube') + ' text-cyan-400 mr-1.5"></i> ' + escapeHtml(o.modelTitle);
       document.getElementById('track-item-specs').innerText = o.specs;
-      
+
       const stages = ['Order Received', 'Awaiting Payment', 'Printing in Progress', 'Inspected & Packaged', 'Complete!'];
       const st = Math.max(0, Math.min(4, o.stage));
       document.getElementById('current-status-title').innerText = stages[st];
@@ -1774,18 +1958,14 @@
         const b = document.getElementById('node-blob-' + i);
         if (b) b.className = i <= st ? 'w-10 h-10 rounded-xl bg-cyan-500 text-slate-950 font-black border-2 border-cyan-400 flex items-center justify-center text-xs shadow-lg shadow-cyan-500/30 transition-all' : 'w-10 h-10 rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold transition-all';
       }
-      
-      // Payment message (stage 1)
+
       const payWrap = document.getElementById('payment-message-wrap');
       if (st === 1) {
         const totalDue = getOrderTotal(o);
         document.getElementById('payment-amount-due').innerText = totalDue;
         payWrap.classList.remove('hidden');
-      } else {
-        payWrap.classList.add('hidden');
-      }
-      
-      // Pickup message (stages 2 = Printing, 3 = Packaged)
+      } else { payWrap.classList.add('hidden'); }
+
       const pickupWrap = document.getElementById('pickup-message-wrap');
       const pickupWarning = document.getElementById('pickup-warning');
       if (st === 2) {
@@ -1800,13 +1980,14 @@
         pickupWrap.classList.add('hidden');
         pickupWarning.innerText = '';
       }
-      
-      // Complete message (stage 4)
+
       const completeWrap = document.getElementById('complete-message-wrap');
       if (st === 4) completeWrap.classList.remove('hidden');
       else completeWrap.classList.add('hidden');
-      
-      // Proof of delivery
+
+      // Return / Refund section
+      renderReturnSection(o);
+
       const proofWrap = document.getElementById('proof-of-delivery-wrap');
       const proofContent = document.getElementById('proof-of-delivery-content');
       if (o.proofOfDelivery && o.proofOfDelivery.imageUrl) {
@@ -1820,7 +2001,7 @@
         proofWrap.classList.add('hidden');
         proofContent.innerHTML = '';
       }
-      
+
       const itemsWrap = document.getElementById('track-items-wrap');
       const itemsList = document.getElementById('track-items-list');
       const items = o.items || [];
@@ -1828,6 +2009,7 @@
         itemsWrap.classList.remove('hidden');
         itemsList.innerHTML = items.map((it, i) => '<div class="flex items-center gap-3 p-3 bg-slate-950/60 border border-slate-800 rounded-xl"><span class="text-cyan-400 font-bold w-6 text-center">' + (i + 1) + '.</span><i class="fa-solid ' + (it.icon || 'fa-cube') + ' text-cyan-400"></i><div class="flex-1 min-w-0"><div class="text-white font-bold truncate">' + escapeHtml(it.title) + '</div><div class="text-[10px] text-slate-400 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:' + (it.filamentColor || '#64748b') + '"></span> ' + escapeHtml(it.filamentName || '') + ' · ' + (it.scale || 100) + '%</div></div><span class="text-emerald-400 font-bold">฿' + (it.unitPrice || 0) + '</span></div>').join('');
       } else { itemsWrap.classList.add('hidden'); itemsList.innerHTML = ''; }
+
       const ll = document.getElementById('audit-log-list');
       if (ll) ll.innerHTML = o.logs.map(l => '<li>' + escapeHtml(l) + '</li>').join('');
       const oSec = document.getElementById('track-selected-options');
@@ -1838,11 +2020,56 @@
         oSec.classList.remove('hidden');
         oList.innerHTML = keys.map(k => '<span class="px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"><i class="fa-solid fa-circle-check text-[10px] mr-1"></i> ' + escapeHtml(k) + ': <strong class="text-white">' + escapeHtml(so[k]) + '</strong></span>').join('');
       } else { oSec.classList.add('hidden'); oList.innerHTML = ''; }
+
       document.getElementById('view-shop').classList.add('hidden');
       document.getElementById('view-tracking').classList.remove('hidden');
       document.getElementById('view-owner').classList.add('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    function renderReturnSection(o) {
+      const badgeSlot = document.getElementById('return-status-badge-slot');
+      const content = document.getElementById('return-request-content');
+      const rr = o.returnRequest;
+
+      if (!rr) {
+        badgeSlot.innerHTML = '';
+        if (o.stage === 4) {
+          content.innerHTML = '<button onclick="openReturnRequestModal(\'' + o.trackingCode + '\')" class="w-full py-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-black uppercase tracking-wider transition flex items-center justify-center gap-2"><i class="fa-solid fa-rotate-left"></i> Request Return / Refund</button>';
+        } else {
+          content.innerHTML = '<p class="text-[11px] font-mono text-slate-500 text-center py-2">Returns can be requested once your order is marked Complete.</p>';
+        }
+        return;
+      }
+
+      const status = rr.status || 'pending';
+      const badgeCls = status === 'pending' ? 'return-badge pending' : (status === 'accepted' ? 'return-badge accepted' : 'return-badge declined');
+      const badgeIcon = status === 'pending' ? 'fa-clock' : (status === 'accepted' ? 'fa-circle-check' : 'fa-circle-xmark');
+      const badgeText = status === 'pending' ? 'PENDING REVIEW' : (status === 'accepted' ? 'ACCEPTED' : 'DECLINED');
+      badgeSlot.innerHTML = '<span class="' + badgeCls + '"><i class="fa-solid ' + badgeIcon + '"></i> ' + badgeText + '</span>';
+
+      let html = '<div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 space-y-3">';
+      html += '<div class="flex items-center justify-between text-[11px] font-mono"><span class="text-slate-400">Requested</span><span class="text-slate-300">' + escapeHtml(rr.requestedAt || '—') + '</span></div>';
+      html += '<div><span class="text-[10px] font-mono text-slate-500 uppercase block mb-1">Your reason</span><p class="text-xs font-mono text-slate-200 whitespace-pre-wrap">' + escapeHtml(rr.reason || '') + '</p></div>';
+      if (rr.imageUrl) {
+        html += '<div><span class="text-[10px] font-mono text-slate-500 uppercase block mb-1">Your photo</span><img src="' + escapeAttr(rr.imageUrl) + '" class="proof-thumb" onclick="openLightbox(\'' + escapeAttr(rr.imageUrl) + '\')" /></div>';
+      }
+      if (status !== 'pending') {
+        html += '<div class="pt-2 border-t border-slate-800 space-y-2">';
+        html += '<div class="flex items-center justify-between text-[11px] font-mono"><span class="text-slate-400">Decided</span><span class="text-slate-300">' + escapeHtml(rr.decidedAt || '—') + '</span></div>';
+        if (rr.ownerNote) {
+          html += '<div><span class="text-[10px] font-mono text-slate-500 uppercase block mb-1">Note from shop</span><p class="text-xs font-mono text-slate-200 whitespace-pre-wrap">' + escapeHtml(rr.ownerNote) + '</p></div>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+
+      if (status === 'pending') {
+        html += '<button onclick="cancelReturnRequest(\'' + o.trackingCode + '\')" class="w-full mt-3 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-mono font-bold transition flex items-center justify-center gap-2"><i class="fa-solid fa-xmark"></i> Cancel Request</button>';
+      }
+      content.innerHTML = html;
+    }
+
     window.copyTrackingNumber = function() {
       if (!activeTrackingCode) return;
       const t = activeTrackingCode;
@@ -1864,6 +2091,178 @@
 
     window.openReturnPolicyModal = function() { document.getElementById('modal-return-policy').classList.remove('hidden'); document.body.style.overflow = 'hidden'; };
     window.closeReturnPolicyModal = function() { document.getElementById('modal-return-policy').classList.add('hidden'); document.body.style.overflow = ''; };
+
+    // ============================================================
+    // RETURN REQUEST (CUSTOMER)
+    // ============================================================
+    let currentReturnImageData = '';
+    let returnUploadState = 'idle';
+
+    window.openReturnRequestModal = function(code) {
+      const o = orderMap.get(code); if (!o) return;
+      document.getElementById('return-modal-code').innerText = code;
+      document.getElementById('return-reason-input').value = '';
+      document.getElementById('return-reason-error').classList.add('hidden');
+      currentReturnImageData = ''; returnUploadState = 'idle';
+      document.getElementById('return-preview-img').src = '';
+      document.getElementById('return-preview-img').style.display = 'none';
+      document.getElementById('return-preview-empty').style.display = 'flex';
+      document.getElementById('return-image-file').value = '';
+      document.getElementById('return-upload-status').innerHTML = '';
+      document.getElementById('modal-return-request').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('return-reason-input').focus(), 100);
+    };
+    window.closeReturnRequestModal = function() {
+      document.getElementById('modal-return-request').classList.add('hidden');
+      document.body.style.overflow = '';
+      currentReturnImageData = ''; returnUploadState = 'idle';
+    };
+    window.handleReturnImageUpload = function(event) {
+      const file = event.target.files && event.target.files[0]; if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showToast('Image too large. Use under 5MB.', 'error'); event.target.value = ''; return; }
+      const r = new FileReader();
+      r.onload = async function(e) {
+        const base64 = e.target.result;
+        currentReturnImageData = base64;
+        const img = document.getElementById('return-preview-img');
+        img.src = base64; img.style.display = 'block';
+        document.getElementById('return-preview-empty').style.display = 'none';
+        returnUploadState = 'uploading';
+        document.getElementById('return-upload-status').innerHTML = '⏳ Uploading photo...';
+        document.getElementById('return-upload-status').style.color = '#fcd34d';
+        try {
+          const url = await uploadToImgbb(base64);
+          currentReturnImageData = url;
+          returnUploadState = 'done';
+          document.getElementById('return-upload-status').innerHTML = '✅ Uploaded!';
+          document.getElementById('return-upload-status').style.color = '#6ee7b7';
+        } catch (err) {
+          returnUploadState = 'error';
+          document.getElementById('return-upload-status').innerHTML = '❌ Upload failed: ' + err.message;
+          document.getElementById('return-upload-status').style.color = '#fda4af';
+        }
+      };
+      r.readAsDataURL(file);
+    };
+    window.clearReturnImage = function() {
+      currentReturnImageData = ''; returnUploadState = 'idle';
+      document.getElementById('return-image-file').value = '';
+      document.getElementById('return-preview-img').src = '';
+      document.getElementById('return-preview-img').style.display = 'none';
+      document.getElementById('return-preview-empty').style.display = 'flex';
+      document.getElementById('return-upload-status').innerHTML = '';
+    };
+    window.submitReturnRequest = async function() {
+      if (!activeTrackingCode) return;
+      const o = orderMap.get(activeTrackingCode); if (!o) { showToast('Order not found.', 'error'); return; }
+      const reason = document.getElementById('return-reason-input').value.trim();
+      const reasonErr = document.getElementById('return-reason-error');
+      if (!reason || reason.length < 5) { reasonErr.classList.remove('hidden'); document.getElementById('return-reason-input').classList.add('input-error'); return; }
+      reasonErr.classList.add('hidden');
+      document.getElementById('return-reason-input').classList.remove('input-error');
+      if (returnUploadState === 'uploading') {
+        showToast('⏳ Waiting for photo to upload...');
+        let waited = 0;
+        while (returnUploadState === 'uploading' && waited < 20000) { await new Promise(r => setTimeout(r, 500)); waited += 500; }
+      }
+      if (returnUploadState === 'error') { showToast('❌ Photo upload failed. Please try again.', 'error'); return; }
+      if (!currentReturnImageData) { showToast('Please attach a photo of the issue.', 'error'); return; }
+      o.returnRequest = {
+        status: 'pending',
+        reason: reason,
+        imageUrl: currentReturnImageData,
+        requestedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        decidedAt: '',
+        ownerNote: ''
+      };
+      o.logs.push('▶ Return requested by customer.');
+      await saveOrderToDb(o);
+      closeReturnRequestModal();
+      renderReturnSection(o);
+      showToast('Return request submitted!');
+      customerSync();
+    };
+    window.cancelReturnRequest = async function(code) {
+      const o = orderMap.get(code); if (!o) return;
+      if (!o.returnRequest) return;
+      if (o.returnRequest.status !== 'pending') { showToast('Only pending requests can be cancelled.', 'error'); return; }
+      o.returnRequest = null;
+      o.logs.push('▶ Return request cancelled by customer.');
+      await saveOrderToDb(o);
+      renderReturnSection(o);
+      showToast('Return request cancelled.');
+    };
+
+    // ============================================================
+    // RETURN REVIEW (OWNER)
+    // ============================================================
+    window.openReturnReviewModal = function(code) {
+      const o = orderMap.get(code); if (!o || !o.returnRequest) return;
+      const rr = o.returnRequest;
+      document.getElementById('return-review-code').innerText = code;
+      document.getElementById('return-review-customer').innerText = o.customerName || '—';
+      document.getElementById('return-review-order').innerText = o.modelTitle || '—';
+      document.getElementById('return-review-date').innerText = rr.requestedAt || '—';
+      document.getElementById('return-review-reason').innerText = rr.reason || '';
+      const photoWrap = document.getElementById('return-review-photo-wrap');
+      const photo = document.getElementById('return-review-photo');
+      if (rr.imageUrl) { photoWrap.classList.remove('hidden'); photo.src = rr.imageUrl; }
+      else { photoWrap.classList.add('hidden'); photo.src = ''; }
+      document.getElementById('return-review-note').value = rr.ownerNote || '';
+      const status = rr.status || 'pending';
+      const pendingActions = document.getElementById('return-review-actions-pending');
+      const decidedActions = document.getElementById('return-review-actions-decided');
+      if (status === 'pending') {
+        pendingActions.classList.remove('hidden');
+        decidedActions.classList.add('hidden');
+      } else {
+        pendingActions.classList.add('hidden');
+        decidedActions.classList.remove('hidden');
+        document.getElementById('return-review-decision').innerHTML = status === 'accepted'
+          ? '<span class="text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i>ACCEPTED</span>'
+          : '<span class="text-rose-400"><i class="fa-solid fa-circle-xmark mr-1"></i>DECLINED</span>';
+        document.getElementById('return-review-decision-date').innerText = rr.decidedAt || '—';
+        const noteWrap = document.getElementById('return-review-decision-note-wrap');
+        const noteEl = document.getElementById('return-review-decision-note');
+        if (rr.ownerNote) { noteWrap.classList.remove('hidden'); noteEl.innerText = rr.ownerNote; }
+        else { noteWrap.classList.add('hidden'); noteEl.innerText = ''; }
+      }
+      document.getElementById('modal-return-review').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    };
+    window.closeReturnReviewModal = function() {
+      document.getElementById('modal-return-review').classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+    window.acceptReturnRequest = async function() {
+      const code = document.getElementById('return-review-code').innerText;
+      const o = orderMap.get(code); if (!o || !o.returnRequest) return;
+      const note = document.getElementById('return-review-note').value.trim();
+      o.returnRequest.status = 'accepted';
+      o.returnRequest.decidedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
+      o.returnRequest.ownerNote = note;
+      o.logs.push('▶ Return request ACCEPTED by Owner.' + (note ? ' Note: ' + note : ''));
+      await saveOrderToDb(o);
+      closeReturnReviewModal();
+      renderOwnerPortalOrders();
+      if (activeView === 'owner') renderOwnerPortal();
+      showToast('Return request accepted for ' + code);
+    };
+    window.declineReturnRequest = async function() {
+      const code = document.getElementById('return-review-code').innerText;
+      const o = orderMap.get(code); if (!o || !o.returnRequest) return;
+      const note = document.getElementById('return-review-note').value.trim();
+      o.returnRequest.status = 'declined';
+      o.returnRequest.decidedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
+      o.returnRequest.ownerNote = note;
+      o.logs.push('▶ Return request DECLINED by Owner.' + (note ? ' Note: ' + note : ''));
+      await saveOrderToDb(o);
+      closeReturnReviewModal();
+      renderOwnerPortalOrders();
+      if (activeView === 'owner') renderOwnerPortal();
+      showToast('Return request declined for ' + code);
+    };
 
     window.openOwnerPinModal = function() { document.getElementById('owner-pin-input').value = ''; document.getElementById('modal-owner-pin').classList.remove('hidden'); setTimeout(() => document.getElementById('owner-pin-input').focus(), 50); };
     window.closeOwnerPinModal = function() {
@@ -2101,7 +2500,7 @@
     })();
 
     let editingOptions = [];
-    window.addOptionGroup = function() { editingOptions.push({ id: 'g' + Date.now() + Math.random().toString(36).substring(2, 5), name: '', choices: [{ value: '', label: '', priceDelta: 0 }] }); renderOptionsBuilder(); };
+    window.addOptionGroup = function() { editingOptions.push({ id: 'g' + Date.now() + '_' + Math.random().toString(36).substring(2, 7), name: '', choices: [{ value: '', label: '', priceDelta: 0 }] }); renderOptionsBuilder(); };
     window.removeOptionGroup = function(id) { editingOptions = editingOptions.filter(g => g.id !== id); renderOptionsBuilder(); };
     window.updateOptionGroupName = function(id, name) { const g = editingOptions.find(x => x.id === id); if (g) g.name = name; };
     window.addOptionChoice = function(id) { const g = editingOptions.find(x => x.id === id); if (!g) return; g.choices.push({ value: '', label: '', priceDelta: 0 }); renderOptionsBuilder(); };
@@ -2161,6 +2560,14 @@
       applyCropToImage();
       setUploadStatus(currentModelImageData ? '✅ Current image: ' + currentModelImageData : '', '#6ee7b7');
       editingOptions = JSON.parse(JSON.stringify(m.options || []));
+      // Guarantee unique ids for editor too.
+      const seen = new Set();
+      editingOptions.forEach((g, gi) => {
+        if (!g.id || seen.has(g.id)) g.id = 'g' + gi + '_' + Math.random().toString(36).substring(2, 7);
+        seen.add(g.id);
+        if (!Array.isArray(g.choices)) g.choices = [];
+        g.choices = g.choices.map(c => (c && typeof c === 'object') ? c : { value: String(c), label: String(c), priceDelta: 0 });
+      });
       renderOptionsBuilder();
       document.getElementById('modal-add-model').classList.remove('hidden');
     };
@@ -2181,15 +2588,9 @@
       if (imageUploadState === 'uploading') {
         showToast('⏳ Waiting for image upload to finish...');
         let waited = 0;
-        while (imageUploadState === 'uploading' && waited < 20000) {
-          await new Promise(r => setTimeout(r, 500));
-          waited += 500;
-        }
+        while (imageUploadState === 'uploading' && waited < 20000) { await new Promise(r => setTimeout(r, 500)); waited += 500; }
       }
-      if (imageUploadState === 'error') {
-        showToast('❌ Image upload failed. Please try again or remove the image.', 'error');
-        return;
-      }
+      if (imageUploadState === 'error') { showToast('❌ Image upload failed. Please try again or remove the image.', 'error'); return; }
 
       const cleanOpts = editingOptions.map(g => ({ id: g.id, name: (g.name || '').trim(), choices: g.choices.map(c => ({ value: (c.value || c.label || '').trim(), label: (c.label || c.value || '').trim(), priceDelta: Number(c.priceDelta) || 0 })).filter(c => c.value !== '') })).filter(g => g.name !== '' && g.choices.length > 0);
 
@@ -2202,6 +2603,7 @@
           m.imageUrl = finalImageUrl;
           m.imageCrop = finalImageUrl ? currentCrop : defaultCrop();
           m.options = cleanOpts; m.newArrival = newArrival;
+          optionGidCache.delete(m.id);
           renderShopGrid(); renderOwnerCatalog();
           await saveModelToDb(m);
           showToast('Updated: ' + title);
@@ -2217,6 +2619,7 @@
     };
     window.deleteCatalogModel = async function(id) {
       catalogModels = catalogModels.filter(m => m.id !== id);
+      optionGidCache.delete(id);
       rebuildMaps(); renderShopGrid();
       if (activeView === 'owner') renderOwnerCatalog();
       await removeModelFromDb(id); showToast('Model removed.');
@@ -2250,7 +2653,17 @@
         const proofBtn = o.proofOfDelivery && o.proofOfDelivery.imageUrl
           ? '<button onclick="openProofModal(\'' + o.trackingCode + '\')" class="ml-2 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold hover:bg-emerald-500/30 transition" title="Edit proof"><i class="fa-solid fa-camera"></i> Proof</button>'
           : '<button onclick="openProofModal(\'' + o.trackingCode + '\')" class="ml-2 px-2 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold hover:bg-slate-700 transition" title="Attach proof"><i class="fa-solid fa-camera"></i> Proof</button>';
-        return '<tr class="hover:bg-slate-900/60 transition"><td class="p-3 font-bold text-cyan-400 align-top">' + o.trackingCode + '</td><td class="p-3 align-top"><span class="text-white block font-bold">' + escapeHtml(o.customerName) + '</span></td><td class="p-3 text-slate-200">' + itemsHtml + totalHtml + '</td><td class="p-3 align-top"><select class="stage-select s' + st + '" onchange="changeOrderStage(\'' + o.trackingCode + '\', this.value)">' + optionsHtml + '</select></td><td class="p-3 text-right align-top">' + proofBtn + '<button onclick="deleteOrder(\'' + o.trackingCode + '\')" class="ml-1 p-1.5 text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>';
+        let returnBtn = '';
+        if (o.returnRequest) {
+          const rr = o.returnRequest;
+          const status = rr.status || 'pending';
+          if (status === 'pending') {
+            returnBtn = '<button onclick="openReturnReviewModal(\'' + o.trackingCode + '\')" class="ml-2 px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold hover:bg-amber-500/30 transition" title="Review return request"><i class="fa-solid fa-rotate-left"></i> Return <span class="blink">!</span></button>';
+          } else {
+            returnBtn = '<button onclick="openReturnReviewModal(\'' + o.trackingCode + '\')" class="ml-2 px-2 py-1 rounded-lg ' + (status === 'accepted' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-300 border border-rose-500/30') + ' text-[10px] font-bold hover:opacity-80 transition" title="View return decision"><i class="fa-solid fa-rotate-left"></i> Return</button>';
+          }
+        }
+        return '<tr class="hover:bg-slate-900/60 transition"><td class="p-3 font-bold text-cyan-400 align-top">' + o.trackingCode + '</td><td class="p-3 align-top"><span class="text-white block font-bold">' + escapeHtml(o.customerName) + '</span></td><td class="p-3 text-slate-200">' + itemsHtml + totalHtml + '</td><td class="p-3 align-top"><select class="stage-select s' + st + '" onchange="changeOrderStage(\'' + o.trackingCode + '\', this.value)">' + optionsHtml + '</select></td><td class="p-3 text-right align-top">' + proofBtn + returnBtn + '<button onclick="deleteOrder(\'' + o.trackingCode + '\')" class="ml-1 p-1.5 text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>';
       }).join('');
     };
     window.changeOrderStage = async function(code, newStage) {
@@ -2339,10 +2752,7 @@
       if (proofUploadState === 'uploading') {
         showToast('⏳ Waiting for upload to finish...');
         let waited = 0;
-        while (proofUploadState === 'uploading' && waited < 20000) {
-          await new Promise(r => setTimeout(r, 500));
-          waited += 500;
-        }
+        while (proofUploadState === 'uploading' && waited < 20000) { await new Promise(r => setTimeout(r, 500)); waited += 500; }
       }
       if (proofUploadState === 'error') { showToast('❌ Upload failed. Try again.', 'error'); return; }
       const note = document.getElementById('proof-note-input').value.trim();
