@@ -16,7 +16,6 @@
         }
       }
     }
-
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -325,7 +324,7 @@
           <div class="pickup-card">
             <p class="text-[10px] font-mono uppercase tracking-widest text-cyan-300 text-center mb-2"><i class="fa-solid fa-location-dot"></i> Pickup Location</p>
             <p class="pickup-message">Pick up at The Heart</p>
-            <p class="text-[10px] font-mono text-slate-400 text-center mt-2">Your order will be waiting for you!</p>
+            <p id="pickup-warning" class="text-xs sm:text-sm font-bold text-center mt-3 leading-snug"></p>
           </div>
         </div>
         <div id="payment-message-wrap" class="hidden pt-4">
@@ -431,11 +430,58 @@
         <p class="text-[10px] text-cyan-300/80 font-bold"><i class="fa-solid fa-crown text-amber-400"></i> Exclusive to King's Bangkok Students &amp; Teachers</p>
       </div>
       <div class="flex items-center space-x-4">
+        <button onclick="openReturnPolicyModal()" class="hover:text-emerald-400 transition">Return Policy</button>
         <button onclick="openQuickTrackModal()" class="hover:text-cyan-400 transition">Track Order</button>
         <button onclick="openOwnerPinModal()" class="hover:text-amber-400 transition">Owner Login</button>
       </div>
     </div>
   </footer>
+
+  <!-- RETURN POLICY MODAL -->
+  <div id="modal-return-policy" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-emerald-500/30 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg"><i class="fa-solid fa-rotate-left"></i></div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-white">Return Policy</h3>
+            <p class="text-[10px] font-mono text-emerald-300 uppercase tracking-widest">Josh and Jett's 3D Prints</p>
+          </div>
+        </div>
+        <button onclick="closeReturnPolicyModal()" class="w-10 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-4 text-xs sm:text-sm font-mono text-slate-300 leading-relaxed">
+        <div class="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-4">
+          <p class="text-emerald-300 font-bold flex items-center gap-2 mb-1"><i class="fa-solid fa-circle-check"></i> 3-Day Return Window</p>
+          <p class="text-slate-300">You can return any 3D print within <strong class="text-white">3 days</strong> of picking it up from The Heart. No questions asked, as long as it's in reasonably original condition.</p>
+        </div>
+        <div>
+          <p class="text-cyan-300 font-bold mb-1.5 flex items-center gap-2"><i class="fa-solid fa-hand-holding-dollar"></i> Cashback for Broken Prints</p>
+          <p>If your print arrives <strong class="text-white">broken, cracked, or clearly defective</strong> (layer separation, failed supports, missing parts, or anything that wasn't your fault), you get a <strong class="text-emerald-400">full cashback</strong>. Just bring it back to The Heart within the 3-day window and we'll refund you on the spot — no receipt needed since we keep a record by tracking code.</p>
+        </div>
+        <div>
+          <p class="text-cyan-300 font-bold mb-1.5 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> What's Not Covered</p>
+          <ul class="space-y-1.5 pl-1">
+            <li>• Damage caused after pickup (dropping, stomping, melting, feeding it to a pet, etc.)</li>
+            <li>• Cosmetic imperfections that are normal for FDM 3D printing (tiny layer lines, minor stringing, slight color variation between spools)</li>
+            <li>• Scale or color choices you made yourself when ordering — the preview is accurate</li>
+            <li>• Prints older than 3 days from the pickup date</li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-cyan-300 font-bold mb-1.5 flex items-center gap-2"><i class="fa-solid fa-comments"></i> How to Start a Return</p>
+          <p>Find one of us at The Heart during break or lunch. Give us your <strong class="text-white">tracking code</strong> (the 8A... one) and we'll pull up your order instantly. If it's broken, we'll refund you in cash on the spot. If you just changed your mind, we'll accept the return as long as it looks fine.</p>
+        </div>
+        <div class="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-4">
+          <p class="text-amber-300 font-bold flex items-center gap-2 mb-1"><i class="fa-solid fa-lightbulb"></i> Friendly Note</p>
+          <p class="text-slate-300">We're two students running this shop between classes, so please be patient with us and don't abuse the policy. If something's wrong with your print, tell us — we'd much rather fix it or refund it than have you walk around with a broken dragon. 🐉</p>
+        </div>
+      </div>
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="closeReturnPolicyModal()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider transition flex items-center gap-2"><i class="fa-solid fa-check"></i> Got It</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 1. Owner PIN Modal -->
   <div id="modal-owner-pin" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
@@ -1739,10 +1785,21 @@
         payWrap.classList.add('hidden');
       }
       
-      // Pickup message (stages 2 and 3)
+      // Pickup message (stages 2 = Printing, 3 = Packaged)
       const pickupWrap = document.getElementById('pickup-message-wrap');
-      if (st === 2 || st === 3) pickupWrap.classList.remove('hidden');
-      else pickupWrap.classList.add('hidden');
+      const pickupWarning = document.getElementById('pickup-warning');
+      if (st === 2) {
+        pickupWrap.classList.remove('hidden');
+        pickupWarning.className = 'text-xs sm:text-sm font-bold text-center mt-3 leading-snug text-rose-400';
+        pickupWarning.innerText = 'DO NOT PICK IT UP NOW IT IS NOT READY YET';
+      } else if (st === 3) {
+        pickupWrap.classList.remove('hidden');
+        pickupWarning.className = 'text-xs sm:text-sm font-bold text-center mt-3 leading-snug text-emerald-400';
+        pickupWarning.innerText = 'YOU CAN PICK IT UP NOW YOUR ORDERS WILL BE WAITING THERE';
+      } else {
+        pickupWrap.classList.add('hidden');
+        pickupWarning.innerText = '';
+      }
       
       // Complete message (stage 4)
       const completeWrap = document.getElementById('complete-message-wrap');
@@ -1804,6 +1861,9 @@
       if (!c) { showToast('Enter a valid code.', 'error'); return; }
       closeQuickTrackModal(); viewOrderTracking(c);
     };
+
+    window.openReturnPolicyModal = function() { document.getElementById('modal-return-policy').classList.remove('hidden'); document.body.style.overflow = 'hidden'; };
+    window.closeReturnPolicyModal = function() { document.getElementById('modal-return-policy').classList.add('hidden'); document.body.style.overflow = ''; };
 
     window.openOwnerPinModal = function() { document.getElementById('owner-pin-input').value = ''; document.getElementById('modal-owner-pin').classList.remove('hidden'); setTimeout(() => document.getElementById('owner-pin-input').focus(), 50); };
     window.closeOwnerPinModal = function() {
