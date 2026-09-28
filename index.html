@@ -130,7 +130,7 @@
     .cart-table { width: 100%; font-family: 'Fira Code', monospace; font-size: 11px; }
     .cart-table th { text-align: left; padding: 8px; color: #64748b; text-transform: uppercase; font-size: 9px; letter-spacing: .05em; border-bottom: 1px solid rgba(255,255,255,.08); }
     .cart-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.04); }
-    #lightbox { position: fixed; inset: 0; z-index: 90; background: rgba(2,6,23,.95); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+    #lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(2,6,23,.95); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
     #lightbox.active { display: flex; }
     #lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 1rem; box-shadow: 0 0 60px rgba(6,182,212,.3); }
     #lightbox .close-hint { position: absolute; top: 20px; right: 20px; color: #cbd5e1; font-size: 12px; font-family: 'Fira Code', monospace; display: flex; align-items: center; gap: 8px; }
@@ -160,12 +160,14 @@
     @keyframes maintenanceGlow { 0%,100% { filter: drop-shadow(0 0 8px rgba(34,211,238,.35)); } 50% { filter: drop-shadow(0 0 24px rgba(16,185,129,.55)); } }
     #maintenance-overlay.active { display: flex !important; }
     body.maintenance-lock { overflow: hidden; }
+    /* Maintenance panel slide-down */
+    #maint-panel.active { transform: translateY(0) !important; opacity: 1 !important; pointer-events: auto !important; }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
 
   <!-- MAINTENANCE OVERLAY (hidden by default) -->
-  <div id="maintenance-overlay" class="fixed inset-0 z-[80] hidden flex-col items-center justify-center bg-slate-950/98 backdrop-blur-2xl overflow-y-auto px-4 py-10">
+  <div id="maintenance-overlay" class="fixed inset-0 z-[80] hidden flex-col items-center justify-center bg-black overflow-y-auto px-4 py-10" style="background: radial-gradient(circle at 50% 0%, #0b0f1a 0%, #000 70%);">
     <div class="max-w-2xl w-full text-center space-y-10">
 
       <div class="relative w-40 h-40 mx-auto">
@@ -241,8 +243,133 @@
 
       <div class="pt-4">
         <p class="text-[10px] font-mono text-slate-600">
-          Press <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-400">Shift</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-400">M</kbd> to toggle the owner panel
+          Staff: press <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-400">Shift</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-400">M</kbd> to open the maintenance panel
         </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAINTENANCE CONTROL PANEL (slide-down, opens with Shift+M after PIN) -->
+  <div id="maint-panel" class="fixed top-0 left-0 right-0 z-[95]" style="transform: translateY(-110%); opacity: 0; pointer-events: none; transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .3s ease;">
+    <div class="glass-panel border-b border-cyan-500/30 shadow-2xl" style="max-height: 100vh; overflow-y: auto;">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-black font-mono uppercase tracking-wider text-white">Maintenance Control Panel</h3>
+              <p class="text-[10px] font-mono text-cyan-300">Press Shift+M to toggle • Esc to close</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <div id="maint-panel-pill" class="sync-pill ok"><span class="sync-dot"></span><span id="maint-panel-text">Synced</span></div>
+            <button onclick="closeMaintPanel()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-xmark"></i> Close
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 border border-cyan-500/30 bg-cyan-950/20 mb-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div id="maint-master-icon-box" class="w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/40 flex items-center justify-center text-rose-400 text-lg flex-shrink-0">
+                <i id="maint-master-icon" class="fa-solid fa-power-off"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black font-mono uppercase tracking-wider text-white">Maintenance Mode</h4>
+                <p id="maint-master-status" class="text-[10px] font-mono text-rose-300">
+                  <i class="fa-solid fa-circle-exclamation mr-1"></i>Currently ACTIVE — shop is locked
+                </p>
+              </div>
+            </div>
+            <button id="maint-master-btn" onclick="toggleMaintenanceEnabled()" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 self-start sm:self-auto">
+              <i id="maint-master-btn-icon" class="fa-solid fa-toggle-on text-base"></i>
+              <span id="maint-master-btn-label">Turn OFF</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="glass-card rounded-2xl p-4 border border-slate-800 space-y-3">
+            <label class="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+              <i class="fa-solid fa-percent text-cyan-400 mr-1"></i> Upgrade Progress
+            </label>
+            <div class="flex items-center gap-3">
+              <input type="range" id="maint-progress-slider" min="0" max="100" step="1" value="85" oninput="updateMaintProgressFromSlider(this.value)" class="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500" />
+              <span id="maint-progress-value" class="text-sm font-black font-mono text-cyan-400 w-12 text-right">85%</span>
+            </div>
+            <div class="flex gap-1.5 flex-wrap">
+              <button onclick="setMaintProgress(0)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">0%</button>
+              <button onclick="setMaintProgress(25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">25%</button>
+              <button onclick="setMaintProgress(50)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">50%</button>
+              <button onclick="setMaintProgress(75)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">75%</button>
+              <button onclick="setMaintProgress(100)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">100%</button>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-4 border border-slate-800 space-y-3">
+            <label class="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+              <i class="fa-solid fa-comment-dots text-emerald-400 mr-1"></i> Status Message
+            </label>
+            <select id="maint-message-select" onchange="applyMaintMessagePreset(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
+              <option value="default">🔧 Default — Upgrading our 3D print shop</option>
+              <option value="inventory">📦 Updating filament inventory &amp; stock</option>
+              <option value="calibration">⚙️ Printer calibration in progress</option>
+              <option value="newfeatures">✨ Deploying new features</option>
+              <option value="database">🗄️ Database maintenance &amp; sync</option>
+              <option value="security">🔒 Security updates in progress</option>
+              <option value="custom">✏️ Custom message...</option>
+            </select>
+            <div id="maint-custom-message-wrap" class="hidden">
+              <input type="text" id="maint-custom-message" placeholder="Enter custom message..." oninput="applyMaintCustomMessage(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500" />
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-4 border border-slate-800 space-y-3">
+            <label class="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+              <i class="fa-solid fa-clock text-amber-400 mr-1"></i> Estimated Time
+            </label>
+            <input type="text" id="maint-time-input" placeholder="e.g. ~4:00 PM" oninput="applyMaintEstimatedTime(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500" />
+            <div class="flex gap-1.5 flex-wrap">
+              <button onclick="setMaintTime('~4:00 PM')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">4 PM</button>
+              <button onclick="setMaintTime('~5:30 PM')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">5:30 PM</button>
+              <button onclick="setMaintTime('Tomorrow')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">Tomorrow</button>
+              <button onclick="setMaintTime('Soon™')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700 transition">Soon™</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+          <div class="flex items-center gap-2 text-[10px] font-mono text-slate-500">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 blink"></span>
+            <span>Changes sync to Firebase instantly</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="resetMaintDefaults()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 text-[10px] font-mono transition flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAINTENANCE PIN MODAL -->
+  <div id="modal-maint-pin" class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-cyan-500/30 space-y-6 shadow-2xl relative">
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 mx-auto flex items-center justify-center text-cyan-400 text-xl"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <h3 class="text-lg font-black text-white">Maintenance Access</h3>
+        <p class="text-xs text-slate-400">Enter maintenance PIN to open the control panel</p>
+      </div>
+      <div class="space-y-4">
+        <input type="password" id="maint-pin-input" maxlength="6" placeholder="•••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-mono tracking-widest text-white focus:outline-none focus:border-cyan-500 transition" />
+        <div class="flex gap-2">
+          <button onclick="closeMaintPinModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">Cancel</button>
+          <button onclick="verifyMaintPin()" class="w-1/2 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition">Unlock</button>
+        </div>
       </div>
     </div>
   </div>
@@ -476,28 +603,6 @@
           <button onclick="exitOwnerPortal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 border border-slate-700 transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-right-from-bracket"></i> Exit &amp; Lock</button>
         </div>
       </div>
-
-      <!-- MAINTENANCE TOGGLE CARD (inside owner portal) -->
-      <div class="glass-panel rounded-3xl p-5 border border-cyan-500/30 bg-cyan-950/10">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <div id="owner-maint-icon-box" class="w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/40 flex items-center justify-center text-rose-400 text-lg flex-shrink-0">
-              <i id="owner-maint-icon" class="fa-solid fa-power-off"></i>
-            </div>
-            <div>
-              <h3 class="text-sm font-black font-mono uppercase tracking-wider text-white">Maintenance Mode</h3>
-              <p id="owner-maint-status" class="text-[10px] font-mono text-rose-300">
-                <i class="fa-solid fa-circle-exclamation mr-1"></i>Currently ACTIVE — shop is locked
-              </p>
-            </div>
-          </div>
-          <button id="owner-maint-btn" onclick="toggleMaintenanceEnabled()" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 self-start sm:self-auto">
-            <i id="owner-maint-btn-icon" class="fa-solid fa-toggle-on text-base"></i>
-            <span id="owner-maint-btn-label">Turn OFF</span>
-          </button>
-        </div>
-      </div>
-
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="glass-panel p-4 rounded-2xl border border-slate-800"><span class="text-[10px] font-mono text-slate-500 uppercase">Total Orders</span><p id="owner-stat-total" class="text-2xl font-black text-white mt-1">0</p></div>
         <div class="glass-panel p-4 rounded-2xl border border-slate-800"><span class="text-[10px] font-mono text-amber-400 uppercase">Active Production</span><p id="owner-stat-active" class="text-2xl font-black text-amber-400 mt-1">0</p></div>
@@ -658,7 +763,7 @@
   </div>
 
   <!-- OWNER RETURN REVIEW MODAL -->
-  <div id="modal-return-review" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
+  <div id="modal-return-review" class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
     <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-indigo-500/30 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-4">
         <div class="flex items-center gap-3">
@@ -707,7 +812,7 @@
   </div>
 
   <!-- 1. Owner PIN Modal -->
-  <div id="modal-owner-pin" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
+  <div id="modal-owner-pin" class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
     <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-amber-500/30 space-y-6 shadow-2xl relative">
       <div class="text-center space-y-2">
         <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 mx-auto flex items-center justify-center text-amber-400 text-xl"><i class="fa-solid fa-shield-halved"></i></div>
@@ -725,7 +830,7 @@
   </div>
 
   <!-- 1b. WIPE Modal -->
-  <div id="modal-wipe" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
+  <div id="modal-wipe" class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/90 backdrop-blur-md hidden p-4">
     <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-md w-full border border-rose-500/40 space-y-5 shadow-2xl">
       <div class="text-center space-y-2">
         <div class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/40 mx-auto flex items-center justify-center text-rose-400 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -1097,10 +1202,13 @@
     const COL_ORDERS = 'orders';
 
     // ============================================================
-    // MAINTENANCE MODE (in-file overlay, no redirect)
+    // MAINTENANCE MODE
     // ============================================================
     const MAINT_COL = 'maintenance';
     const MAINT_DOC = 'config';
+    const MAINT_PIN = '55854';               // <-- maintenance panel PIN
+    const OWNER_PIN = '85455';               // <-- owner portal PIN
+
     const MAINT_DEFAULTS = {
       enabled: true,
       progress: 85,
@@ -1120,6 +1228,7 @@
     let maintUnsub = null;
     let maintPollTimer = null;
     let maintIsApplying = false;
+    let maintPanelOpen = false;
 
     function renderMaintenanceOverlay() {
       const overlay = document.getElementById('maintenance-overlay');
@@ -1145,35 +1254,55 @@
       const t = document.getElementById('maint-time');
       if (t) t.innerText = 'Back at ' + (maintState.estimatedTime || '~4:00 PM');
 
-      renderOwnerMaintToggle();
+      renderMaintPanelUI();
     }
 
-    function renderOwnerMaintToggle() {
-      const box = document.getElementById('owner-maint-icon-box');
-      const icon = document.getElementById('owner-maint-icon');
-      const status = document.getElementById('owner-maint-status');
-      const btn = document.getElementById('owner-maint-btn');
-      const btnIcon = document.getElementById('owner-maint-btn-icon');
-      const btnLabel = document.getElementById('owner-maint-btn-label');
-      if (!btn) return;
-      const on = maintState.enabled === true;
-      if (on) {
-        box.className = 'w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/40 flex items-center justify-center text-rose-400 text-lg flex-shrink-0';
-        icon.className = 'fa-solid fa-power-off';
-        status.className = 'text-[10px] font-mono text-rose-300';
-        status.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i>Currently ACTIVE — shop is locked';
-        btn.className = 'px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 self-start sm:self-auto';
-        btnIcon.className = 'fa-solid fa-toggle-on text-base';
-        btnLabel.innerText = 'Turn OFF';
-      } else {
-        box.className = 'w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-lg flex-shrink-0';
-        icon.className = 'fa-solid fa-circle-check';
-        status.className = 'text-[10px] font-mono text-emerald-300';
-        status.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>Currently OFF — shop is live for customers';
-        btn.className = 'px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 self-start sm:self-auto';
-        btnIcon.className = 'fa-solid fa-toggle-off text-base';
-        btnLabel.innerText = 'Turn ON';
+    function renderMaintPanelUI() {
+      // Master toggle visuals
+      const box = document.getElementById('maint-master-icon-box');
+      const icon = document.getElementById('maint-master-icon');
+      const status = document.getElementById('maint-master-status');
+      const btn = document.getElementById('maint-master-btn');
+      const btnIcon = document.getElementById('maint-master-btn-icon');
+      const btnLabel = document.getElementById('maint-master-btn-label');
+      if (btn) {
+        const on = maintState.enabled === true;
+        if (on) {
+          box.className = 'w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/40 flex items-center justify-center text-rose-400 text-lg flex-shrink-0';
+          icon.className = 'fa-solid fa-power-off';
+          status.className = 'text-[10px] font-mono text-rose-300';
+          status.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i>Currently ACTIVE — shop is locked';
+          btn.className = 'px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 self-start sm:self-auto';
+          btnIcon.className = 'fa-solid fa-toggle-on text-base';
+          btnLabel.innerText = 'Turn OFF';
+        } else {
+          box.className = 'w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-lg flex-shrink-0';
+          icon.className = 'fa-solid fa-circle-check';
+          status.className = 'text-[10px] font-mono text-emerald-300';
+          status.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>Currently OFF — shop is live for customers';
+          btn.className = 'px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 self-start sm:self-auto';
+          btnIcon.className = 'fa-solid fa-toggle-off text-base';
+          btnLabel.innerText = 'Turn ON';
+        }
       }
+
+      // Progress slider
+      const ps = document.getElementById('maint-progress-slider');
+      const pv = document.getElementById('maint-progress-value');
+      if (ps) ps.value = maintState.progress;
+      if (pv) pv.innerText = maintState.progress + '%';
+
+      // Message select
+      const ms = document.getElementById('maint-message-select');
+      if (ms) ms.value = maintState.messageKey;
+      const cw = document.getElementById('maint-custom-message-wrap');
+      const cm = document.getElementById('maint-custom-message');
+      if (cw) cw.classList.toggle('hidden', maintState.messageKey !== 'custom');
+      if (cm && document.activeElement !== cm) cm.value = maintState.customMessage || '';
+
+      // Time input
+      const ti = document.getElementById('maint-time-input');
+      if (ti && document.activeElement !== ti) ti.value = maintState.estimatedTime || '';
     }
 
     function applyMaintStateFromFirebase(data) {
@@ -1221,6 +1350,41 @@
       }
     }
 
+    // ---- Maintenance PIN modal ----
+    window.openMaintPinModal = function() {
+      document.getElementById('maint-pin-input').value = '';
+      document.getElementById('modal-maint-pin').classList.remove('hidden');
+      setTimeout(() => document.getElementById('maint-pin-input').focus(), 50);
+    };
+    window.closeMaintPinModal = function() {
+      document.getElementById('modal-maint-pin').classList.add('hidden');
+    };
+    window.verifyMaintPin = function() {
+      const pin = document.getElementById('maint-pin-input').value.trim();
+      if (pin === MAINT_PIN) {
+        closeMaintPinModal();
+        openMaintPanel();
+      } else {
+        showToast('Incorrect maintenance PIN.', 'error');
+      }
+    };
+
+    // ---- Maintenance control panel ----
+    window.openMaintPanel = function() {
+      maintPanelOpen = true;
+      document.getElementById('maint-panel').classList.add('active');
+      renderMaintPanelUI();
+      showToast('Maintenance panel opened');
+    };
+    window.closeMaintPanel = function() {
+      maintPanelOpen = false;
+      document.getElementById('maint-panel').classList.remove('active');
+    };
+    window.toggleMaintPanel = function() {
+      if (maintPanelOpen) closeMaintPanel();
+      else openMaintPinModal();
+    };
+
     window.toggleMaintenanceEnabled = async function() {
       maintState.enabled = !(maintState.enabled === true);
       renderMaintenanceOverlay();
@@ -1228,20 +1392,74 @@
       showToast(maintState.enabled ? 'Maintenance mode ENABLED — shop is locked' : 'Maintenance mode DISABLED — shop is live');
     };
 
-    // Shift+M shortcut: open Owner Portal from anywhere; exit if already inside
+    window.updateMaintProgressFromSlider = async function(val) {
+      maintState.progress = Math.max(0, Math.min(100, parseInt(val) || 0));
+      renderMaintenanceOverlay();
+      await saveMaintState();
+    };
+    window.setMaintProgress = async function(val) {
+      maintState.progress = Math.max(0, Math.min(100, parseInt(val) || 0));
+      renderMaintenanceOverlay();
+      await saveMaintState();
+      showToast('Progress set to ' + maintState.progress + '%');
+    };
+    window.applyMaintMessagePreset = async function(key) {
+      if (key === 'custom') {
+        maintState.messageKey = 'custom';
+        renderMaintenanceOverlay();
+        await saveMaintState();
+        return;
+      }
+      maintState.messageKey = key;
+      maintState.customMessage = '';
+      renderMaintenanceOverlay();
+      await saveMaintState();
+      showToast('Message preset: ' + key);
+    };
+    window.applyMaintCustomMessage = async function(val) {
+      maintState.customMessage = (val || '').trim();
+      maintState.messageKey = 'custom';
+      renderMaintenanceOverlay();
+      await saveMaintState();
+    };
+    window.applyMaintEstimatedTime = async function(val) {
+      maintState.estimatedTime = (val || '').trim() || '~4:00 PM';
+      renderMaintenanceOverlay();
+      await saveMaintState();
+    };
+    window.setMaintTime = async function(val) {
+      maintState.estimatedTime = val;
+      renderMaintenanceOverlay();
+      await saveMaintState();
+      showToast('Estimated time: ' + val);
+    };
+    window.resetMaintDefaults = async function() {
+      maintState = { ...MAINT_DEFAULTS };
+      renderMaintenanceOverlay();
+      await saveMaintState();
+      showToast('Maintenance settings reset to defaults');
+    };
+
+    // ---- Shift+M shortcut ----
     document.addEventListener('keydown', function(e) {
       const tag = (e.target.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
       if (e.shiftKey && e.key.toLowerCase() === 'm') {
         e.preventDefault();
-        if (activeView === 'owner') {
-          exitOwnerPortal();
-        } else {
-          openOwnerPinModal();
-        }
+        // If panel is open, close it. If PIN modal is open, close it. Else open PIN prompt.
+        const pinOpen = !document.getElementById('modal-maint-pin').classList.contains('hidden');
+        if (maintPanelOpen) closeMaintPanel();
+        else if (pinOpen) closeMaintPinModal();
+        else openMaintPinModal();
+      }
+      if (e.key === 'Escape') {
+        if (maintPanelOpen) closeMaintPanel();
       }
     });
 
+    // ============================================================
+    // SHOP STATE
+    // ============================================================
     let catalogModels = [];
     let filaments = [];
     let orders = [];
@@ -1352,6 +1570,9 @@
       return data.data.url;
     }
 
+    // ============================================================
+    // SYNC BANNER
+    // ============================================================
     window.flashBanner = function() {};
 
     function showSyncBanner(title, subtitle) {
@@ -2495,7 +2716,7 @@
     };
     window.verifyOwnerPin = function() {
       const pin = document.getElementById('owner-pin-input').value.trim();
-      if (pin === '85455') {
+      if (pin === OWNER_PIN) {
         document.getElementById('modal-owner-pin').classList.add('hidden');
         showToast('Owner Portal access granted!');
         activeView = 'owner'; history.replaceState(null, '', '#owner');
@@ -2514,7 +2735,6 @@
       document.getElementById('owner-stat-active').innerText = ac;
       document.getElementById('owner-stat-completed').innerText = cc;
       renderOwnerFilaments(); renderOwnerCatalog(); renderOwnerPortalOrders(); renderOwnerCartTable();
-      renderOwnerMaintToggle();
     };
 
     window.renderOwnerFilaments = function() {
