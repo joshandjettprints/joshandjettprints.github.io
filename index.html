@@ -149,9 +149,103 @@
     .return-badge.pending { border-color: rgba(245,158,11,.5); color: #fcd34d; background: rgba(120,53,15,.35); }
     .return-badge.accepted { border-color: rgba(16,185,129,.5); color: #6ee7b7; background: rgba(6,78,59,.35); }
     .return-badge.declined { border-color: rgba(244,63,94,.5); color: #fda4af; background: rgba(76,5,25,.5); }
+    /* Maintenance overlay animations */
+    .pulse-ring { animation: pulseRing 2.5s ease-in-out infinite; }
+    @keyframes pulseRing { 0%,100% { opacity: .2; transform: scale(1); } 50% { opacity: .5; transform: scale(1.1); } }
+    .gear-spin { animation: gearSpin 6s linear infinite; transform-origin: center; }
+    @keyframes gearSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .progress-stripe { background: linear-gradient(90deg, #06b6d4, #10b981, #06b6d4); background-size: 200% 100%; animation: stripeMove 2s linear infinite; }
+    @keyframes stripeMove { 0% { background-position: 0% 0%; } 100% { background-position: 200% 0%; } }
+    .maintenance-glow { animation: maintenanceGlow 3s ease-in-out infinite; }
+    @keyframes maintenanceGlow { 0%,100% { filter: drop-shadow(0 0 8px rgba(34,211,238,.35)); } 50% { filter: drop-shadow(0 0 24px rgba(16,185,129,.55)); } }
+    #maintenance-overlay.active { display: flex !important; }
+    body.maintenance-lock { overflow: hidden; }
   </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- MAINTENANCE OVERLAY (hidden by default) -->
+  <div id="maintenance-overlay" class="fixed inset-0 z-[80] hidden flex-col items-center justify-center bg-slate-950/98 backdrop-blur-2xl overflow-y-auto px-4 py-10">
+    <div class="max-w-2xl w-full text-center space-y-10">
+
+      <div class="relative w-40 h-40 mx-auto">
+        <div class="absolute inset-0 rounded-full border-2 border-cyan-500/20 pulse-ring"></div>
+        <div class="absolute inset-4 rounded-full border-2 border-emerald-500/20 pulse-ring" style="animation-delay:.8s;"></div>
+        <div class="absolute inset-8 rounded-full border-2 border-cyan-500/10 pulse-ring" style="animation-delay:1.6s;"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-24 h-24 rounded-3xl bg-slate-950/80 border border-cyan-500/30 flex items-center justify-center shadow-2xl shadow-cyan-500/10">
+            <i class="fa-solid fa-gear text-cyan-400 text-5xl gear-spin"></i>
+          </div>
+        </div>
+        <div class="absolute -top-1 -right-1 w-10 h-10 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center text-amber-400 text-sm shadow-lg">
+          <i class="fa-solid fa-wrench"></i>
+        </div>
+        <div class="absolute -bottom-1 -left-1 w-10 h-10 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center text-emerald-400 text-sm shadow-lg">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight maintenance-glow">Maintenance in Progress</h2>
+        <p id="maint-message" class="text-sm sm:text-base text-slate-400 font-mono max-w-md mx-auto leading-relaxed">
+          We're currently upgrading our 3D print shop to serve you better.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4 max-w-md mx-auto">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span class="text-cyan-300 font-bold uppercase tracking-wider">
+            <i class="fa-solid fa-arrows-rotate fa-spin mr-1.5"></i>System Upgrade
+          </span>
+          <span id="maint-progress-label" class="text-slate-400">~ 85%</span>
+        </div>
+        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+          <div id="maint-progress-bar" class="progress-stripe h-full rounded-full" style="width:85%;"></div>
+        </div>
+        <p id="maint-subtext" class="text-[10px] font-mono text-slate-500 text-left">
+          <i class="fa-solid fa-circle-info text-cyan-400 mr-1"></i>
+          Deploying new features &amp; filament inventory updates
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto text-left">
+        <div class="glass-card rounded-2xl p-4 border border-slate-800 space-y-1.5">
+          <div class="flex items-center gap-2 text-cyan-400 text-xs font-bold font-mono uppercase">
+            <i class="fa-solid fa-clock"></i> Estimated Time
+          </div>
+          <p id="maint-time" class="text-sm text-white font-bold">Back at ~4:00 PM</p>
+          <p class="text-[10px] text-slate-500 font-mono">Bangkok time (ICT)</p>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border border-slate-800 space-y-1.5">
+          <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold font-mono uppercase">
+            <i class="fa-solid fa-heart"></i> Your Orders
+          </div>
+          <p class="text-sm text-white font-bold">Safe &amp; Sound</p>
+          <p class="text-[10px] text-slate-500 font-mono">All order data is preserved</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-3 text-xs font-mono text-slate-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 blink"></span>
+        <span>Maintenance mode active</span>
+        <span class="text-slate-700">|</span>
+        <span class="text-cyan-400">Josh &amp; Jett's 3D Prints</span>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-4 border border-amber-500/30 bg-amber-950/20 max-w-md mx-auto">
+        <p class="text-[11px] text-slate-300 font-mono leading-relaxed">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1.5"></i>
+          Need urgent assistance? Please contact us directly at <strong class="text-amber-300">The Heart</strong> during break or lunch time.
+        </p>
+      </div>
+
+      <div class="pt-4">
+        <p class="text-[10px] font-mono text-slate-600">
+          Press <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-400">Shift</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-400">M</kbd> to toggle the owner panel
+        </p>
+      </div>
+    </div>
+  </div>
 
   <!-- SYNC BANNER -->
   <div id="sync-banner">
@@ -382,6 +476,28 @@
           <button onclick="exitOwnerPortal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 border border-slate-700 transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-right-from-bracket"></i> Exit &amp; Lock</button>
         </div>
       </div>
+
+      <!-- MAINTENANCE TOGGLE CARD (inside owner portal) -->
+      <div class="glass-panel rounded-3xl p-5 border border-cyan-500/30 bg-cyan-950/10">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div id="owner-maint-icon-box" class="w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/40 flex items-center justify-center text-rose-400 text-lg flex-shrink-0">
+              <i id="owner-maint-icon" class="fa-solid fa-power-off"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-black font-mono uppercase tracking-wider text-white">Maintenance Mode</h3>
+              <p id="owner-maint-status" class="text-[10px] font-mono text-rose-300">
+                <i class="fa-solid fa-circle-exclamation mr-1"></i>Currently ACTIVE — shop is locked
+              </p>
+            </div>
+          </div>
+          <button id="owner-maint-btn" onclick="toggleMaintenanceEnabled()" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 self-start sm:self-auto">
+            <i id="owner-maint-btn-icon" class="fa-solid fa-toggle-on text-base"></i>
+            <span id="owner-maint-btn-label">Turn OFF</span>
+          </button>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="glass-panel p-4 rounded-2xl border border-slate-800"><span class="text-[10px] font-mono text-slate-500 uppercase">Total Orders</span><p id="owner-stat-total" class="text-2xl font-black text-white mt-1">0</p></div>
         <div class="glass-panel p-4 rounded-2xl border border-slate-800"><span class="text-[10px] font-mono text-amber-400 uppercase">Active Production</span><p id="owner-stat-active" class="text-2xl font-black text-amber-400 mt-1">0</p></div>
@@ -556,18 +672,9 @@
       </div>
       <div class="space-y-4 font-mono text-xs">
         <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400">Customer</span>
-            <span id="return-review-customer" class="text-white font-bold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400">Order</span>
-            <span id="return-review-order" class="text-cyan-300 font-bold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400">Requested</span>
-            <span id="return-review-date" class="text-slate-300">—</span>
-          </div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">Customer</span><span id="return-review-customer" class="text-white font-bold">—</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">Order</span><span id="return-review-order" class="text-cyan-300 font-bold">—</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">Requested</span><span id="return-review-date" class="text-slate-300">—</span></div>
         </div>
         <div>
           <span class="text-slate-400 block mb-1 uppercase tracking-wider text-[10px]">Reason</span>
@@ -989,6 +1096,152 @@
     const COL_FILAMENTS = 'filaments';
     const COL_ORDERS = 'orders';
 
+    // ============================================================
+    // MAINTENANCE MODE (in-file overlay, no redirect)
+    // ============================================================
+    const MAINT_COL = 'maintenance';
+    const MAINT_DOC = 'config';
+    const MAINT_DEFAULTS = {
+      enabled: true,
+      progress: 85,
+      messageKey: 'default',
+      customMessage: '',
+      estimatedTime: '~4:00 PM'
+    };
+    const MAINT_PRESETS = {
+      default:     { message: "We're currently upgrading our 3D print shop to serve you better. The store will be back online shortly.", subtext: "Deploying new features & filament inventory updates" },
+      inventory:   { message: "We're updating our filament inventory and restocking materials. Check back soon for fresh colors!", subtext: "Syncing filament colors, stock levels & surcharges" },
+      calibration: { message: "Our 3D printers are undergoing precision calibration to ensure the highest print quality.", subtext: "Calibrating print beds, extruders & layer alignment" },
+      newfeatures: { message: "Exciting new features are being deployed! We'll be back with an even better shopping experience.", subtext: "Rolling out new features & improvements" },
+      database:    { message: "We're performing scheduled database maintenance and syncing all order data.", subtext: "Syncing orders, models & customer data safely" },
+      security:    { message: "Security updates are being applied to keep your orders and data safe.", subtext: "Applying security patches & system hardening" }
+    };
+    let maintState = { ...MAINT_DEFAULTS };
+    let maintUnsub = null;
+    let maintPollTimer = null;
+    let maintIsApplying = false;
+
+    function renderMaintenanceOverlay() {
+      const overlay = document.getElementById('maintenance-overlay');
+      if (!overlay) return;
+      const on = maintState.enabled === true;
+      overlay.classList.toggle('active', on);
+      document.body.classList.toggle('maintenance-lock', on);
+
+      const p = typeof maintState.progress === 'number' ? maintState.progress : 85;
+      const bar = document.getElementById('maint-progress-bar');
+      const label = document.getElementById('maint-progress-label');
+      if (bar) bar.style.width = p + '%';
+      if (label) label.innerText = '~ ' + p + '%';
+
+      const preset = maintState.messageKey === 'custom'
+        ? { message: maintState.customMessage || 'Custom maintenance message', subtext: 'Custom maintenance message' }
+        : (MAINT_PRESETS[maintState.messageKey] || MAINT_PRESETS.default);
+      const msg = document.getElementById('maint-message');
+      const sub = document.getElementById('maint-subtext');
+      if (msg) msg.innerText = preset.message;
+      if (sub) sub.innerHTML = '<i class="fa-solid fa-circle-info text-cyan-400 mr-1"></i>' + preset.subtext;
+
+      const t = document.getElementById('maint-time');
+      if (t) t.innerText = 'Back at ' + (maintState.estimatedTime || '~4:00 PM');
+
+      renderOwnerMaintToggle();
+    }
+
+    function renderOwnerMaintToggle() {
+      const box = document.getElementById('owner-maint-icon-box');
+      const icon = document.getElementById('owner-maint-icon');
+      const status = document.getElementById('owner-maint-status');
+      const btn = document.getElementById('owner-maint-btn');
+      const btnIcon = document.getElementById('owner-maint-btn-icon');
+      const btnLabel = document.getElementById('owner-maint-btn-label');
+      if (!btn) return;
+      const on = maintState.enabled === true;
+      if (on) {
+        box.className = 'w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/40 flex items-center justify-center text-rose-400 text-lg flex-shrink-0';
+        icon.className = 'fa-solid fa-power-off';
+        status.className = 'text-[10px] font-mono text-rose-300';
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i>Currently ACTIVE — shop is locked';
+        btn.className = 'px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 self-start sm:self-auto';
+        btnIcon.className = 'fa-solid fa-toggle-on text-base';
+        btnLabel.innerText = 'Turn OFF';
+      } else {
+        box.className = 'w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-lg flex-shrink-0';
+        icon.className = 'fa-solid fa-circle-check';
+        status.className = 'text-[10px] font-mono text-emerald-300';
+        status.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>Currently OFF — shop is live for customers';
+        btn.className = 'px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 self-start sm:self-auto';
+        btnIcon.className = 'fa-solid fa-toggle-off text-base';
+        btnLabel.innerText = 'Turn ON';
+      }
+    }
+
+    function applyMaintStateFromFirebase(data) {
+      maintIsApplying = true;
+      maintState = {
+        enabled: data.enabled !== false,
+        progress: typeof data.progress === 'number' ? data.progress : MAINT_DEFAULTS.progress,
+        messageKey: data.messageKey || MAINT_DEFAULTS.messageKey,
+        customMessage: data.customMessage || '',
+        estimatedTime: data.estimatedTime || MAINT_DEFAULTS.estimatedTime
+      };
+      renderMaintenanceOverlay();
+      maintIsApplying = false;
+    }
+
+    async function saveMaintState() {
+      if (!firebase || !firebase.db || maintIsApplying) return;
+      try {
+        const ref = firebase.doc(firebase.db, MAINT_COL, MAINT_DOC);
+        await firebase.setDoc(ref, {
+          enabled: maintState.enabled,
+          progress: maintState.progress,
+          messageKey: maintState.messageKey,
+          customMessage: maintState.customMessage,
+          estimatedTime: maintState.estimatedTime
+        });
+      } catch (e) { showToast('Maintenance save failed: ' + e.message, 'error'); }
+    }
+
+    async function initMaintenance() {
+      if (!firebase || !firebase.db) return;
+      try {
+        const ref = firebase.doc(firebase.db, MAINT_COL, MAINT_DOC);
+        const snap = await firebase.getDoc(ref);
+        if (snap.exists()) applyMaintStateFromFirebase(snap.data());
+        else { await firebase.setDoc(ref, { ...MAINT_DEFAULTS }); applyMaintStateFromFirebase(MAINT_DEFAULTS); }
+        if (maintUnsub) maintUnsub();
+        maintUnsub = firebase.onSnapshot(ref, (s) => { if (s.exists()) applyMaintStateFromFirebase(s.data()); });
+        if (maintPollTimer) clearInterval(maintPollTimer);
+        maintPollTimer = setInterval(async () => {
+          try { const s = await firebase.getDoc(ref); if (s.exists()) applyMaintStateFromFirebase(s.data()); } catch (e) {}
+        }, 60000);
+      } catch (e) {
+        console.warn('Maintenance init failed:', e);
+      }
+    }
+
+    window.toggleMaintenanceEnabled = async function() {
+      maintState.enabled = !(maintState.enabled === true);
+      renderMaintenanceOverlay();
+      await saveMaintState();
+      showToast(maintState.enabled ? 'Maintenance mode ENABLED — shop is locked' : 'Maintenance mode DISABLED — shop is live');
+    };
+
+    // Shift+M shortcut: open Owner Portal from anywhere; exit if already inside
+    document.addEventListener('keydown', function(e) {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (e.shiftKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        if (activeView === 'owner') {
+          exitOwnerPortal();
+        } else {
+          openOwnerPinModal();
+        }
+      }
+    });
+
     let catalogModels = [];
     let filaments = [];
     let orders = [];
@@ -1006,18 +1259,15 @@
     let fbReady = false;
     let firebase = null;
 
-    // Stable per-session map: modelId -> array of gids (one per option group)
     const optionGidCache = new Map();
     function getStableGids(model) {
       if (!model || !Array.isArray(model.options)) return [];
       const key = model.id || '_noname_';
       if (optionGidCache.has(key)) return optionGidCache.get(key);
       const gids = model.options.map((g, gi) => {
-        // Prefer the saved id, but only if it's unique within this model.
         const saved = (g && typeof g.id === 'string' && g.id.trim()) ? g.id.trim() : '';
         return saved || ('g' + gi + '_' + Math.random().toString(36).substring(2, 7));
       });
-      // Dedupe: if two groups somehow share the same saved id, force uniqueness.
       const seen = new Set();
       const fixed = gids.map((id, gi) => {
         if (seen.has(id)) return 'g' + gi + '_' + Math.random().toString(36).substring(2, 7);
@@ -1041,6 +1291,7 @@
       fbReady = true;
       firebase = window.__fb;
       initBackend();
+      initMaintenance();
     });
 
     (function pollForFirebase() {
@@ -1048,6 +1299,7 @@
         fbReady = true;
         firebase = window.__fb;
         initBackend();
+        initMaintenance();
         return;
       }
       if (!fbReady) setTimeout(pollForFirebase, 50);
@@ -1089,9 +1341,6 @@
       }
     }
 
-    // ============================================================
-    // IMGBB UPLOAD
-    // ============================================================
     async function uploadToImgbb(base64Data) {
       const base64Only = base64Data.replace(/^data:image\/\w+;base64,/, '');
       const formData = new FormData();
@@ -1103,9 +1352,6 @@
       return data.data.url;
     }
 
-    // ============================================================
-    // SYNC BANNER
-    // ============================================================
     window.flashBanner = function() {};
 
     function showSyncBanner(title, subtitle) {
@@ -1308,8 +1554,6 @@
       } catch (e) {}
     }
 
-    // After a sync, refresh every image surface so the <img> tags
-    // get re-created with their (possibly new) src from Firestore.
     function refreshAllImages() {
       renderShopGrid();
       renderCategoryPills();
@@ -1327,12 +1571,8 @@
           }
         }
       }
-      if (activeView === 'owner') {
-        renderOwnerCatalog();
-      }
-      if (activeView === 'tracking' && activeTrackingCode) {
-        viewOrderTracking(activeTrackingCode, false);
-      }
+      if (activeView === 'owner') renderOwnerCatalog();
+      if (activeView === 'tracking' && activeTrackingCode) viewOrderTracking(activeTrackingCode, false);
     }
 
     window.customerSync = async function() {
@@ -1385,7 +1625,6 @@
       catch (e) { syncState.counts.filaments.failed = 1; totalFailed++; setSyncCounts('filaments', 0, filaments.length, 1, 'push'); }
       try { await bulkWrite(COL_ORDERS, orders.map(o => ({ ...o })), o => o.trackingCode); setSyncCounts('orders', orders.length, orders.length, 0, 'push'); }
       catch (e) { syncState.counts.orders.failed = 1; totalFailed++; setSyncCounts('orders', 0, orders.length, 1, 'push'); }
-      // Pull again so images render from the latest server copy
       try {
         const arr = await readCollection(COL_MODELS);
         if (arr.length > 0) catalogModels = arr.map(normalizeModel);
@@ -1794,9 +2033,6 @@
       document.body.style.overflow = 'hidden';
     };
 
-    // ============================================================
-    // OPTION RENDERING (FIXED)
-    // ============================================================
     function renderPurchaseOptions() {
       const section = document.getElementById('buy-options-section');
       const container = document.getElementById('buy-options-container');
@@ -1808,7 +2044,6 @@
         const gid = gids[gi];
         const choices = (group.choices || []).map(c => (c && typeof c === 'object') ? c : { value: String(c), label: String(c), priceDelta: 0 });
         if (choices.length === 0) return '';
-        // Only default to the first choice if the user hasn't picked one yet.
         if (selectedOptions[gid] === undefined) {
           selectedOptions[gid] = choices[0].value;
         }
@@ -1831,7 +2066,6 @@
     window.selectOption = function(gid, val) {
       if (selectedOptions[gid] === val) return;
       selectedOptions[gid] = val;
-      // Re-render only the chips, not the whole modal, to avoid losing focus.
       renderPurchaseOptions();
       updateBuyTotal();
     };
@@ -1938,9 +2172,6 @@
       return 0;
     }
 
-    // ============================================================
-    // TRACKING PAGE (with return request section)
-    // ============================================================
     window.viewOrderTracking = function(code, updateHash = true) {
       const o = orderMap.get(code);
       if (!o) { showToast('Tracking code not found.', 'error'); return; }
@@ -1985,7 +2216,6 @@
       if (st === 4) completeWrap.classList.remove('hidden');
       else completeWrap.classList.add('hidden');
 
-      // Return / Refund section
       renderReturnSection(o);
 
       const proofWrap = document.getElementById('proof-of-delivery-wrap');
@@ -2092,9 +2322,6 @@
     window.openReturnPolicyModal = function() { document.getElementById('modal-return-policy').classList.remove('hidden'); document.body.style.overflow = 'hidden'; };
     window.closeReturnPolicyModal = function() { document.getElementById('modal-return-policy').classList.add('hidden'); document.body.style.overflow = ''; };
 
-    // ============================================================
-    // RETURN REQUEST (CUSTOMER)
-    // ============================================================
     let currentReturnImageData = '';
     let returnUploadState = 'idle';
 
@@ -2193,9 +2420,7 @@
       renderReturnSection(o);
       showToast('Return request cancelled.');
     };
-    // ============================================================
-    // RETURN REVIEW (OWNER)
-    // ============================================================
+
     window.openReturnReviewModal = function(code) {
       const o = orderMap.get(code); if (!o || !o.returnRequest) return;
       const rr = o.returnRequest;
@@ -2289,6 +2514,7 @@
       document.getElementById('owner-stat-active').innerText = ac;
       document.getElementById('owner-stat-completed').innerText = cc;
       renderOwnerFilaments(); renderOwnerCatalog(); renderOwnerPortalOrders(); renderOwnerCartTable();
+      renderOwnerMaintToggle();
     };
 
     window.renderOwnerFilaments = function() {
@@ -2392,9 +2618,6 @@
       showToast(m.newArrival ? 'Marked as New Arrival: ' + m.title : 'Removed from New Arrivals: ' + m.title);
     };
 
-    // ============================================================
-    // IMAGE HANDLING
-    // ============================================================
     let currentModelImageData = '';
     let currentCrop = defaultCrop();
     let cropDragging = false, cropStartX = 0, cropStartY = 0, cropStartPosX = 50, cropStartPosY = 50;
@@ -2448,12 +2671,10 @@
         currentModelImageData = base64;
         currentCrop = defaultCrop();
         applyCropToImage();
-
         imageUploadState = 'uploading';
         document.getElementById('new-model-image-data').value = '';
         setUploadStatus('⏳ Uploading image to imgbb...', '#fcd34d');
         showToast('⏳ Uploading image to imgbb...');
-
         try {
           const url = await uploadToImgbb(base64);
           currentModelImageData = url;
@@ -2559,7 +2780,6 @@
       applyCropToImage();
       setUploadStatus(currentModelImageData ? '✅ Current image: ' + currentModelImageData : '', '#6ee7b7');
       editingOptions = JSON.parse(JSON.stringify(m.options || []));
-      // Guarantee unique ids for editor too.
       const seen = new Set();
       editingOptions.forEach((g, gi) => {
         if (!g.id || seen.has(g.id)) g.id = 'g' + gi + '_' + Math.random().toString(36).substring(2, 7);
@@ -2583,18 +2803,14 @@
       const desc = document.getElementById('new-model-desc').value.trim() || 'Custom 3D printed model.';
       const newArrival = document.getElementById('new-model-new-arrival').checked;
       if (!title) { showToast('Enter a model title.', 'error'); return; }
-
       if (imageUploadState === 'uploading') {
         showToast('⏳ Waiting for image upload to finish...');
         let waited = 0;
         while (imageUploadState === 'uploading' && waited < 20000) { await new Promise(r => setTimeout(r, 500)); waited += 500; }
       }
       if (imageUploadState === 'error') { showToast('❌ Image upload failed. Please try again or remove the image.', 'error'); return; }
-
       const cleanOpts = editingOptions.map(g => ({ id: g.id, name: (g.name || '').trim(), choices: g.choices.map(c => ({ value: (c.value || c.label || '').trim(), label: (c.label || c.value || '').trim(), priceDelta: Number(c.priceDelta) || 0 })).filter(c => c.value !== '') })).filter(g => g.name !== '' && g.choices.length > 0);
-
       const finalImageUrl = (currentModelImageData && currentModelImageData.startsWith('http')) ? currentModelImageData : '';
-
       if (id) {
         const m = catalogMap.get(id);
         if (m) {
@@ -2682,9 +2898,6 @@
       await removeOrderFromDb(code); showToast('Order ' + code + ' deleted.');
     };
 
-    // ============================================================
-    // PROOF OF DELIVERY
-    // ============================================================
     let currentProofImageData = '';
     let proofUploadState = 'idle';
 
@@ -2775,6 +2988,7 @@
         fbReady = true;
         firebase = window.__fb;
         initBackend();
+        initMaintenance();
       }
     });
   </script>
